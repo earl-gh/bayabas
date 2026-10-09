@@ -17,7 +17,7 @@ Bayabas is a 3D low-poly multiplayer MOBA built in Godot 4 for Android, with opt
 | Memory (RAM) | 3 GB | 4 GB or more |
 | Graphics | OpenGL ES 3.0 support | Adreno 610 / Mali-G52 class or better |
 | Storage | 200 MB free | 500 MB free |
-| Display | 5.0", 1280 × 720, landscape | 6.0"+, 1920 × 1080 |
+| Display | 5.0", 720 × 1280, portrait | 6.0"+, 1080 × 1920, portrait |
 | Network | Internet for multiplayer (Wi-Fi or 4G), latency under 150 ms | Wi-Fi or 4G/5G, latency under 80 ms |
 | Input | Touchscreen (virtual joystick + drag-to-aim skill buttons) | — |
 | Software | Bayabas APK installed (no Google account or sign-in needed) | — |
@@ -106,7 +106,9 @@ Every weapon has a type icon. All values (damage, cooldowns, ranges) are data-dr
 - Every PR gets a **playable web preview link** for testing from an iPhone.
 
 ### 3.8 Visual style and orientation
-- **Landscape only.** The game always plays in landscape (Android locked to landscape). On the web build a phone held in portrait shows a "rotate your phone" prompt instead of the game.
+- **Portrait (vertical) only, by design.** Bayabas is a one-hand-friendly vertical MOBA: the phone is held upright, the lane runs up the screen, your base is at the bottom and the enemy base at the top. Android is locked to portrait; the web build shows a "rotate your phone" prompt if held in landscape.
+- **Vertical UI layout:** left thumb = virtual joystick (bottom-left); right thumb = 4 skill buttons in an arc (bottom-right) with drag-to-aim and cancel zone; top bar = score/sets, ball timer, tricycle warning; slim vertical lane minimap on one edge; kill feed and weapon pick screen designed for a tall screen. Keep the centre of the screen clear for gameplay.
+- **Vertical gameplay adaptation:** the camera shows the whole 16 m lane width and roughly 22-26 m of lane length ahead, so the fight is read as a tall corridor; offscreen threats are shown by edge indicators and the minimap. Rules and numbers are unchanged (see `docs/GDD.md`); only camera, UI and framing change.
 - **Style target: Clash of Clans-like, low-poly 3D, Filipino street theme.** Chunky, toy-like proportions; bright, saturated, high-contrast colours; clean flat-shaded low-poly meshes with one shared palette texture; soft rounded shapes, thick readable silhouettes, light cartoon outlines and bouncy, exaggerated animation; playful UI with big rounded buttons. Everything must read clearly from the isometric ~55 degree camera on a small phone screen.
 - **Pinoy flavour:** colours and details from the street (jeepney paint, faded sari-sari signage, laundry lines, tarpaulin posters, concrete and cardboard, bahay-kubo/barong-barong roofs), warm daylight, and kids in everyday clothes.
 - **Inspired by, not copied:** match the look and feel only. Do not reuse or imitate any Clash of Clans / Supercell asset, character, logo, UI art or name.

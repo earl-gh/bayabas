@@ -3,7 +3,7 @@
 Each milestone = a few small PRs, each with tests and a working Pages preview. Finish a milestone before starting the next. Target version after each milestone is shown; release-please produces it from commit types.
 
 ## M0 — Scaffold (→ v0.1.0)
-1. Create Godot 4.6 project at repo root: Compatibility renderer, landscape, stretch mode `canvas_items`/aspect `expand`, warnings-as-errors for untyped code.
+1. Create Godot 4.6 project at repo root: Compatibility renderer, portrait, 720×1280 base, stretch mode `canvas_items`/aspect `expand`, warnings-as-errors for untyped code.
 2. Folders per `CLAUDE.md`. Autoloads `Net`, `Session`, `Settings` (stubs).
 3. `export_presets.cfg` with presets named exactly **`Web`** (single-threaded, export to `build/web/index.html`), **`Android`**, **`Server`** (Linux, dedicated server feature tag).
 4. Add GUT under `addons/gut`, `.gutconfig.json`, one passing test.
@@ -15,7 +15,7 @@ Each milestone = a few small PRs, each with tests and a working Pages preview. F
 1. Greybox map: 60×16 m lane, bases, boundary walls, 2 wall layers × 3 columns per side (placeholder boxes).
 2. Sim core: `MatchSim.step(dt)`, `PlayerState`, `PlayerInput`, seeded RNG.
 3. Movement + collision in sim (simple circle vs AABB, no physics engine dependency in sim).
-4. Isometric-style follow camera (ML-like, ~55° pitch); team-relative so your base is always bottom-left.
+4. Isometric-style follow camera (ML-like, ~55° pitch); team-relative so your base is always at the bottom and the enemy base at the top (vertical lane); the full 16 m lane width fits the screen width.
 5. Input: on-screen joystick + 4 skill buttons with **drag-to-aim** and cancel zone; keyboard WASD, mouse aim, Q/E weapons, Space dash, F bookmark, R ball.
 6. HP, death, 10 s respawn; Dash (with stumble) and Bookmark.
 7. Practice mode with 2 training dummies (stand still / walk back and forth).
