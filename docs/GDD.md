@@ -34,7 +34,7 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Takbo (Dash) | 5 m dash over 0.2 s, then 0.4 s stumble (can't move/cast) | 8 s |
 | Bookmark | Place mark, blink 4 m forward, +30% speed for 4 s, then return to mark | 14 s |
 
-Dash and Bookmark blink stop at walls (they never pass through). Death cancels active dash/stumble/bookmark effects; cooldowns keep running through death and respawn.
+Dash and Bookmark blink stop at walls that block you, i.e. the enemy's walls and the lane edges (your own team's walls are passable). Death cancels active dash/stumble/bookmark effects; cooldowns keep running through death and respawn.
 
 ## Weapons
 Status effects: `STUN` (no move/cast), `SLOW(x%)`, `AIRBORNE` (stun + vertical anim, no knockback), `POLYMORPH` (can: no cast, 50% speed), `BOUNCE` (short airborne), `KNOCKOUT` (ball; downed, no actions).
@@ -60,7 +60,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 ## Map (single mid lane, ~60 m long × 16 m wide)
 - Layout per side, from base outward: base post → wall layer 1 → wall layer 2 → mid.
 - Each wall layer = 3 columns (left / center / right), each column 300 HP. A column at 0 HP is removed and opens that slot.
-- Walls block movement and projectiles. Walls take damage from all attacks and the ball (ball: 60).
+- **A team passes straight through its own cardboard walls; the enemy team is blocked by them** (owner decision, completes D5). Boundary walls block everyone. Walls take damage from enemy attacks and the ball (ball: 60). Which projectiles a wall stops: enemy projectiles are blocked; own-team projectiles pass through (D11).
 - Base zone: circle r=2 around the electric post. A living, non-CC'd enemy standing in it for 0.5 s scores.
 - Boundary walls on the long sides (house fronts, fences).
 - Greybox placeholder geometry (base 4 m from each lane end, wall layers 7 m and 12 m from the base, 1 m thick) lives in `data/rules/map_layout.tres`; adjust there, not in code.
@@ -100,7 +100,8 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - **D2** Ball catch input/timing.
 - **D3** Who can blink to the ball (default: thrower only).
 - **D4** Tricycle push direction (default: perpendicular, away from vehicle).
-- **D5** Original brief for walls ends with "This must …" — unfinished requirement; ask designer.
+- **D5** Original brief for walls ends with "This must …" — unfinished requirement. Partly answered by the owner: a team can pass through its own walls (implemented). Ask whether anything else was meant.
+- **D11** Do a team's own projectiles pass through its own walls? Default yes (matches movement); applies once projectiles exist (M2).
 - **D7** Bookmark "then return to mark": default = the player is moved back to the mark when the 4 s speed boost ends (data toggle `bookmark_returns` in `data/rules/game_rules.tres`).
 - **D8** Can enemies damage a player in the death delay? Default **no** (untargetable); data toggle `death_delay_takes_damage` (damage then drains gray HP).
 - **D9** Death-delay numbers (gray HP 50, drain 8/s, touch distances) are placeholders; tune in data.

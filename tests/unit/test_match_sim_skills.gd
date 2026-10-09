@@ -166,13 +166,22 @@ func test_dash_cooldown_is_eight_seconds() -> void:
 	assert_gt(p.dash_time_left, 0.0, "ready again after 8 s")
 
 
-func test_dash_stops_at_walls() -> void:
+func test_dash_stops_at_enemy_walls() -> void:
+	var sim: MatchSim = _sim()
+	var p: PlayerState = sim.add_player(1, 0)
+	p.position = Vector2(0.0, -9.0)
+	_tick(sim, 1, Vector2(0.0, -1.0), PlayerInput.BTN_DASH)
+	_run(sim, 1, Vector2(0.0, -1.0), 8)
+	assert_almost_eq(p.position.y, -13.5 + p.radius, 0.05)
+
+
+func test_dash_goes_through_the_own_teams_walls() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
 	p.position = Vector2(0.0, 21.0)
 	_tick(sim, 1, Vector2(0.0, -1.0), PlayerInput.BTN_DASH)
 	_run(sim, 1, Vector2(0.0, -1.0), 8)
-	assert_almost_eq(p.position.y, 19.5 + p.radius, 0.05)
+	assert_almost_eq(p.position.y, 16.0, 0.05, "5 m through the own wall at z = 19")
 
 
 # ---- Bookmark ----
@@ -232,9 +241,17 @@ func test_bookmark_cooldown_is_fourteen_seconds() -> void:
 	assert_true(p.mark_active, "ready after 14 s")
 
 
-func test_bookmark_blink_stops_at_walls() -> void:
+func test_bookmark_blink_stops_at_enemy_walls() -> void:
+	var sim: MatchSim = _sim()
+	var p: PlayerState = sim.add_player(1, 0)
+	p.position = Vector2(0.0, -11.0)
+	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
+	assert_almost_eq(p.position.y, -13.5 + p.radius, 0.05)
+
+
+func test_bookmark_blink_goes_through_the_own_teams_walls() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
 	p.position = Vector2(0.0, 21.0)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_almost_eq(p.position.y, 19.5 + p.radius, 0.05)
+	assert_almost_eq(p.position.y, 17.0, 0.05)

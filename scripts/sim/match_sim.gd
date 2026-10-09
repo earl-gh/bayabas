@@ -261,8 +261,9 @@ func _move_by(state: PlayerState, delta: Vector2) -> void:
 		return
 	var count: int = maxi(1, ceili(length / state.radius))
 	var piece: Vector2 = delta / count
+	var blocking: Array[Rect2] = _blocking_rects_for(state)
 	for i: int in count:
-		state.position = Collision.resolve(state.position + piece, state.radius, _blocking_rects())
+		state.position = Collision.resolve(state.position + piece, state.radius, blocking)
 
 
 ## Slot 0 at the base post, then alternating +x / -x by spawn_spacing.
@@ -273,11 +274,13 @@ func _spawn_position(side: int, slot: int) -> Vector2:
 	return base + Vector2(direction * offset * rules.spawn_spacing, 0.0)
 
 
-## Boundary walls plus every wall column that is still standing.
-func _blocking_rects() -> Array[Rect2]:
+## What stops this player: the boundary walls plus every standing wall column on the
+## OTHER team's side. A team walks straight through its own cardboard walls.
+func _blocking_rects_for(state: PlayerState) -> Array[Rect2]:
+	var own_side: int = side_for_team(state.team)
 	var rects: Array[Rect2] = []
 	rects.append_array(_boundaries)
 	for wall: MapLayout.WallSpec in walls:
-		if wall.hp > 0:
+		if wall.hp > 0 and wall.side != own_side:
 			rects.append(wall.rect)
 	return rects
