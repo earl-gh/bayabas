@@ -1,6 +1,6 @@
 class_name TitleScreen
 extends Control
-## Title screen. Practice opens the greybox map for now; room buttons are stubs.
+## Title screen. Practice opens the offline practice match; room buttons are stubs.
 
 @onready var _version_label: Label = %VersionLabel
 @onready var _status_label: Label = %StatusLabel
@@ -17,7 +17,7 @@ func _ready() -> void:
 
 
 func _on_practice_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/map/greybox_map.tscn")
+	get_tree().change_scene_to_file("res://scenes/match/practice.tscn")
 
 
 func _on_stub_pressed(label: String) -> void:

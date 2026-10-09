@@ -56,7 +56,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.
-- Camera (data, tunable in `data/rules`): ~55° pitch, follows the local player, shows the full 16 m width and about 24 m of lane length. Team-relative: both teams see their own base at the bottom (view flips for the other team).
+- Camera (data, tunable in `data/rules`): ~55° pitch, follows the local player, shows the full 16 m width and about 24 m of lane length. Values in `data/rules/camera_rules.tres` (pitch 55°, horizontal FOV 50°, lane + 2 m fills the screen width; the camera is centered on the lane and follows the player along it, stopping 6 m before each end). Team-relative: both teams see their own base at the bottom (view flips for the other team).
 - Offscreen awareness: edge indicators for allies/enemies/ball/tricycle plus a slim lane minimap. Aim previews and skill ranges must remain readable within the visible area (long-range weapons rely on drag-to-aim and edge indicators).
 - Because the visible depth is shorter than the lane, ranges, speeds and the lane length stay as specified; balance is re-checked in M6 with real play on phones.
 

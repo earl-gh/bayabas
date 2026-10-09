@@ -1,0 +1,39 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/view/practice_match.gd" id="1_practice"]
+[ext_resource type="PackedScene" path="res://scenes/map/greybox_map.tscn" id="2_map"]
+[ext_resource type="Resource" path="res://data/rules/game_rules.tres" id="3_rules"]
+[ext_resource type="Resource" path="res://data/rules/map_layout.tres" id="4_layout"]
+[ext_resource type="Resource" path="res://data/rules/camera_rules.tres" id="5_camera_rules"]
+[ext_resource type="Script" path="res://scripts/view/follow_camera.gd" id="6_follow"]
+[ext_resource type="Script" path="res://scripts/ui/virtual_joystick.gd" id="7_stick"]
+
+[node name="Practice" type="Node3D"]
+script = ExtResource("1_practice")
+rules = ExtResource("3_rules")
+layout = ExtResource("4_layout")
+
+[node name="Map" parent="." instance=ExtResource("2_map")]
+show_overview_camera = false
+
+[node name="Actors" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="FollowCamera" type="Camera3D" parent="."]
+unique_name_in_owner = true
+current = true
+script = ExtResource("6_follow")
+rules = ExtResource("5_camera_rules")
+layout = ExtResource("4_layout")
+
+[node name="Controls" type="CanvasLayer" parent="."]
+
+[node name="Joystick" type="Control" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = -1
+anchor_top = 0.45
+anchor_right = 0.6
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("7_stick")
