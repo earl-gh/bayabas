@@ -60,6 +60,13 @@ static func outline(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vec
 	return lines
 
 
+## Ball throw preview: range circle plus the throw line.
+static func ball_outline(origin: Vector2, direction: Vector2, reach: float) -> Array[PackedVector2Array]:
+	var lines: Array[PackedVector2Array] = [circle(origin, reach)]
+	lines.append(PackedVector2Array([origin, origin + direction.normalized() * reach]))
+	return lines
+
+
 static func circle(center: Vector2, radius: float) -> PackedVector2Array:
 	var points: PackedVector2Array = PackedVector2Array()
 	for i: int in CIRCLE_POINTS + 1:
@@ -81,13 +88,17 @@ func clear() -> void:
 
 
 func show_aim(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, target_id: int, cancelled: bool) -> void:
+	show_lines(outline(sim, caster, def, aim, target_id), cancelled, def.max_range > 0.0)
+
+
+## Draws polylines; the first is drawn faint as the range circle when `has_range`.
+func show_lines(lines: Array[PackedVector2Array], cancelled: bool, has_range: bool = true) -> void:
 	_mesh.clear_surfaces()
-	var lines: Array[PackedVector2Array] = outline(sim, caster, def, aim, target_id)
 	var color: Color = CANCEL_COLOR if cancelled else READY_COLOR
 	_mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 	for index: int in lines.size():
 		var line: PackedVector2Array = lines[index]
-		var line_color: Color = RANGE_COLOR if index == 0 and def.max_range > 0.0 and not cancelled else color
+		var line_color: Color = RANGE_COLOR if index == 0 and has_range and not cancelled else color
 		for i: int in line.size() - 1:
 			_mesh.surface_set_color(line_color)
 			_mesh.surface_add_vertex(Vector3(line[i].x, HEIGHT, line[i].y))

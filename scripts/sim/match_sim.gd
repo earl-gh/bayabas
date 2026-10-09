@@ -10,7 +10,21 @@ signal player_death_delay_started(id: int)
 ## `by_id` is the reviving teammate, or -1 when the player touched their own base post.
 signal player_revived(id: int, by_id: int)
 
+## A team scored (`by_id` stood in the enemy base). A freeze follows.
+signal point_scored(team: int, by_id: int)
+signal set_won(team: int)
+signal match_won(team: int)
+## The freeze is over: everyone is back at their base at full HP.
+signal point_reset
+## New set: the teams swapped bases (and the walls were rebuilt).
+signal sides_switched
+signal wall_damaged(index: int)
+signal wall_destroyed(index: int)
+signal walls_rebuilt
+
 const REVIVED_BY_POST: int = -1
+
+enum Phase { PLAYING, POINT_FREEZE, MATCH_OVER }
 
 var rules: GameRules
 var layout: MapLayout
@@ -24,11 +38,20 @@ var walls: Array[MapLayout.WallSpec] = []
 var weapons: WeaponSystem = WeaponSystem.new()
 ## id -> WeaponDef, from rules.weapons.
 var weapon_defs: Dictionary[StringName, WeaponDef] = {}
+var score: MatchScore
+var ball: RubberBall
+var tricycle: Tricycle
+var phase: Phase = Phase.PLAYING
+## Seconds left in the freeze after a point.
+var freeze_left: float = 0.0
 
 var _inputs: Dictionary[int, PlayerInput] = {}
 var _brains: Dictionary[int, DummyBrain] = {}
 var _team_counts: Dictionary[int, int] = {}
 var _boundaries: Array[Rect2] = []
+## Which side team 0 defends this set (teams switch bases every set).
+var _team0_side: int = MapLayout.SIDE_OWN
+var _new_set_pending: bool = false
 
 
 func _init(p_rules: GameRules, p_layout: MapLayout, seed_value: int) -> void:
@@ -39,12 +62,15 @@ func _init(p_rules: GameRules, p_layout: MapLayout, seed_value: int) -> void:
 	_boundaries = layout.boundary_rects()
 	for def: WeaponDef in rules.weapons:
 		weapon_defs[def.id] = def
+	score = MatchScore.new(rules)
+	ball = RubberBall.new(rules)
+	tricycle = Tricycle.new(rules)
 
 
-## Team 0 starts on the own (+Z) base, team 1 on the enemy (-Z) base.
-## Sides swap each set later (M3), so this is only the initial assignment.
+## Team 0 starts on the own (+Z) base, team 1 on the enemy (-Z) base; they swap
+## every set.
 func side_for_team(team: int) -> int:
-	return MapLayout.SIDE_OWN if team == 0 else MapLayout.SIDE_ENEMY
+	return _team0_side if team == 0 else -_team0_side
 
 
 func add_player(id: int, team: int) -> PlayerState:
@@ -206,6 +232,15 @@ func kill(id: int) -> void:
 
 
 func step(dt: float) -> void:
+	if phase == Phase.MATCH_OVER:
+		tick += 1
+		return
+	if phase == Phase.POINT_FREEZE:
+		freeze_left -= dt
+		if freeze_left <= 0.0:
+			_end_freeze()
+		tick += 1
+		return
 	for id: int in _brains:
 		if players[id].alive:
 			_inputs[id] = _brains[id].think(players[id])
@@ -217,6 +252,9 @@ func step(dt: float) -> void:
 		else:
 			_step_dead(state, dt)
 	weapons.step(self, dt)
+	ball.step(self, dt)
+	tricycle.step(self, dt)
+	_check_base_captures(dt)
 	tick += 1
 
 
@@ -229,7 +267,8 @@ func _step_alive(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	_tick_boost(state, dt)
 	# Skills fire on a fresh press only: holding a key through a cooldown does not
 	# queue a cast for the moment it ends (no precasting).
-	var just_pressed: int = input.buttons & ~state.previous_buttons if input != null else 0
+	var previous: int = state.previous_buttons
+	var just_pressed: int = input.buttons & ~previous if input != null else 0
 	if input != null and state.can_act():
 		if just_pressed & PlayerInput.BTN_DASH and state.dash_cooldown_left <= 0.0:
 			_start_dash(state, input)
@@ -237,6 +276,7 @@ func _step_alive(state: PlayerState, input: PlayerInput, dt: float) -> void:
 			_use_bookmark(state)
 	if input != null:
 		_handle_weapon_buttons(state, input, dt)
+		_handle_ball_button(state, input, previous, dt)
 	_move(state, input, dt)
 	if state.death_delay:
 		_step_death_delay(state)
@@ -412,6 +452,10 @@ func _tick_boost(state: PlayerState, dt: float) -> void:
 
 
 func _move(state: PlayerState, input: PlayerInput, dt: float) -> void:
+	if state.push_time_left > 0.0:
+		_move_by(state, state.push_velocity * minf(dt, state.push_time_left))
+		state.push_time_left = maxf(0.0, state.push_time_left - dt)
+		return
 	if state.dash_time_left > 0.0:
 		var active: float = minf(dt, state.dash_time_left)
 		_move_by(state, state.dash_direction * (rules.dash_distance / rules.dash_duration) * active)
@@ -432,6 +476,8 @@ func _move(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	if state.boost_time_left > 0.0:
 		speed *= 1.0 + rules.bookmark_speed_bonus
 	speed *= state.effects.speed_multiplier(rules.polymorph_speed_scale)
+	if ball.is_holder(state.id):
+		speed *= rules.ball_holder_speed_scale
 	if state.death_delay:
 		speed *= rules.death_delay_move_speed_scale
 		state.gray_hp -= rules.death_delay_drain_per_second * move.length() * dt
@@ -475,3 +521,179 @@ func blocking_rects_for_team(team: int) -> Array[Rect2]:
 		if wall.hp > 0 and wall.side != own_side:
 			rects.append(wall.rect)
 	return rects
+
+
+# ---- walls ---------------------------------------------------------------------
+
+## Index of the standing wall column at `point` that blocks `team`, or -1.
+func wall_at_point(team: int, point: Vector2) -> int:
+	var own_side: int = side_for_team(team)
+	for index: int in walls.size():
+		var wall: MapLayout.WallSpec = walls[index]
+		if wall.hp > 0 and wall.side != own_side and wall.rect.has_point(point):
+			return index
+	return -1
+
+
+## Standing enemy wall columns (for `team`) touched by a circle.
+func walls_in_circle(team: int, center: Vector2, radius: float) -> Array[int]:
+	var own_side: int = side_for_team(team)
+	var result: Array[int] = []
+	for index: int in walls.size():
+		var wall: MapLayout.WallSpec = walls[index]
+		if wall.hp <= 0 or wall.side == own_side:
+			continue
+		var closest: Vector2 = Vector2(
+			clampf(center.x, wall.rect.position.x, wall.rect.end.x),
+			clampf(center.y, wall.rect.position.y, wall.rect.end.y)
+		)
+		if closest.distance_to(center) <= radius:
+			result.append(index)
+	return result
+
+
+func damage_wall(index: int, amount: int) -> void:
+	var wall: MapLayout.WallSpec = walls[index]
+	if wall.hp <= 0 or amount <= 0:
+		return
+	wall.hp = maxi(0, wall.hp - amount)
+	wall_damaged.emit(index)
+	if wall.hp == 0:
+		wall_destroyed.emit(index)
+
+
+# ---- knockback, ball, base -------------------------------------------------------
+
+## Pushes a player by `offset` over `duration` (walls still stop them). Cancels a dash.
+func push(id: int, offset: Vector2, duration: float) -> void:
+	var state: PlayerState = players[id]
+	state.dash_time_left = 0.0
+	state.stumble_time_left = 0.0
+	state.push_velocity = offset / maxf(duration, 0.001)
+	state.push_time_left = duration
+
+
+## Called after a teleport (ball blink): an active dash ends there.
+func on_teleported(state: PlayerState) -> void:
+	state.dash_time_left = 0.0
+
+
+## Ball button: press (while holding the ball) starts aiming, release throws (cast on
+## release, auto-aim locked at the press, cancel zone works). A fresh press while
+## your own throw is flying blinks to it. Every fresh press opens the catch window.
+func _handle_ball_button(state: PlayerState, input: PlayerInput, previous: int, dt: float) -> void:
+	var held: bool = input.is_pressed(PlayerInput.BTN_BALL)
+	var was_held: bool = (previous & PlayerInput.BTN_BALL) != 0
+	if held and not was_held:
+		state.ball_press_age = 0.0
+	else:
+		state.ball_press_age += dt
+	if ball.is_holder(state.id):
+		if held and not was_held:
+			state.ball_aim_hold = 0.0
+			state.ball_aim_lock = _ball_auto_aim(state)
+		elif held and state.ball_aim_hold >= 0.0:
+			state.ball_aim_hold += dt
+		elif not held and was_held and state.ball_aim_hold >= 0.0:
+			state.ball_aim_hold = -1.0
+			if not input.is_pressed(PlayerInput.BTN_AIM_CANCEL) and state.can_act():
+				var aim: Vector2 = input.aim if input.aim.length() >= rules.aim_deadzone else state.ball_aim_lock
+				ball.throw(state, aim)
+		return
+	state.ball_aim_hold = -1.0
+	if held and not was_held and ball.state == RubberBall.State.FLYING and state.can_act():
+		ball.blink(self, state)
+
+
+## The direction a ball throw would take now (for the aim preview): the stick past
+## the deadzone, else the auto-aim locked at the press (or a live one before it).
+func resolved_ball_aim(state: PlayerState, stick: Vector2) -> Vector2:
+	if stick.length() >= rules.aim_deadzone:
+		return stick.normalized()
+	if state.ball_aim_hold >= 0.0:
+		return state.ball_aim_lock
+	return _ball_auto_aim(state)
+
+
+func _ball_auto_aim(state: PlayerState) -> Vector2:
+	var target: PlayerState = nearest_enemy(state, rules.ball_range)
+	if target != null and target.position != state.position:
+		return state.position.direction_to(target.position)
+	return state.facing
+
+
+## A living, uncontrolled player standing in the enemy base zone long enough scores.
+func _check_base_captures(dt: float) -> void:
+	for id: int in players:
+		var state: PlayerState = players[id]
+		if not state.alive or state.death_delay or not state.effects.can_cast():
+			state.base_time = 0.0
+			continue
+		var enemy_base: Vector2 = layout.base_center(-side_for_team(state.team))
+		if state.position.distance_to(enemy_base) > layout.base_radius:
+			state.base_time = 0.0
+			continue
+		state.base_time += dt
+		if state.base_time >= rules.base_capture_time:
+			_score_point(state.team, id)
+			return
+
+
+func _score_point(team: int, by_id: int) -> void:
+	var result: MatchScore.Result = score.award_point(team)
+	point_scored.emit(team, by_id)
+	if result == MatchScore.Result.MATCH:
+		phase = Phase.MATCH_OVER
+		set_won.emit(team)
+		match_won.emit(team)
+		return
+	if result == MatchScore.Result.SET:
+		_new_set_pending = true
+		set_won.emit(team)
+	phase = Phase.POINT_FREEZE
+	freeze_left = rules.point_freeze_time
+
+
+func _end_freeze() -> void:
+	if _new_set_pending:
+		_new_set_pending = false
+		_team0_side = -_team0_side
+		for id: int in players:
+			var spawn: Vector2 = players[id].spawn_position
+			players[id].spawn_position = Vector2(spawn.x, -spawn.y)
+		for wall: MapLayout.WallSpec in walls:
+			wall.hp = layout.wall_hp
+		walls_rebuilt.emit()
+		sides_switched.emit()
+	_reset_round()
+	phase = Phase.PLAYING
+	point_reset.emit()
+
+
+## Everyone back to their base at full HP, cooldowns and effects cleared; weapon
+## objects, the ball and an active tricycle are removed. Walls persist.
+func _reset_round() -> void:
+	weapons.reset()
+	ball.reset(rules)
+	tricycle.cancel(rules)
+	for id: int in players:
+		var state: PlayerState = players[id]
+		var was_dead: bool = not state.alive
+		_clear_actions(state)
+		state.position = state.spawn_position
+		state.facing = Vector2(0.0, -side_for_team(state.team))
+		state.hp = rules.player_max_hp
+		state.alive = true
+		state.death_delay = false
+		state.death_delay_used = false
+		state.gray_hp = 0.0
+		state.respawn_time_left = 0.0
+		state.dash_cooldown_left = 0.0
+		state.bookmark_cooldown_left = 0.0
+		for slot: int in state.weapon_cooldowns.size():
+			state.weapon_cooldowns[slot] = 0.0
+		state.push_time_left = 0.0
+		state.base_time = 0.0
+		state.ball_aim_hold = -1.0
+		if was_dead:
+			player_respawned.emit(id)

@@ -47,6 +47,16 @@ var previous_buttons: int = 0
 var aim_lock: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO]
 var aim_target: Array[int] = [-1, -1]
 var effects: StatusEffects = StatusEffects.new()
+## Seconds since the ball button was last freshly pressed (catch window, D2).
+var ball_press_age: float = 1.0e9
+## Ball throw aim: -1 = not aiming; the auto-aim is locked at the press like weapons.
+var ball_aim_hold: float = -1.0
+var ball_aim_lock: Vector2 = Vector2.ZERO
+## Knockback (tricycle): moved by `push_velocity` until `push_time_left` runs out.
+var push_velocity: Vector2 = Vector2.ZERO
+var push_time_left: float = 0.0
+## Time spent standing in the enemy base zone (scores at GameRules.base_capture_time).
+var base_time: float = 0.0
 
 
 ## Bookmark can be used: off cooldown and not still out on a mark (its cooldown

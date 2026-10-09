@@ -192,6 +192,15 @@ func _hit_cone(sim: MatchSim, caster: PlayerState, def: WeaponDef, direction: Ve
 			continue
 		for i: int in hits:
 			_hit(sim, target, def)
+	for index: int in sim.walls_in_circle(caster.team, caster.position, def.max_range):
+		var rect: Rect2 = sim.walls[index].rect
+		var closest: Vector2 = Vector2(
+			clampf(caster.position.x, rect.position.x, rect.end.x),
+			clampf(caster.position.y, rect.position.y, rect.end.y)
+		)
+		var to_wall: Vector2 = closest - caster.position
+		if to_wall.length() < 0.001 or absf(direction.angle_to(to_wall)) <= half_angle:
+			sim.damage_wall(index, def.damage * hits)
 
 
 func _step_cones(sim: MatchSim, dt: float) -> void:
@@ -239,6 +248,9 @@ func _advance_projectile(sim: MatchSim, projectile: Projectile, distance: float)
 		if not _move_projectile(sim, projectile, move):
 			return false
 		if _blocked(projectile, previous, blocking):
+			var wall: int = sim.wall_at_point(projectile.team, projectile.position)
+			if wall >= 0:
+				sim.damage_wall(wall, projectile.def.damage)
 			if projectile.def.shape == WeaponDef.Shape.BOOMERANG and not projectile.returning:
 				projectile.position = previous
 				_turn_back(projectile)
@@ -296,12 +308,17 @@ func _blocked(projectile: Projectile, previous: Vector2, blocking: Array[Rect2])
 	for rect: Rect2 in blocking:
 		if rect.has_point(projectile.position):
 			return true
+	return blocks_segment(projectile.team, previous, projectile.position)
+
+
+## True if an enemy (of `team`) paper shield crosses the segment a-b.
+func blocks_segment(team: int, a: Vector2, b: Vector2) -> bool:
 	for shield: Shield in shields:
-		if shield.team == projectile.team:
+		if shield.team == team:
 			continue
-		var a: Vector2 = shield.center - shield.along * shield.half_width
-		var b: Vector2 = shield.center + shield.along * shield.half_width
-		if Geometry2D.segment_intersects_segment(previous, projectile.position, a, b) != null:
+		var left: Vector2 = shield.center - shield.along * shield.half_width
+		var right: Vector2 = shield.center + shield.along * shield.half_width
+		if Geometry2D.segment_intersects_segment(a, b, left, right) != null:
 			return true
 	return false
 
@@ -383,6 +400,8 @@ func _step_shields(dt: float) -> void:
 func _area_hit(sim: MatchSim, team: int, def: WeaponDef, center: Vector2, radius: float) -> void:
 	for target: PlayerState in _enemies_within(sim, team, center, radius):
 		_hit(sim, target, def)
+	for wall: int in sim.walls_in_circle(team, center, radius):
+		sim.damage_wall(wall, def.damage)
 
 
 func _enemies_within(sim: MatchSim, team: int, center: Vector2, radius: float) -> Array[PlayerState]:

@@ -76,6 +76,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Layout per side, from base outward: base post → wall layer 1 → wall layer 2 → mid.
 - Each wall layer = 3 columns (left / center / right), each column 300 HP. A column at 0 HP is removed and opens that slot.
 - **A team passes straight through its own cardboard walls; the enemy team is blocked by them** (owner decision, completes D5). Boundary walls block everyone. Walls take damage from enemy attacks and the ball (ball: 60). Which projectiles a wall stops: enemy projectiles are blocked; own-team projectiles pass through (D11).
+- What damages a wall column: enemy weapons deal their normal damage to it. A projectile that hits it deals its damage once (a boomerang turns back); ground areas, jacks ticks and bola bounces hit every column inside their circle; cones hit columns in front within range. Non-damaging weapons (trap, shield) don't hurt walls. Own walls never take damage from their own team.
 - Base zone: circle r=2 around the electric post. A living, non-CC'd enemy standing in it for 0.5 s scores.
 - Boundary walls on the long sides (house fronts, fences).
 - Greybox placeholder geometry (base 4 m from each lane end, wall layers 7 m and 12 m from the base, 1 m thick) lives in `data/rules/map_layout.tres`; adjust there, not in code.
@@ -90,6 +91,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - **Point**: reach enemy base. After a point: 3 s freeze, all players reset to their bases at full HP, cooldowns reset. Walls **persist** within a set.
 - **Set**: first to 5 points, win by 2, hard cap 7.
 - **Match**: best of 3 sets. Teams switch bases each set; walls fully rebuild each set.
+- Implementation defaults: during the 3 s freeze nothing moves. The reset also clears status effects, weapon objects on the field, the ball (its 15 s spawn timer restarts) and an active tricycle crossing (the next one comes a full interval later). Dead players come back too. After the last point of the match the game stops and shows the result. Numbers in `data/rules/game_rules.tres` (`base_capture_time`, `point_freeze_time`, `set_points_to_win`, `set_win_by`, `set_point_cap`, `match_sets_to_win`).
 
 ## Rubber ball
 - Spawns at center every 15 s if none exists.
@@ -100,10 +102,13 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Hit cardboard wall → 60 dmg, ball despawns, timer restarts.
 - Hit boundary or max range → drops on ground, can be picked up.
 - While in flight and not yet hit anything, the **thrower** can recast to blink to the ball. **(D3 confirm: thrower only)**
+- Controls: one **Ball** button (R on keyboard). It reads **Throw** while you hold the ball (press, drag to aim, release; auto-aim locked at the press like weapons, cancel zone works), **Blink** while your own throw is flying, otherwise **Catch** (a press opens the 0.3 s catch window).
+- Implementation defaults: thrown at 20 m/s (`ball_speed`); an enemy paper shield stops it and it drops there; it passes through the thrower's own walls (D11) and only damages enemy walls; the holder drops it when they go down or die; the blink moves the thrower onto the ball and the ball keeps flying. Numbers in `data/rules/game_rules.tres` (`ball_*`).
 
 ## Tricycle
 - Every 120 s (first at 120 s), drives across the map's midline from a random side, ~3 s crossing, warning horn + lane marker 2 s before.
 - Contact: 8 m knockback perpendicular to its path, away from it; no damage. **(D4 confirm)**
+- Implementation defaults: the push is spread over 0.3 s and stops at walls that block you; each player is pushed at most once per crossing; it pushes players in the death delay too. Practice mode has a "Tricycle (test)" button. Numbers in `data/rules/game_rules.tres` (`tricycle_*`).
 
 ## Lobby rules
 - Modes: 1v1, 2v2, 3v3. Passcode: 6 chars, A–Z/2–9, no ambiguous chars.
