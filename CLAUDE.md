@@ -29,7 +29,13 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 - Small PRs (one HANDOFF task each). Use `.github/pull_request_template.md`. Include the **PR preview URL** in the PR body and how to test it on a phone.
 - PR must be green: GUT tests + web export. Squash-merge only.
 - Releases: release-please opens a release PR on `main`; merging it tags `vX.Y.Z` and updates `CHANGELOG.md`. Don't edit versions or the changelog by hand. Pre-1.0: `feat` = minor, `fix` = patch.
-- **Ship loop (owner-approved):** Claude opens the PR, waits for CI green, squash-merges it, waits for the Pages deploy of `main` to finish, then gives the owner the live link (`https://earl-gh.github.io/bayabas/`) plus what to check. Stop and ask instead if CI is red and not obviously fixable, or if the change is risky or outward-facing. The release-please release PR (tags a version) is still merged only when the owner says so.
+- **Ship loop (owner-approved), one phase/task at a time:**
+  1. **Make the PR** from a feature branch (small, one HANDOFF task, tests included).
+  2. **Review the PR** yourself before merging: read the full diff (run the code-review skill), check CI is green, and check against the Definition of done below. Fix anything found on the same branch and re-check.
+  3. **Merge if correct** (squash). If CI is red and not obviously fixable, or the change is risky/outward-facing, stop and ask instead.
+  4. **Confirm it is live** before telling the owner anything: the Pages run for the `main` commit succeeded, the `gh-pages` branch head names that commit, and the site responds. If the deploy was cancelled or failed, fix or re-run it first.
+  5. **Then** give the owner the live link (`https://earl-gh.github.io/bayabas/`) and exactly what to check.
+  The release-please release PR (tags a version) is merged only when the owner says so.
 
 ## Platforms and how the owner tests
 - **Dev channel = web build on the owner's iPhone browser** (Pages root for `main`, `pr-preview/pr-<N>/` for PRs). Always end a ship loop with that link.
