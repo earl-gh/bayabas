@@ -31,6 +31,11 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 - Releases: release-please opens a release PR on `main`; merging it tags `vX.Y.Z` and updates `CHANGELOG.md`. Don't edit versions or the changelog by hand. Pre-1.0: `feat` = minor, `fix` = patch.
 - **Ship loop (owner-approved):** Claude opens the PR, waits for CI green, squash-merges it, waits for the Pages deploy of `main` to finish, then gives the owner the live link (`https://earl-gh.github.io/bayabas/`) plus what to check. Stop and ask instead if CI is red and not obviously fixable, or if the change is risky or outward-facing. The release-please release PR (tags a version) is still merged only when the owner says so.
 
+## Platforms and how the owner tests
+- **Dev channel = web build on the owner's iPhone browser** (Pages root for `main`, `pr-preview/pr-<N>/` for PRs). Always end a ship loop with that link.
+- **Android stays releasable at all times:** the `android-debug-apk` CI job must stay green on every PR (artifact `bayabas-debug-apk`). Never merge a change that breaks the `Android` preset or needs desktop-only/thread APIs. Signed release APK/AAB is M6.
+- Android-only problems (touch, safe areas, performance) can't be seen on the iPhone web build; call them out in the PR instead of assuming they work.
+
 ## Definition of done (per task)
 - Static-typed, no warnings (treat warnings as errors in project settings).
 - Unit tests for every sim rule touched (`tests/unit/test_<thing>.gd`).
