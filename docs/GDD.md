@@ -9,7 +9,7 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Move speed | 5.0 m/s |
 | Server tick | 30 Hz; snapshots to clients at 20 Hz |
 | Weapon pick time | 10 s (match start); unpicked slots auto-fill with random weapons |
-| Respawn time | 10 s after a real death, at own base, weapon swap allowed during the timer |
+| Respawn time | 10 s after a real death, at own base; weapons can be swapped any number of times during the timer (D13) |
 | Basic attack | **None.** There is no basic attack: players only use the weapons they picked plus the two default skills (owner decision) |
 
 ## Characters (cosmetic, randomized)
@@ -118,5 +118,5 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - **D9** Death-delay numbers (gray HP 50, drain 8/s, touch distances) are placeholders; tune in data.
 - **D10** With no basic attack, a loadout of only non-damaging weapons (e.g. `papel_trap` + `papel_shield`) deals no damage. Default: allowed; consider requiring at least one damaging weapon at pick time.
 - **D12** Unarmed papel trap lifetime (not in the brief): default 20 s.
-- **D13** Respawn weapon swap: the swap screen opens on death with your current weapons pre-picked; the choice applies at once (you are dead anyway) and the screen closes when you respawn.
+- **D13** ~~Respawn weapon swap~~ **Decided (owner): swap with no limit while dead.** For the whole respawn timer you can change weapons as often as you like. The swap screen opens on death with your current weapons pre-picked and shows the respawn countdown; every full pair applies at once; **Done** closes it and a **Swap weapons** button reopens it while still dead. It closes when you respawn. No swapping while alive. A weapon kept across a swap keeps its cooldown.
 - **D6** Only one Block weapon exists — consider a second one for loadout variety.

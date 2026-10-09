@@ -412,3 +412,49 @@ func test_status_effects_show_on_name_tags() -> void:
 	var tag: Label3D = enemy_view.find_children("*", "Label3D", true, false)[0] as Label3D
 	assert_string_contains(tag.text, "POLYMORPH")
 	assert_lt(enemy_view.scale.y, 1.0, "turned into a can")
+
+
+# ---- respawn swap (D13: no limit while dead) ------------------------------------
+
+func test_while_dead_weapons_can_be_swapped_again_and_again() -> void:
+	var practice: PracticeMatch = _practice()
+	var screen: WeaponPickScreen = _pick_screen(practice)
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	practice.sim.set_loadout(PracticeMatch.LOCAL_ID, &"bato_light", &"lata")
+	practice.sim.kill(PracticeMatch.LOCAL_ID)
+	screen.tap(&"bato_light")
+	screen.tap(&"jacks")
+	assert_eq(player.weapons, [&"lata", &"jacks"] as Array[StringName], "applied at once")
+	for i: int in 120:
+		practice.advance(DT)
+	assert_true(practice.is_picking(), "no pick timer: stays open while dead")
+	screen.tap(&"trumpo")
+	assert_eq(player.weapons, [&"jacks", &"trumpo"] as Array[StringName])
+	screen.tap(&"bola")
+	assert_eq(player.weapons, [&"trumpo", &"bola"] as Array[StringName])
+
+
+func test_done_closes_and_the_swap_button_reopens_while_dead() -> void:
+	var practice: PracticeMatch = _practice()
+	var screen: WeaponPickScreen = _pick_screen(practice)
+	var swap: Button = practice.get_node("%SwapButton") as Button
+	practice.sim.kill(PracticeMatch.LOCAL_ID)
+	practice.advance(DT)
+	assert_false(swap.visible, "hidden under the open swap screen")
+	screen.press_ready()
+	practice.advance(DT)
+	assert_false(practice.is_picking())
+	assert_true(swap.visible)
+	assert_true(practice.controls_active())
+	practice.open_swap()
+	assert_true(practice.is_picking())
+	screen.press_ready()
+	practice.open_swap()
+	assert_true(practice.is_picking(), "as many times as you like")
+	for i: int in 310:
+		practice.advance(DT)
+	assert_true(practice.sim.players[PracticeMatch.LOCAL_ID].alive)
+	assert_false(practice.is_picking(), "respawning closes it")
+	assert_false(swap.visible)
+	practice.open_swap()
+	assert_false(practice.is_picking(), "no swapping while alive")
