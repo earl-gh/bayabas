@@ -9,7 +9,6 @@ concurrency:
 jobs:
   test-and-export:
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('project.godot') != '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Read Godot version
