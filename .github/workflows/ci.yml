@@ -28,3 +28,60 @@ jobs:
           mkdir -p build/web
           godot --headless --export-release "Web" build/web/index.html
           test -f build/web/index.html
+
+  android-debug-apk:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_BUILD_TOOLS: "35.0.1"
+      ANDROID_PLATFORM: "android-35"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read Godot version
+        id: gv
+        run: echo "version=$(cat .godot-version)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ steps.gv.outputs.version }}
+          use-dotnet: false
+          include-templates: true
+      - name: Install Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "build-tools;${ANDROID_BUILD_TOOLS}" "platforms;${ANDROID_PLATFORM}"
+      - name: Generate debug keystore
+        run: |
+          keytool -genkeypair -v -keystore "$RUNNER_TEMP/debug.keystore" \
+            -alias androiddebugkey -storepass android -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+      - name: Point Godot at the Android SDK and JDK
+        run: |
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-4.6.tres <<EOS
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOS
+      - name: Import project
+        run: godot --headless --import
+      - name: Export debug APK
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          mkdir -p build/android
+          godot --headless --export-debug "Android" build/android/bayabas-debug.apk
+          test -f build/android/bayabas-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bayabas-debug-apk
+          path: build/android/bayabas-debug.apk
+          if-no-files-found: error
