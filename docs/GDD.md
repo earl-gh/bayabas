@@ -9,15 +9,24 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Move speed | 5.0 m/s |
 | Server tick | 30 Hz; snapshots to clients at 20 Hz |
 | Weapon pick time | 10 s (match start); unpicked slots auto-fill with random weapons |
-| Respawn time | 10 s, at own base, weapon swap allowed during the timer |
-| Basic attack | **Decision pending (D1)** — default ON: melee "suntok", 6 dmg, 2.0 m, 0.8 s |
+| Respawn time | 10 s after a real death, at own base, weapon swap allowed during the timer |
+| Basic attack | **None.** There is no basic attack: players only use the weapons they picked plus the two default skills (owner decision) |
 
 ## Characters (cosmetic, randomized)
 - Roster (`data/characters/*.tres`, `CharacterDef`): `junjun` boy, `ligaya` girl, `migo` gay boy, `toni` lesbian girl, `popoy` chubby boy, `inday` dark-skinned girl. Outfits in `docs/PROJECT.md` §3.2.
 - Assigned by the **server** at match start with the match's seeded RNG: shuffle the roster, give one per player, no duplicates (6 characters ≥ max 6 players). Fixed for the whole match, including respawns and set switches.
 - Purely visual: identical hitbox (capsule r=0.4 m), HP, speed, animations timing. Shown in loading screen, scoreboard and kill feed.
 - Team readability: team-colored bandana/armband + ground ring; enemy outline on the local client.
-- Practice mode: random character for the player, dummies use the others.
+- Practice mode: random character for the player, dummies use the others. Practice has two training dummies on the enemy team (one stands still, one walks sideways +/-3 m around its post at half speed) and one standing ally dummy, so the revive touch can be tested. Dummies never attack or use skills, have no death delay, and respawn at their spot after 10 s.
+
+## Death delay (once per respawn)
+- When HP reaches 0 the player does **not** die yet. They enter the **death delay**: HP stays 0 and they get temporary **gray HP**.
+- Gray HP **drains while they move** (rate scales with stick length; standing still costs nothing). If gray HP reaches 0 they really die and respawn after 10 s with full HP.
+- **Skills are disabled** during the death delay (dash, bookmark, weapons). Movement still works.
+- **Revive:** a living teammate (not themselves in death delay) touching the downed player revives them, or the downed player touches **their own base's electric post** and revives themselves with no help. They come back with the **gray HP they had left** as their HP (at least 1).
+- The death delay can trigger **only once per respawn**: if HP reaches 0 again after a revive, the player dies for real. Respawning re-arms it.
+- Training dummies in practice mode have no death delay.
+- Numbers (starting points, in `data/rules/game_rules.tres`): gray HP 50, drain 8 per second at full stick, same move speed, teammate touch within 1.0 m (center to center), base post touch within 1.2 m of the post center. Enemies cannot damage a player in death delay (D8).
 
 ## Default skills
 | Skill | Effect | CD |
@@ -87,10 +96,13 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Host leaves in lobby → next player becomes host. Player disconnect in match → slot stays, 60 s to reconnect.
 
 ## Open decisions (defaults are implemented; change if the designer says so)
-- **D1** Basic attack exists? (default yes — otherwise a CC-only loadout cannot damage)
+- **D1** ~~Basic attack~~ **Decided: no basic attack** (owner). See D10.
 - **D2** Ball catch input/timing.
 - **D3** Who can blink to the ball (default: thrower only).
 - **D4** Tricycle push direction (default: perpendicular, away from vehicle).
 - **D5** Original brief for walls ends with "This must …" — unfinished requirement; ask designer.
 - **D7** Bookmark "then return to mark": default = the player is moved back to the mark when the 4 s speed boost ends (data toggle `bookmark_returns` in `data/rules/game_rules.tres`).
+- **D8** Can enemies damage a player in the death delay? Default **no** (untargetable); data toggle `death_delay_takes_damage` (damage then drains gray HP).
+- **D9** Death-delay numbers (gray HP 50, drain 8/s, touch distances) are placeholders; tune in data.
+- **D10** With no basic attack, a loadout of only non-damaging weapons (e.g. `papel_trap` + `papel_shield`) deals no damage. Default: allowed; consider requiring at least one damaging weapon at pick time.
 - **D6** Only one Block weapon exists — consider a second one for loadout variety.

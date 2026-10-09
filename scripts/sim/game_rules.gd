@@ -21,6 +21,28 @@ extends Resource
 @export var bookmark_cooldown: float = 0.0
 ## Data toggle: return to the mark when the boost ends (GDD D7 default).
 @export var bookmark_returns: bool = false
+## Death delay: at 0 HP a player (once per respawn) keeps walking with "gray HP" that
+## drains while moving. A living teammate touching them, or the player touching their own
+## base post, revives them with the gray HP they have left. Skills are off meanwhile.
+@export var death_delay_enabled: bool = false
+@export var death_delay_gray_hp: float = 0.0
+## Gray HP lost per second at full stick (scaled by stick length; standing still is free).
+@export var death_delay_drain_per_second: float = 0.0
+@export var death_delay_move_speed_scale: float = 0.0
+## Center-to-center distance at which a teammate's touch revives.
+@export var revive_touch_distance: float = 0.0
+## Distance to the own base post center at which touching it revives.
+@export var post_touch_distance: float = 0.0
+## Data toggle (GDD D8): can enemies damage a player in death delay? Default no.
+@export var death_delay_takes_damage: bool = false
+## Practice-mode training dummies (two enemies and one ally).
+@export var dummy_z: float = 0.0
+@export var dummy_stand_x: float = 0.0
+@export var dummy_patrol_x: float = 0.0
+@export var dummy_patrol_range: float = 0.0
+@export var dummy_patrol_speed_scale: float = 0.0
+@export var dummy_ally_x: float = 0.0
+@export var dummy_ally_z: float = 0.0
 
 
 ## Fixed simulation step in seconds (1 / tick_rate).
