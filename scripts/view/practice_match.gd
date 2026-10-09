@@ -1,6 +1,8 @@
 class_name PracticeMatch
 extends Node3D
-## Offline practice match: runs a local MatchSim, draws it, and feeds it input.
+## The match screen. Offline practice runs a local MatchSim with training dummies;
+## online (`online = true`, scenes/match/online.tscn) it draws the GameClient's
+## mirror of the server's match and sends inputs instead of stepping a sim.
 ## Reads sim state only; all rules live in scripts/sim/.
 
 const LOCAL_ID: int = 1
@@ -21,6 +23,7 @@ const AIM_BITS: Array[int] = [PlayerInput.BTN_WEAPON_1, PlayerInput.BTN_WEAPON_2
 const WEAPON_SLOTS: int = 2
 const BALL_SLOT: int = 2
 const BANNER_TIME: float = 2.0
+const RECONNECT_INTERVAL: float = 2.0
 ## Practice-only debug button to test the death delay without an enemy that fights back.
 const DEBUG_DAMAGE: int = 30
 const ALLY_COLOR: Color = Color(0.5, 0.75, 1.0)
@@ -30,8 +33,14 @@ const HP_TEXT_COLOR: Color = Color(1.0, 1.0, 1.0)
 
 @export var rules: GameRules
 @export var layout: MapLayout
+## Online match: driven by Net.client (set `client` before adding to the tree to
+## use another one, e.g. in tests).
+@export var online: bool = false
 
 var sim: MatchSim
+var client: GameClient
+var local_id: int = LOCAL_ID
+var local_team: int = LOCAL_TEAM
 
 var _accumulator: float = 0.0
 var _stick: Vector2 = Vector2.ZERO
@@ -55,6 +64,10 @@ var _key_held: Array[bool] = [false, false, false]
 var _key_aim: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
 var _key_cancel: Array[bool] = [false, false, false]
 var _banner_left: float = 0.0
+## Online: our own input counter (the server acks it for reconciliation).
+var _input_tick: int = 0
+## Online: seconds until the next reconnect attempt after the connection dropped.
+var _reconnect_left: float = -1.0
 
 @onready var _camera: FollowCamera = %FollowCamera
 @onready var _joystick: VirtualJoystick = %Joystick
@@ -84,17 +97,10 @@ var _banner_left: float = 0.0
 
 
 func _ready() -> void:
-	sim = MatchSim.new(rules, layout, Time.get_ticks_usec())
-	sim.add_player(LOCAL_ID, LOCAL_TEAM)
-	sim.add_dummy(ENEMY_STAND_ID, 1, Vector2(rules.dummy_stand_x, rules.dummy_z), DummyBrain.standing())
-	var patrol: DummyBrain = DummyBrain.patrolling(
-		rules.dummy_patrol_x, rules.dummy_patrol_range, rules.dummy_patrol_speed_scale
-	)
-	sim.add_dummy(ENEMY_PATROL_ID, 1, Vector2(rules.dummy_patrol_x, rules.dummy_z), patrol)
-	sim.add_dummy(ALLY_ID, LOCAL_TEAM, Vector2(rules.dummy_ally_x, rules.dummy_ally_z), DummyBrain.standing())
-	sim.assign_characters()
-	var loadout: Array[StringName] = sim.random_loadout()
-	sim.set_loadout(LOCAL_ID, loadout[0], loadout[1])
+	if online:
+		_setup_online()
+	else:
+		_setup_practice()
 	for character: CharacterDef in rules.characters:
 		_characters[character.id] = character
 	for id: int in sim.players:
@@ -112,6 +118,8 @@ func _ready() -> void:
 		_aim_buttons[slot].aim_released.connect(aim_released.bind(slot))
 	_hurt_button.pressed.connect(hurt_local.bind(DEBUG_DAMAGE))
 	_tricycle_button.pressed.connect(sim.tricycle.call_now)
+	_hurt_button.visible = not online
+	_tricycle_button.visible = not online
 	_again_button.pressed.connect(_on_again_pressed)
 	sim.point_scored.connect(_on_point_scored)
 	sim.set_won.connect(_on_set_won)
@@ -128,7 +136,72 @@ func _ready() -> void:
 	sim.player_respawned.connect(_on_player_respawned)
 	_open_pick("Pick 2 weapons", [])
 	_opening_pick = true
+	if online:
+		client.stage_changed.connect(_on_stage_changed)
+		client.connection_changed.connect(_on_connection_changed)
+		client.loaded()
+		if client.stage == "play":
+			_on_stage_changed("play")
 	_sync_views(0.0)
+
+
+func _setup_practice() -> void:
+	sim = MatchSim.new(rules, layout, Time.get_ticks_usec())
+	sim.add_player(local_id, local_team)
+	sim.add_dummy(ENEMY_STAND_ID, 1, Vector2(rules.dummy_stand_x, rules.dummy_z), DummyBrain.standing())
+	var patrol: DummyBrain = DummyBrain.patrolling(
+		rules.dummy_patrol_x, rules.dummy_patrol_range, rules.dummy_patrol_speed_scale
+	)
+	sim.add_dummy(ENEMY_PATROL_ID, 1, Vector2(rules.dummy_patrol_x, rules.dummy_z), patrol)
+	sim.add_dummy(ALLY_ID, local_team, Vector2(rules.dummy_ally_x, rules.dummy_ally_z), DummyBrain.standing())
+	sim.assign_characters()
+	var loadout: Array[StringName] = sim.random_loadout()
+	sim.set_loadout(local_id, loadout[0], loadout[1])
+
+
+func _setup_online() -> void:
+	if client == null:
+		client = Net.client
+	sim = client.mirror
+	local_id = client.player_id
+	local_team = sim.players[local_id].team
+
+
+## Online: the server ended the weapon pick (loadouts are final) and play starts.
+func _on_stage_changed(stage: String) -> void:
+	if stage != "play" or not _opening_pick:
+		return
+	_pick_screen.dismiss()
+	_opening_pick = false
+	_set_controls_active(true)
+
+
+func _exit_tree() -> void:
+	if online and client != null and client.in_match():
+		client.leave_room()
+		Session.reconnect_token = ""
+		Session.save()
+
+
+## Online: the connection dropped (phone locked, network switch...). Keep trying;
+## the server holds our slot for 60 s and the token gets it back.
+func _on_connection_changed(is_up: bool) -> void:
+	if is_up:
+		_reconnect_left = -1.0
+		show_banner("Back online!")
+		return
+	show_banner("Connection lost\nReconnecting...")
+	_reconnect_left = 0.0
+
+
+func _try_reconnect(delta: float) -> void:
+	if _reconnect_left < 0.0 or client.is_online() or client.is_connecting():
+		return
+	_reconnect_left -= delta
+	if _reconnect_left <= 0.0:
+		_reconnect_left = RECONNECT_INTERVAL
+		var url: String = Session.reconnect_url if not Session.reconnect_url.is_empty() else Settings.server_url
+		client.connect_to(url)
 
 
 func _process(delta: float) -> void:
@@ -159,13 +232,13 @@ func aim_released(aim: Vector2, cancelled: bool, slot: int) -> void:
 
 
 func hurt_local(amount: int) -> void:
-	sim.damage(LOCAL_ID, amount)
+	sim.damage(local_id, amount)
 	_sync_views(0.0)
 
 
 ## The base side the local team defends this set (+Z = own/bottom at the start).
 func own_side() -> int:
-	return sim.side_for_team(LOCAL_TEAM)
+	return sim.side_for_team(local_team)
 
 
 ## The camera and stick are turned around when the local team defends the -Z base.
@@ -183,8 +256,10 @@ func banner_text() -> String:
 	return _banner.text if _banner.visible else ""
 
 
+## True while the weapon pick is open, or (online) while waiting for the server
+## to start play after our pick.
 func is_picking() -> bool:
-	return _pick_screen.is_open()
+	return _pick_screen.is_open() or _opening_pick
 
 
 ## Ends the open pick now (auto-fills empty slots), e.g. for tests or on respawn.
@@ -195,6 +270,9 @@ func finish_pick() -> void:
 ## Runs as many fixed sim ticks as `delta` allows, then updates the visuals.
 func advance(delta: float) -> void:
 	_pick_screen.tick(delta)
+	if online:
+		client.interpolate()
+		_try_reconnect(delta)
 	if _opening_pick:
 		_sync_views(delta)
 		return
@@ -247,7 +325,11 @@ func _step_once(dt: float) -> void:
 				_sent_held[slot] = false
 	if cancel:
 		buttons |= PlayerInput.BTN_AIM_CANCEL
-	sim.set_input(LOCAL_ID, PlayerInput.create(world_move, aim, buttons, sim.tick))
+	if online:
+		_input_tick += 1
+		client.send_input(PlayerInput.create(world_move, aim, buttons, _input_tick), dt)
+		return
+	sim.set_input(local_id, PlayerInput.create(world_move, aim, buttons, sim.tick))
 	sim.step(dt)
 
 
@@ -257,7 +339,7 @@ func _screen_to_world(screen_aim: Vector2) -> Vector2:
 
 ## Mouse position on the ground, relative to the player, scaled by the weapon range.
 func _mouse_aim(slot: int) -> Vector2:
-	var player: PlayerState = sim.players[LOCAL_ID]
+	var player: PlayerState = sim.players[local_id]
 	var viewport: Viewport = get_viewport()
 	if viewport == null or (slot != BALL_SLOT and slot >= player.weapons.size()):
 		return Vector2.ZERO
@@ -283,7 +365,13 @@ func _open_pick(heading: String, current: Array[StringName]) -> void:
 
 
 func _on_pick_confirmed(picks: Array[StringName]) -> void:
-	sim.set_loadout(LOCAL_ID, picks[0], picks[1])
+	sim.set_loadout(local_id, picks[0], picks[1])
+	if online:
+		# the server starts play for everyone once all have picked (or time is up)
+		client.pick_weapons(picks[0], picks[1])
+		if client.stage != "play":
+			show_banner("Waiting for the others...")
+			return
 	_opening_pick = false
 	_set_controls_active(true)
 	_sync_views(0.0)
@@ -311,9 +399,13 @@ func controls_active() -> bool:
 
 ## Opens the respawn swap screen (only while dead; reopen as often as you like).
 func open_swap() -> void:
-	var player: PlayerState = sim.players[LOCAL_ID]
-	if player.alive:
+	if sim.players[local_id].alive:
 		return
+	_open_swap_screen()
+
+
+func _open_swap_screen() -> void:
+	var player: PlayerState = sim.players[local_id]
 	var ids: Array[StringName] = []
 	for def: WeaponDef in rules.weapons:
 		ids.append(def.id)
@@ -322,24 +414,28 @@ func open_swap() -> void:
 
 
 func _on_swapped(picks: Array[StringName]) -> void:
-	sim.swap_loadout(LOCAL_ID, picks[0], picks[1])
+	if online:
+		client.swap_weapons(picks[0], picks[1])
+		sim.players[local_id].weapons.assign(picks)
+	else:
+		sim.swap_loadout(local_id, picks[0], picks[1])
 	_sync_views(0.0)
 
 
 func _on_player_died(id: int) -> void:
-	if id == LOCAL_ID:
-		open_swap()
+	if id == local_id:
+		_open_swap_screen()
 
 
 func _on_player_respawned(id: int) -> void:
-	if id == LOCAL_ID and _pick_screen.visible:
+	if id == local_id and _pick_screen.visible:
 		_pick_screen.force_finish()
 
 
 func _sync_views(delta: float) -> void:
 	for id: int in sim.players:
 		_sync_actor(sim.players[id])
-	var player: PlayerState = sim.players[LOCAL_ID]
+	var player: PlayerState = sim.players[local_id]
 	_sync_hud(player)
 	_sync_aim(player)
 	_fx.sync(sim, delta)
@@ -363,7 +459,7 @@ func _sync_actor(state: PlayerState) -> void:
 	_materials[state.id].albedo_color = color
 	var tag: Label3D = _tags[state.id]
 	var lines: PackedStringArray = PackedStringArray([_character_name(state)])
-	if state.id != LOCAL_ID:
+	if state.id != local_id:
 		lines.append("GRAY %d" % ceili(state.gray_hp) if state.death_delay else "HP %d" % state.hp)
 	var effects: PackedStringArray = state.effects.active_names()
 	if not effects.is_empty():
@@ -411,9 +507,9 @@ func _sync_hud(player: PlayerState) -> void:
 func _sync_ball_button(player: PlayerState) -> void:
 	var button: AimButton = _aim_buttons[BALL_SLOT]
 	var text: String = "Catch"
-	if sim.ball.is_holder(LOCAL_ID):
+	if sim.ball.is_holder(local_id):
 		text = "Throw"
-	elif sim.ball.state == RubberBall.State.FLYING and sim.ball.thrower_id == LOCAL_ID and sim.ball.can_blink:
+	elif sim.ball.state == RubberBall.State.FLYING and sim.ball.thrower_id == local_id and sim.ball.can_blink:
 		text = "Blink"
 	if button.label_text != text:
 		button.label_text = text
@@ -438,7 +534,7 @@ func _sync_aim(player: PlayerState) -> void:
 		else:
 			continue
 		if slot == BALL_SLOT:
-			if not sim.ball.is_holder(LOCAL_ID):
+			if not sim.ball.is_holder(local_id):
 				continue
 			var direction: Vector2 = sim.resolved_ball_aim(player, stick)
 			_aim_indicator.show_lines(AimIndicator.ball_outline(player.position, direction, rules.ball_range), cancelled)
@@ -460,8 +556,8 @@ func _sync_aim(player: PlayerState) -> void:
 
 ## Top bar: team-relative score, set, ball and tricycle timers; banners fade.
 func _sync_score(delta: float) -> void:
-	var mine: int = LOCAL_TEAM
-	var theirs: int = 1 - LOCAL_TEAM
+	var mine: int = local_team
+	var theirs: int = 1 - local_team
 	var score: MatchScore = sim.score
 	_score_label.text = "YOU %d - %d THEM   Set %d (%d-%d)" % [
 		score.points[mine], score.points[theirs], score.set_number, score.sets[mine], score.sets[theirs]
@@ -487,15 +583,15 @@ func _sync_score(delta: float) -> void:
 
 
 func _on_point_scored(team: int, _by_id: int) -> void:
-	show_banner("POINT - YOU!" if team == LOCAL_TEAM else "POINT - THEM")
+	show_banner("POINT - YOU!" if team == local_team else "POINT - THEM")
 
 
 func _on_set_won(team: int) -> void:
-	show_banner("SET TO YOU!\nSwitching bases" if team == LOCAL_TEAM else "SET TO THEM\nSwitching bases")
+	show_banner("SET TO YOU!\nSwitching bases" if team == local_team else "SET TO THEM\nSwitching bases")
 
 
 func _on_match_won(team: int) -> void:
-	show_banner("YOU WIN THE MATCH!" if team == LOCAL_TEAM else "THEY WIN THE MATCH")
+	show_banner("YOU WIN THE MATCH!" if team == local_team else "THEY WIN THE MATCH")
 
 
 func _on_sides_switched() -> void:
@@ -507,30 +603,34 @@ func _on_tricycle_warning(_direction: int) -> void:
 
 
 func _on_ball_knockout(id: int) -> void:
-	if id == LOCAL_ID:
+	if id == local_id:
 		show_banner("Knocked out!")
 
 
 func _on_ball_caught(id: int) -> void:
-	if id == LOCAL_ID:
+	if id == local_id:
 		show_banner("Nice catch!")
 
 
 func _on_again_pressed() -> void:
+	if online:
+		client.leave_room()
+		get_tree().change_scene_to_file("res://scenes/ui/lobby.tscn")
+		return
 	get_tree().reload_current_scene()
 
 
 func _character_name(state: PlayerState) -> String:
 	var character: CharacterDef = _characters.get(state.character_id) as CharacterDef
 	var name_text: String = character.display_name if character != null else "?"
-	return "You (%s)" % name_text if state.id == LOCAL_ID else name_text
+	return "You (%s)" % name_text if state.id == local_id else name_text
 
 
 func _make_actor_view(state: PlayerState) -> void:
 	var team_color: Color = GreyboxMap.ENEMY_COLOR
-	if state.id == LOCAL_ID:
+	if state.id == local_id:
 		team_color = GreyboxMap.OWN_COLOR
-	elif state.team == LOCAL_TEAM:
+	elif state.team == local_team:
 		team_color = ALLY_COLOR
 	var character: CharacterDef = _characters.get(state.character_id) as CharacterDef
 	var color: Color = character.tint if character != null else team_color

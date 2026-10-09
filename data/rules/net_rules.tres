@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="NetRules" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/net/net_rules.gd" id="1_net"]
+
+[resource]
+script = ExtResource("1_net")
+passcode_length = 6
+passcode_alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+reconnect_window = 60.0
+snapshot_rate = 20
+interpolation_delay = 0.1
+load_timeout = 15.0
+pick_grace = 1.0
+max_queued_inputs = 6
+max_name_length = 12
+default_port = 8080

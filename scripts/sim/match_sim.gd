@@ -73,6 +73,26 @@ func side_for_team(team: int) -> int:
 	return _team0_side if team == 0 else -_team0_side
 
 
+## Network mirror only: the server says which base team 0 defends now.
+func set_team0_side(side: int) -> void:
+	if side == _team0_side:
+		return
+	_team0_side = side
+	for id: int in players:
+		var spawn: Vector2 = players[id].spawn_position
+		players[id].spawn_position = Vector2(spawn.x, -spawn.y)
+
+
+## Client-side prediction: runs only the movement part of a tick for one player
+## (walking, dash travel, pushes; walls and speed modifiers included). Skills,
+## weapons and everything else stay server-side.
+func predict_move(id: int, input: PlayerInput, dt: float) -> void:
+	var state: PlayerState = players.get(id) as PlayerState
+	if state == null or not state.alive or phase != Phase.PLAYING:
+		return
+	_move(state, input, dt)
+
+
 func add_player(id: int, team: int) -> PlayerState:
 	var slot: int = 0
 	if _team_counts.has(team):

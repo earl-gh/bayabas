@@ -75,3 +75,20 @@ func active_names() -> PackedStringArray:
 	for type: int in _time_left:
 		names.append(Type.keys()[type])
 	return names
+
+
+## Plain data for network snapshots: {type: time_left, "slow": magnitude}.
+func snapshot() -> Dictionary:
+	var data: Dictionary = {}
+	for type: int in _time_left:
+		data[type] = _time_left[type]
+	data["slow"] = _slow
+	return data
+
+
+func restore(data: Dictionary) -> void:
+	_time_left.clear()
+	_slow = data.get("slow", 0.0) as float
+	for key: Variant in data:
+		if key is int:
+			_time_left[key as int] = data[key] as float

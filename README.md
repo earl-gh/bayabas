@@ -4,6 +4,9 @@
 
 - **Play (single live link, updates on every merge to `main`):** `https://earl-gh.github.io/bayabas/`
 
+## Online play
+Create/Join Room needs the game server running somewhere. See [server/README.md](server/README.md): free deploy on Render (all in the browser) or Fly.io, then set the repo variable `BAYABAS_SERVER_URL` so the live web build uses it.
+
 ## Docs
 - [Project documentation](docs/PROJECT.md) — abstract, requirements, features
 - [Game design spec](docs/GDD.md) — rules and balance numbers
