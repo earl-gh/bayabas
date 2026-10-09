@@ -20,6 +20,10 @@ Net="*res://scripts/autoload/net.gd"
 Session="*res://scripts/autoload/session.gd"
 Settings="*res://scripts/autoload/settings.gd"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
 [debug]
 
 gdscript/warnings/treat_warnings_as_errors=true
