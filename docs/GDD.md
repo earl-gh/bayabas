@@ -53,6 +53,12 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Base zone: circle r=2 around the electric post. A living, non-CC'd enemy standing in it for 0.5 s scores.
 - Boundary walls on the long sides (house fronts, fences).
 
+## Vertical layout (portrait game)
+- The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.
+- Camera (data, tunable in `data/rules`): ~55° pitch, follows the local player, shows the full 16 m width and about 24 m of lane length. Team-relative: both teams see their own base at the bottom (view flips for the other team).
+- Offscreen awareness: edge indicators for allies/enemies/ball/tricycle plus a slim lane minimap. Aim previews and skill ranges must remain readable within the visible area (long-range weapons rely on drag-to-aim and edge indicators).
+- Because the visible depth is shorter than the lane, ranges, speeds and the lane length stay as specified; balance is re-checked in M6 with real play on phones.
+
 ## Scoring (volleyball format)
 - **Point**: reach enemy base. After a point: 3 s freeze, all players reset to their bases at full HP, cooldowns reset. Walls **persist** within a set.
 - **Set**: first to 5 points, win by 2, hard cap 7.

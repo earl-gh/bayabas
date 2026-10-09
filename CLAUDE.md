@@ -43,13 +43,13 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 - Android-only problems (touch, safe areas, performance) can't be seen on the iPhone web build; call them out in the PR instead of assuming they work.
 
 ## Art and orientation (binding)
-- Landscape only (Android locked; web shows a rotate prompt in portrait).
+- **Portrait (vertical) only**: Android locked to portrait; the web build shows a "rotate your phone" prompt if held in landscape. Bayabas is a vertical MOBA by design (see `docs/PROJECT.md` section 3.8 and `docs/GDD.md` "Vertical layout").
 - Art style: Clash of Clans-like, low-poly flat-shaded 3D with a Filipino street theme. Chunky, bright, saturated, readable at phone size. Inspired by, never copied: no Supercell assets, names or logos. Full spec in `docs/PROJECT.md` section 3.8.
 
 ## Definition of done (per task)
 - Static-typed, no warnings (treat warnings as errors in project settings).
 - Unit tests for every sim rule touched (`tests/unit/test_<thing>.gd`).
-- Works with touch **and** keyboard/mouse; UI usable at 390×844 portrait-safe areas and landscape (game is landscape).
+- Works with touch **and** keyboard/mouse; UI built portrait-first at 720×1280 base and usable at 390×844 with safe areas (notch, home bar); thumb-reachable controls.
 - Web build loads on Pages; nothing requires threads, local files or desktop-only APIs.
 - `docs/GDD.md` updated if a rule or number changed.
 
