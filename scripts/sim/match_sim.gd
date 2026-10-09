@@ -77,7 +77,8 @@ func _spawn_position(side: int, slot: int) -> Vector2:
 
 ## Boundary walls plus every wall column that is still standing.
 func _blocking_rects() -> Array[Rect2]:
-	var rects: Array[Rect2] = _boundaries.duplicate()
+	var rects: Array[Rect2] = []
+	rects.append_array(_boundaries)
 	for wall: MapLayout.WallSpec in walls:
 		if wall.hp > 0:
 			rects.append(wall.rect)
