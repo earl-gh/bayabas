@@ -54,3 +54,58 @@ func test_long_frames_are_capped_not_spiralling() -> void:
 	var practice: PracticeMatch = _practice()
 	practice.advance(10.0)
 	assert_eq(practice.sim.tick, PracticeMatch.MAX_STEPS_PER_FRAME)
+
+
+func test_hp_label_and_hurt_button_path() -> void:
+	var practice: PracticeMatch = _practice()
+	var label: Label = practice.get_node("%HpLabel") as Label
+	assert_eq(label.text, "HP 100 / 100")
+	practice.hurt_local(30)
+	assert_eq(label.text, "HP 70 / 100")
+
+
+func test_death_hides_the_player_and_shows_the_respawn_timer_then_recovers() -> void:
+	var practice: PracticeMatch = _practice()
+	var capsule: Node3D = practice.get_node("%Actors").get_child(0) as Node3D
+	var respawn: Label = practice.get_node("%RespawnLabel") as Label
+	assert_false(respawn.visible)
+	practice.hurt_local(100)
+	assert_false(capsule.visible)
+	assert_true(respawn.visible)
+	assert_eq(respawn.text, "Respawning in 10")
+	for i: int in 305:
+		practice.advance(DT)
+	assert_true(capsule.visible)
+	assert_false(respawn.visible)
+	assert_eq((practice.get_node("%HpLabel") as Label).text, "HP 100 / 100")
+
+
+func test_dash_button_starts_a_dash_and_shows_its_cooldown() -> void:
+	var practice: PracticeMatch = _practice()
+	var dash: TouchButton = practice.get_node("%DashButton") as TouchButton
+	assert_eq(dash.cooldown_fraction, 0.0)
+	practice.press_skill(PlayerInput.BTN_DASH)
+	practice.advance(DT)
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	assert_gt(player.dash_time_left, 0.0)
+	assert_gt(dash.cooldown_fraction, 0.9)
+
+
+func test_bookmark_button_blinks_the_player() -> void:
+	var practice: PracticeMatch = _practice()
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	var start_z: float = player.position.y
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
+	practice.advance(DT)
+	assert_almost_eq(player.position.y, start_z - 4.0, 0.05)
+	assert_true(player.mark_active)
+
+
+func test_a_pressed_skill_is_sent_once() -> void:
+	var practice: PracticeMatch = _practice()
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
+	practice.advance(DT)
+	var cooldown: float = player.bookmark_cooldown_left
+	practice.advance(DT)
+	assert_lt(player.bookmark_cooldown_left, cooldown, "cooldown runs, not re-triggered")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/view/practice_match.gd" id="1_practice"]
 [ext_resource type="PackedScene" path="res://scenes/map/greybox_map.tscn" id="2_map"]
@@ -7,6 +7,7 @@
 [ext_resource type="Resource" path="res://data/rules/camera_rules.tres" id="5_camera_rules"]
 [ext_resource type="Script" path="res://scripts/view/follow_camera.gd" id="6_follow"]
 [ext_resource type="Script" path="res://scripts/ui/virtual_joystick.gd" id="7_stick"]
+[ext_resource type="Script" path="res://scripts/ui/touch_button.gd" id="8_button"]
 
 [node name="Practice" type="Node3D"]
 script = ExtResource("1_practice")
@@ -33,7 +34,85 @@ unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = -1
 anchor_top = 0.45
-anchor_right = 0.6
+anchor_right = 0.5
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("7_stick")
+
+[node name="HpLabel" type="Label" parent="Controls"]
+unique_name_in_owner = true
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 64.0
+offset_bottom = 112.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+
+[node name="RespawnLabel" type="Label" parent="Controls"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -40.0
+offset_right = 260.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DashButton" type="Control" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -174.0
+offset_top = -234.0
+offset_right = -46.0
+offset_bottom = -106.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("8_button")
+label_text = "Dash"
+
+[node name="BookmarkButton" type="Control" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -312.0
+offset_top = -174.0
+offset_right = -184.0
+offset_bottom = -46.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("8_button")
+label_text = "Mark"
+
+[node name="HurtButton" type="Button" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -260.0
+offset_top = 64.0
+offset_right = -24.0
+offset_bottom = 124.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 22
+text = "DEBUG: -30 HP"
