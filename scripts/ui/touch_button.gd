@@ -14,6 +14,9 @@ const SHADOW_DROP: float = 5.0
 const FONT_SIZE: int = 26
 const SMALL_FONT_SIZE: int = 18
 const TEXT_OUTLINE: int = 5
+const COOLDOWN_FONT_SIZE: int = 34
+const READY_FLASH_TIME: float = 0.45
+const READY_GLOW: Color = Color(1.0, 0.9, 0.4)
 const COOLDOWN_COLOR: Color = Color(0.0, 0.0, 0.0, 0.45)
 const ARC_COLOR: Color = Color(1.0, 1.0, 1.0, 0.8)
 const TEXT_COLOR: Color = Color(1.0, 1.0, 1.0, 0.95)
@@ -33,6 +36,10 @@ const MOUSE_POINTER: int = -2
 
 ## 1.0 = just used, 0.0 = ready.
 var cooldown_fraction: float = 0.0
+## Seconds left on the cooldown (drawn as a number).
+var cooldown_seconds: float = 0.0
+## Brief glow when the skill becomes ready again.
+var _ready_flash: float = 0.0
 
 ## While locked (e.g. skills off in the death delay) the button is dimmed and ignores presses.
 var locked: bool = false
@@ -50,8 +57,17 @@ func set_cooldown(remaining: float, total: float) -> void:
 	var fraction: float = 0.0
 	if total > 0.0 and remaining > 0.0:
 		fraction = clampf(remaining / total, 0.0, 1.0)
-	if not is_equal_approx(fraction, cooldown_fraction):
+	if fraction == 0.0 and cooldown_fraction > 0.0:
+		_ready_flash = READY_FLASH_TIME
+	if not is_equal_approx(fraction, cooldown_fraction) or ceili(remaining) != ceili(cooldown_seconds):
 		cooldown_fraction = fraction
+		cooldown_seconds = maxf(remaining, 0.0)
+		queue_redraw()
+
+
+func _process(delta: float) -> void:
+	if _ready_flash > 0.0:
+		_ready_flash = maxf(0.0, _ready_flash - delta)
 		queue_redraw()
 
 
@@ -103,6 +119,11 @@ func _draw() -> void:
 		draw_circle(center, radius, COOLDOWN_COLOR)
 	if cooldown_fraction > 0.0:
 		draw_arc(center, radius - ARC_WIDTH, -PI / 2.0, -PI / 2.0 + TAU * cooldown_fraction, ARC_POINTS, ARC_COLOR, ARC_WIDTH)
+		_text(font, "%d" % ceili(cooldown_seconds), center, COOLDOWN_FONT_SIZE, Color.WHITE)
+	if _ready_flash > 0.0:
+		var glow: Color = READY_GLOW
+		glow.a = _ready_flash / READY_FLASH_TIME
+		draw_arc(center, radius + 4.0 + 10.0 * (1.0 - glow.a), 0.0, TAU, ARC_POINTS, glow, 6.0)
 
 
 ## Centred text with a dark outline (readable over the street).

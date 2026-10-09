@@ -11,9 +11,6 @@ const ENEMY_STAND_ID: int = 2
 const ENEMY_PATROL_ID: int = 3
 const ALLY_ID: int = 4
 const MAX_STEPS_PER_FRAME: int = 8
-const TAG_HEIGHT: float = 2.4
-const TAG_PIXEL_SIZE: float = 0.012
-const TAG_FONT_SIZE: int = 48
 const AIRBORNE_LIFT: float = 1.0
 ## Aimed buttons: the two weapons and the ball (press, drag to aim, release).
 const AIM_BITS: Array[int] = [PlayerInput.BTN_WEAPON_1, PlayerInput.BTN_WEAPON_2, PlayerInput.BTN_BALL]
@@ -42,7 +39,6 @@ var _stick: Vector2 = Vector2.ZERO
 var _pending_buttons: int = 0
 var _views: Dictionary[int, KidModel] = {}
 var _last_positions: Dictionary[int, Vector2] = {}
-var _tags: Dictionary[int, Label3D] = {}
 var _characters: Dictionary[StringName, CharacterDef] = {}
 ## The opening pick pauses the match; the respawn swap does not.
 var _opening_pick: bool = false
@@ -83,7 +79,11 @@ var _reconnect_left: float = -1.0
 @onready var _map: StreetMap = %Map
 @onready var _walls: WallsView = %Walls
 @onready var _neutrals: NeutralsView = %Neutrals
-@onready var _score_label: Label = %ScoreLabel
+@onready var _scoreboard: Scoreboard = %Scoreboard
+@onready var _player_card: PlayerCard = %PlayerCard
+@onready var _overhead: OverheadHud = %Overhead
+@onready var _minimap: LaneMinimap = %Minimap
+@onready var _top_hud: Control = %TopHud
 @onready var _info_label: Label = %InfoLabel
 @onready var _banner: Label = %Banner
 @onready var _again_button: Button = %AgainButton
@@ -105,6 +105,7 @@ func _ready() -> void:
 	_walls.watch(sim)
 	_neutrals.watch(sim)
 	_map.set_own_side(own_side())
+	_setup_hud()
 	_dash_button.icon_id = &"dash"
 	_bookmark_button.icon_id = &"bookmark"
 	_aim_buttons[BALL_SLOT].icon_id = &"ball"
@@ -440,8 +441,10 @@ func _sync_views(delta: float) -> void:
 	_sync_aim(player)
 	_fx.sync(sim, delta)
 	_neutrals.sync(delta)
+	_overhead.tick(delta)
+	_minimap.queue_redraw()
 	_sync_score(delta)
-	_camera.follow(player.position, _flip())
+	_camera.follow(player.position, _flip(), delta)
 
 
 func _sync_actor(state: PlayerState, delta: float) -> void:
@@ -454,17 +457,13 @@ func _sync_actor(state: PlayerState, delta: float) -> void:
 	_last_positions[state.id] = state.position
 	view.face(state.facing)
 	view.animate(delta, minf(speed, 20.0), state)
-	var tag: Label3D = _tags[state.id]
-	var lines: PackedStringArray = PackedStringArray([_character_name(state)])
-	if state.id != local_id:
-		lines.append("GRAY %d" % ceili(state.gray_hp) if state.death_delay else "HP %d" % state.hp)
-	var effects: PackedStringArray = state.effects.active_names()
-	if not effects.is_empty():
-		lines.append(" ".join(effects))
-	tag.text = "\n".join(lines)
 
 
 func _sync_hud(player: PlayerState) -> void:
+	if player.death_delay:
+		_player_card.set_hp(player.gray_hp / rules.death_delay_gray_hp, true)
+	else:
+		_player_card.set_hp(float(player.hp) / float(rules.player_max_hp), false)
 	if player.death_delay:
 		_hp_label.text = "HP 0   GRAY %d" % ceili(player.gray_hp)
 		_hp_label.add_theme_color_override("font_color", DELAY_COLOR)
@@ -555,11 +554,8 @@ func _sync_aim(player: PlayerState) -> void:
 ## Top bar: team-relative score, set, ball and tricycle timers; banners fade.
 func _sync_score(delta: float) -> void:
 	var mine: int = local_team
-	var theirs: int = 1 - local_team
 	var score: MatchScore = sim.score
-	_score_label.text = "YOU %d - %d THEM   Set %d (%d-%d)" % [
-		score.points[mine], score.points[theirs], score.set_number, score.sets[mine], score.sets[theirs]
-	]
+	_scoreboard.show_score(score, mine, rules.match_sets_to_win)
 	var info: PackedStringArray = PackedStringArray()
 	if sim.ball.state == RubberBall.State.NONE:
 		info.append("Ball in %d" % ceili(sim.ball.spawn_timer))
@@ -572,7 +568,7 @@ func _sync_score(delta: float) -> void:
 		info.append("Tricycle in %d:%02d" % [floori(arrival) / 60, floori(arrival) % 60])
 	if sim.phase == MatchSim.Phase.POINT_FREEZE:
 		info.append("Next point in %d" % ceili(sim.freeze_left))
-	_info_label.text = "   ".join(info)
+	_info_label.text = "  |  ".join(info)
 	_again_button.visible = sim.phase == MatchSim.Phase.MATCH_OVER
 	if sim.phase != MatchSim.Phase.MATCH_OVER and _banner_left > 0.0:
 		_banner_left -= delta
@@ -618,6 +614,37 @@ func _on_again_pressed() -> void:
 	get_tree().reload_current_scene()
 
 
+## Overhead bars, player card and minimap; the top HUD clears the notch.
+func _setup_hud() -> void:
+	var names: Dictionary[int, String] = {}
+	for id: int in sim.players:
+		names[id] = _character_name(sim.players[id])
+	_overhead.setup(sim, _camera, local_id, local_team, names)
+	_minimap.setup(sim, local_id, local_team)
+	var me: CharacterDef = _characters.get(sim.players[local_id].character_id) as CharacterDef
+	var shown: String = me.display_name if me != null else "You"
+	_player_card.show_player(shown, me.tint if me != null else Color.WHITE, Palette.TEAM_OWN)
+	_top_hud.position.y = _safe_top_inset()
+
+
+## The top safe-area inset (notch, status bar) in UI pixels.
+func _safe_top_inset() -> float:
+	var window: Vector2i = DisplayServer.window_get_size()
+	if window.y <= 0:
+		return 0.0
+	var safe: Rect2i = DisplayServer.get_display_safe_area()
+	var screen_inset: float = maxf(0.0, float(safe.position.y - DisplayServer.window_get_position().y))
+	return screen_inset * get_viewport().get_visible_rect().size.y / float(window.y)
+
+
+func overhead() -> OverheadHud:
+	return _overhead
+
+
+func scoreboard() -> Scoreboard:
+	return _scoreboard
+
+
 func _character_name(state: PlayerState) -> String:
 	var character: CharacterDef = _characters.get(state.character_id) as CharacterDef
 	var name_text: String = character.display_name if character != null else "?"
@@ -637,12 +664,3 @@ func _make_actor_view(state: PlayerState) -> void:
 	view.setup(character, team_color, rules.player_radius)
 	_actors.add_child(view)
 	_views[state.id] = view
-	var tag: Label3D = Label3D.new()
-	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	tag.pixel_size = TAG_PIXEL_SIZE
-	tag.font_size = TAG_FONT_SIZE
-	tag.outline_size = 8
-	tag.modulate = team_color.lightened(0.5)
-	tag.position = Vector3(0.0, TAG_HEIGHT, 0.0)
-	view.add_child(tag)
-	_tags[state.id] = tag

@@ -42,6 +42,24 @@ Filipino street; inspired by, never copied).
 - `scripts/ui/icons.gd` (`Icons`): vector icons for the 12 weapons, dash, bookmark,
   ball and the title guava. They're drawn on the round skill buttons and the weapon pick cards.
 
+## Depth
+- Real sun shadows (one orthogonal shadow map, 45 m), saturated colour grading.
+- Cartoon outlines on the kids and the can (an inside-out shell, `LowPoly.add_outline`).
+- Street life: banderitas strung across the street, power poles with wires, chalk piko,
+  manholes, the tambayan bench, drums, mango trees and banana plants, two-storey houses
+  with balconies and water tanks, fiesta tarpaulins (fictional), base pads.
+
+## HUD (Mobile Legends / LoL style)
+- **Overhead bars** (`scripts/ui/hud/overhead_hud.gd`):
+  - Drawn in screen space: name, a segmented HP bar (green = you, blue = ally, red = enemy, grey = gray HP), status effects.
+  - Floating damage numbers.
+- **Player card** top-left (portrait in the character colour, name, HP bar), **scoreboard pill**
+  top-centre (blue vs red points, set number, set pips), ball / tricycle timer pill, and a **lane
+  minimap** on the left edge (your base at the bottom).
+  - The top HUD moves below the notch (safe area).
+- **Skill buttons** show the cooldown in seconds and flash when ready.
+- **Joystick:** always visible at rest (golden thumb, arrows), and it floats to wherever you touch.
+
 ## Audio
 - `scripts/view/audio/sound_bank.gd` (`SoundBank`): synthesised SFX and the music loop.
   - SFX: cast, hit, snip, boing, bonk, crunch, thud, point jingles, set fanfare, tricycle horn, down, revive, click, dash.

@@ -20,9 +20,13 @@ unique_name_in_owner = true
 
 [node name="BackButton" type="Button" parent="Hud"]
 unique_name_in_owner = true
-offset_left = 24.0
-offset_top = 64.0
-offset_right = 184.0
-offset_bottom = 136.0
-theme_override_font_sizes/font_size = 28
-text = "Back"
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -116.0
+offset_top = 52.0
+offset_right = -12.0
+offset_bottom = 108.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 22
+text = "Exit"

@@ -4,7 +4,10 @@
 
 [resource]
 script = ExtResource("1_camera")
-pitch_degrees = 55.0
-hfov_degrees = 50.0
-lane_margin = 2.0
+pitch_degrees = 52.0
+hfov_degrees = 44.0
+lane_margin = 3.0
 end_clamp = 6.0
+look_ahead = 3.5
+follow_rate = 7.0
+side_follow = 0.15

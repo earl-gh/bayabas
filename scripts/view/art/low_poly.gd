@@ -157,3 +157,34 @@ func gable(center: Vector3, width: float, depth: float, rise: float, color: Colo
 
 static func _sphere_point(u: float, v: float) -> Vector3:
 	return Vector3(sin(v) * cos(u), cos(v), sin(v) * sin(u))
+
+
+static var _outline_material: StandardMaterial3D
+
+
+## Dark, front-culled material for cartoon outlines (inverted hull).
+static func outline_material() -> StandardMaterial3D:
+	if _outline_material == null:
+		_outline_material = StandardMaterial3D.new()
+		_outline_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_outline_material.cull_mode = BaseMaterial3D.CULL_FRONT
+		_outline_material.albedo_color = Color(0.13, 0.08, 0.1)
+	return _outline_material
+
+
+## Gives `node` a cartoon outline: a slightly larger, inside-out copy of its mesh,
+## scaled about the mesh's own centre so off-centre parts line up.
+static func add_outline(node: MeshInstance3D, thickness: float = 0.035) -> MeshInstance3D:
+	var box: AABB = node.mesh.get_aabb()
+	var extent: float = maxf(box.size.x, maxf(box.size.y, box.size.z))
+	var scale: float = 1.0 + 2.0 * thickness / maxf(extent, 0.05)
+	var center: Vector3 = box.get_center()
+	var shell: MeshInstance3D = MeshInstance3D.new()
+	shell.name = "Outline"
+	shell.mesh = node.mesh
+	shell.material_override = outline_material()
+	shell.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	shell.scale = Vector3.ONE * scale
+	shell.position = center - center * scale
+	node.add_child(shell)
+	return shell
