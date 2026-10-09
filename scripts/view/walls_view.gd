@@ -4,8 +4,10 @@ extends Node3D
 ## take damage, gone at 0 HP, back when the walls are rebuilt for a new set.
 
 const WALL_HEIGHT: float = 2.0
-const FRESH_COLOR: Color = Color(0.82, 0.64, 0.38)
-const BROKEN_COLOR: Color = Color(0.4, 0.28, 0.16)
+const FRESH_COLOR: Color = Color(1.0, 1.0, 1.0)
+const BROKEN_COLOR: Color = Color(0.45, 0.38, 0.32)
+## Squashed a bit as it takes damage.
+const BROKEN_SCALE: float = 0.75
 
 var _sim: MatchSim
 var _boxes: Array[MeshInstance3D] = []
@@ -19,14 +21,13 @@ func watch(sim: MatchSim) -> void:
 	_boxes.clear()
 	_materials.clear()
 	for wall: MapLayout.WallSpec in sim.walls:
-		var mesh: BoxMesh = BoxMesh.new()
-		mesh.size = Vector3(wall.rect.size.x, WALL_HEIGHT, wall.rect.size.y)
-		var material: StandardMaterial3D = StandardMaterial3D.new()
-		mesh.material = material
+		# cardboard boxes; damage darkens them through a tint that multiplies the palette
+		var material: StandardMaterial3D = LowPoly.material().duplicate() as StandardMaterial3D
 		var box: MeshInstance3D = MeshInstance3D.new()
-		box.mesh = mesh
+		box.mesh = Props.cardboard_wall(Vector3(wall.rect.size.x, WALL_HEIGHT, wall.rect.size.y))
+		box.material_override = material
 		var center: Vector2 = wall.rect.get_center()
-		box.position = Vector3(center.x, WALL_HEIGHT / 2.0, center.y)
+		box.position = Vector3(center.x, 0.0, center.y)
 		add_child(box)
 		_boxes.append(box)
 		_materials.append(material)
@@ -53,3 +54,4 @@ func _refresh(index: int) -> void:
 	_boxes[index].visible = wall.hp > 0
 	var health: float = clampf(float(wall.hp) / float(_sim.layout.wall_hp), 0.0, 1.0)
 	_materials[index].albedo_color = BROKEN_COLOR.lerp(FRESH_COLOR, health)
+	_boxes[index].scale.y = lerpf(BROKEN_SCALE, 1.0, health)

@@ -45,6 +45,8 @@ Each milestone = one or two meaningful PRs (develop continuously, not one PR per
 6. Deploy doc in `server/README.md` (Fly.io or Render free tier).
 
 ## M5 — Art, UI and audio (→ v0.6.0)
+Done in code (see `docs/ART.md`): procedural low-poly meshes with one shared vertex-colour material instead of `.glb` files, synthesised audio instead of recordings. Swappable for hand-made assets later.
+
 Low-poly flat-shaded `.glb` props with one palette texture: sari-sari store, houses, laundry lines, tricycle, electric post with flyers (septic siphoning, hiring, police notice, generic election poster — fictional names only), cardboard walls, street-game weapons. Characters: the 6 kids from PROJECT §3.2 on **one shared rig and animation set** (swap meshes/materials only), same silhouette height so hitboxes match, team-colored bandana/armband slot. Respectful design per PROJECT §3.2 — no caricature. Varied Filipino skin tones across the roster. Pinoy-street UI theme, weapon icons, SFX, short BGM loop.
 
 ## M6 — Polish and release (→ v1.0.0)

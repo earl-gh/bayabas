@@ -431,7 +431,7 @@ func test_status_effects_show_on_name_tags() -> void:
 	var enemy_view: Node3D = practice.get_node("%Actors").get_child(1) as Node3D
 	var tag: Label3D = enemy_view.find_children("*", "Label3D", true, false)[0] as Label3D
 	assert_string_contains(tag.text, "POLYMORPH")
-	assert_lt(enemy_view.scale.y, 1.0, "turned into a can")
+	assert_true((enemy_view as KidModel).is_can(), "turned into a can")
 
 
 # ---- respawn swap (D13: no limit while dead) ------------------------------------
@@ -517,13 +517,13 @@ func test_scoring_shows_a_banner_and_updates_the_scoreboard() -> void:
 
 func test_new_set_turns_the_view_around_and_recolors_the_bases() -> void:
 	var practice: PracticeMatch = _practice()
-	var map: GreyboxMap = practice.get_node("%Map") as GreyboxMap
-	assert_eq(map.base_color(MapLayout.SIDE_OWN), GreyboxMap.OWN_COLOR)
+	var map: StreetMap = practice.get_node("%Map") as StreetMap
+	assert_eq(map.base_color(MapLayout.SIDE_OWN), StreetMap.OWN_COLOR)
 	for i: int in 5:
 		_score_point(practice)
 		_finish_freeze(practice)
 	assert_eq(practice.own_side(), MapLayout.SIDE_ENEMY, "we defend the -Z base now")
-	assert_eq(map.base_color(MapLayout.SIDE_ENEMY), GreyboxMap.OWN_COLOR, "our base is blue wherever it is")
+	assert_eq(map.base_color(MapLayout.SIDE_ENEMY), StreetMap.OWN_COLOR, "our base is blue wherever it is")
 	var camera: Camera3D = practice.get_node("%FollowCamera") as Camera3D
 	assert_almost_eq(absf(camera.rotation_degrees.y), 180.0, 0.01, "own base still at the bottom of the screen")
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]

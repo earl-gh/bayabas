@@ -1,7 +1,7 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/view/practice_match.gd" id="1_practice"]
-[ext_resource type="PackedScene" path="res://scenes/map/greybox_map.tscn" id="2_map"]
+[ext_resource type="PackedScene" path="res://scenes/map/street_map.tscn" id="2_map"]
 [ext_resource type="Resource" path="res://data/rules/game_rules.tres" id="3_rules"]
 [ext_resource type="Resource" path="res://data/rules/map_layout.tres" id="4_layout"]
 [ext_resource type="Resource" path="res://data/rules/camera_rules.tres" id="5_camera_rules"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://scripts/view/aim_indicator.gd" id="12_aim_indicator"]
 [ext_resource type="Script" path="res://scripts/view/walls_view.gd" id="13_walls"]
 [ext_resource type="Script" path="res://scripts/view/neutrals_view.gd" id="14_neutrals"]
+[ext_resource type="Script" path="res://scripts/view/audio/match_audio.gd" id="15_audio"]
 
 [node name="Practice" type="Node3D"]
 script = ExtResource("1_practice")
@@ -43,6 +44,10 @@ script = ExtResource("11_fx")
 [node name="AimIndicator" type="MeshInstance3D" parent="."]
 unique_name_in_owner = true
 script = ExtResource("12_aim_indicator")
+
+[node name="Audio" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("15_audio")
 
 [node name="FollowCamera" type="Camera3D" parent="."]
 unique_name_in_owner = true

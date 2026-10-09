@@ -18,6 +18,10 @@ signal match_won(team: int)
 signal point_reset
 ## New set: the teams swapped bases (and the walls were rebuilt).
 signal sides_switched
+## A weapon was cast (for sounds and effects).
+signal weapon_cast(id: int, weapon_id: StringName)
+## A player lost HP (or gray HP).
+signal player_damaged(id: int, amount: int)
 signal wall_damaged(index: int)
 signal wall_destroyed(index: int)
 signal walls_rebuilt
@@ -232,10 +236,12 @@ func damage(id: int, amount: int) -> void:
 	if state.death_delay:
 		if rules.death_delay_takes_damage:
 			state.gray_hp -= amount
+			player_damaged.emit(id, amount)
 			if state.gray_hp <= 0.0:
 				_die(state)
 		return
 	state.hp = maxi(0, state.hp - amount)
+	player_damaged.emit(id, amount)
 	if state.hp > 0:
 		return
 	if rules.death_delay_enabled and state.death_delay_allowed and not state.death_delay_used:
@@ -439,6 +445,7 @@ func _try_fire(state: PlayerState, slot: int, stick: Vector2, hold_seconds: floa
 	var aim: Vector2 = resolved_aim(state, slot, stick)
 	if weapons.fire(self, state, def, aim, hold_seconds, state.aim_target[slot]):
 		state.weapon_cooldowns[slot] = def.cooldown
+		weapon_cast.emit(state.id, def.id)
 
 
 func _start_dash(state: PlayerState, input: PlayerInput) -> void:

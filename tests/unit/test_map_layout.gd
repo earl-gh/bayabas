@@ -1,7 +1,7 @@
 extends GutTest
 
 const LAYOUT: MapLayout = preload("res://data/rules/map_layout.tres")
-const MAP_SCENE: PackedScene = preload("res://scenes/map/greybox_map.tscn")
+const MAP_SCENE: PackedScene = preload("res://scenes/map/street_map.tscn")
 
 
 func test_layout_matches_gdd_numbers() -> void:
@@ -67,10 +67,22 @@ func test_boundary_walls_enclose_lane_without_overlapping_it() -> void:
 		assert_false(rect.intersects(lane))
 
 
-func test_greybox_scene_builds_expected_geometry() -> void:
-	var map: GreyboxMap = autofree(MAP_SCENE.instantiate()) as GreyboxMap
+func test_street_scene_builds_walls_bases_and_dressing() -> void:
+	var map: StreetMap = autofree(MAP_SCENE.instantiate()) as StreetMap
 	add_child(map)
 	var geometry: Node3D = map.get_node("%Geometry") as Node3D
-	# ground + boundaries + wall columns + (ring + post) per base
-	var expected: int = 1 + LAYOUT.boundary_rects().size() + LAYOUT.wall_columns().size() + 4
-	assert_eq(geometry.get_child_count(), expected)
+	assert_gt(geometry.get_child_count(), 30, "road, sides, 12 wall columns, 2 bases, houses and props")
+	assert_eq(map.base_color(MapLayout.SIDE_OWN), StreetMap.OWN_COLOR)
+	assert_eq(map.base_color(MapLayout.SIDE_ENEMY), StreetMap.ENEMY_COLOR)
+
+
+func test_props_stay_low_poly() -> void:
+	var budgets: Dictionary = {
+		"house": Props.house(0), "store": Props.sari_sari(), "post": Props.electric_post(),
+		"tricycle": Props.tricycle(2.4, 1.4), "jeepney": Props.jeepney(), "wall": Props.cardboard_wall(Vector3(5, 2, 1)),
+	}
+	for name: String in budgets:
+		var mesh: ArrayMesh = budgets[name]
+		var vertices: int = mesh.surface_get_array_len(0)
+		assert_lt(vertices, 3000, "%s has %d vertices" % [name, vertices])
+		assert_eq(mesh.surface_get_material(0), LowPoly.material(), "%s uses the one shared material" % name)

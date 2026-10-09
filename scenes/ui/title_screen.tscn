@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/title_screen.gd" id="1_title"]
 [ext_resource type="PackedScene" path="res://scenes/ui/orientation_gate.tscn" id="2_gate"]
+[ext_resource type="Script" path="res://scripts/ui/icon_view.gd" id="3_icon"]
 
 [node name="TitleScreen" type="Control"]
 layout_mode = 3
@@ -11,6 +12,37 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_title")
+
+[node name="Sky" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.56, 0.8, 0.98, 1)
+
+[node name="Street" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 0.78
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.36, 0.37, 0.42, 1)
+
+[node name="Curb" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_top = 0.765
+anchor_right = 1.0
+anchor_bottom = 0.78
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0.92, 0.9, 0.84, 1)
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -29,23 +61,44 @@ layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
+[node name="Guava" type="Control" parent="Margin/Column"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("3_icon")
+icon_id = &"guava"
+
 [node name="Title" type="Label" parent="Margin/Column"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 96
-text = "Bayabas"
+theme_override_colors/font_color = Color(1, 0.84, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0.32, 0.14, 0.08, 1)
+theme_override_constants/outline_size = 22
+theme_override_font_sizes/font_size = 120
+text = "BAYABAS"
 horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Margin/Column"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "Laro sa kalye!"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Margin/Column"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+mouse_filter = 2
 
 [node name="PracticeButton" type="Button" parent="Margin/Column"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(320, 72)
+custom_minimum_size = Vector2(440, 104)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 40
 text = "Practice"
 
 [node name="CreateRoomButton" type="Button" parent="Margin/Column"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(320, 72)
+custom_minimum_size = Vector2(440, 104)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 32
@@ -53,7 +106,7 @@ text = "Create Room"
 
 [node name="JoinRoomButton" type="Button" parent="Margin/Column"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(320, 72)
+custom_minimum_size = Vector2(440, 104)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 32

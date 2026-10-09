@@ -6,4 +6,16 @@
 script = ExtResource("1_char")
 id = &"popoy"
 display_name = "Popoy"
-tint = Color(0.45, 0.6, 0.95, 1)
+tint = Color(0.4, 0.6, 1, 1)
+skin = Color(0.88, 0.7, 0.55, 1)
+hair_color = Color(0.1, 0.08, 0.07, 1)
+hair = 4
+top = 4
+top_accent = Color(0.97, 0.97, 0.95, 1)
+bottom = 0
+bottom_color = Color(0.15, 0.6, 0.35, 1)
+shoes = false
+shoe_color = Color(0.3, 0.3, 0.35, 1)
+extra = 4
+extra_color = Color(1, 0.5, 0.75, 1)
+body_width = 1.22
