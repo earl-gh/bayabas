@@ -64,6 +64,7 @@ var _key_cancel: Array[bool] = [false, false]
 @onready var _cancel_zone: Control = %CancelZone
 @onready var _pick_screen: WeaponPickScreen = %PickScreen
 @onready var _hurt_button: Button = %HurtButton
+@onready var _swap_button: Button = %SwapButton
 
 
 func _ready() -> void:
@@ -92,6 +93,9 @@ func _ready() -> void:
 		_weapon_buttons[slot].aim_released.connect(aim_released.bind(slot))
 	_hurt_button.pressed.connect(hurt_local.bind(DEBUG_DAMAGE))
 	_pick_screen.confirmed.connect(_on_pick_confirmed)
+	_pick_screen.swapped.connect(_on_swapped)
+	_pick_screen.closed.connect(_set_controls_active.bind(true))
+	_swap_button.pressed.connect(open_swap)
 	sim.player_died.connect(_on_player_died)
 	sim.player_respawned.connect(_on_player_respawned)
 	_open_pick("Pick 2 weapons", [])
@@ -255,13 +259,30 @@ func controls_active() -> bool:
 	return _dash_button.is_processing_input()
 
 
+## Opens the respawn swap screen (only while dead; reopen as often as you like).
+func open_swap() -> void:
+	var player: PlayerState = sim.players[LOCAL_ID]
+	if player.alive:
+		return
+	var ids: Array[StringName] = []
+	for def: WeaponDef in rules.weapons:
+		ids.append(def.id)
+	_pick_screen.open_swap(WeaponPick.new(ids, 0.0, player.weapons), rules.weapons, "Swap weapons")
+	_set_controls_active(false)
+
+
+func _on_swapped(picks: Array[StringName]) -> void:
+	sim.swap_loadout(LOCAL_ID, picks[0], picks[1])
+	_sync_views(0.0)
+
+
 func _on_player_died(id: int) -> void:
 	if id == LOCAL_ID:
-		_open_pick("Swap weapons?", sim.players[LOCAL_ID].weapons)
+		open_swap()
 
 
 func _on_player_respawned(id: int) -> void:
-	if id == LOCAL_ID and _pick_screen.is_open():
+	if id == LOCAL_ID and _pick_screen.visible:
 		_pick_screen.force_finish()
 
 
@@ -308,6 +329,9 @@ func _sync_hud(player: PlayerState) -> void:
 	_delay_label.visible = player.death_delay
 	_respawn_label.visible = not player.alive
 	_respawn_label.text = "Respawning in %d" % ceili(player.respawn_time_left)
+	_swap_button.visible = not player.alive and not _pick_screen.visible
+	if not player.alive:
+		_pick_screen.show_time(player.respawn_time_left)
 	_dash_button.set_locked(player.death_delay)
 	_bookmark_button.set_locked(player.death_delay)
 	_dash_button.set_cooldown(player.dash_cooldown_left, rules.dash_cooldown)

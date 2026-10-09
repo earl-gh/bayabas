@@ -4,6 +4,9 @@ extends Control
 ## then Ready, or wait for the timer to auto-fill. Reads and drives a WeaponPick.
 
 signal confirmed(picks: Array[StringName])
+## Swap mode: a new pair of weapons was picked (applied at once).
+signal swapped(picks: Array[StringName])
+signal closed
 
 const COLUMNS: int = 3
 const CELL_SIZE: Vector2 = Vector2(212.0, 96.0)
@@ -19,6 +22,8 @@ const KIND_COLORS: Dictionary[WeaponDef.Kind, Color] = {
 }
 
 var pick: WeaponPick
+## Respawn swap mode: no pick timer, every full pair is applied, Done closes.
+var swap_mode: bool = false
 
 var _buttons: Dictionary[StringName, Button] = {}
 var _title: Label
@@ -41,6 +46,31 @@ func _ready() -> void:
 func open(p_pick: WeaponPick, defs: Array[WeaponDef], heading: String, rng: RandomNumberGenerator) -> void:
 	pick = p_pick
 	_rng = rng
+	swap_mode = false
+	_show(defs, heading)
+
+
+## Opens the respawn swap: change weapons as often as you like until `close()`.
+func open_swap(p_pick: WeaponPick, defs: Array[WeaponDef], heading: String) -> void:
+	pick = p_pick
+	swap_mode = true
+	_show(defs, heading)
+
+
+func close() -> void:
+	if not visible:
+		return
+	visible = false
+	closed.emit()
+
+
+## Swap mode shows the respawn countdown instead of a pick timer.
+func show_time(seconds: float) -> void:
+	if visible:
+		_timer.text = "Respawn in %d" % ceili(seconds)
+
+
+func _show(defs: Array[WeaponDef], heading: String) -> void:
 	if _buttons.is_empty():
 		_build(defs)
 	_title.text = heading
@@ -57,16 +87,20 @@ func tap(id: StringName) -> void:
 		return
 	pick.toggle(id)
 	_refresh()
+	if swap_mode and pick.picks.size() == WeaponPick.SLOTS:
+		swapped.emit(pick.picks.duplicate())
 
 
 func press_ready() -> void:
-	if is_open() and pick.confirm():
+	if swap_mode:
+		close()
+	elif is_open() and pick.confirm():
 		_finish()
 
 
 ## Counts the pick timer down (call every frame while open).
 func tick(delta: float) -> void:
-	if not is_open():
+	if not is_open() or swap_mode:
 		return
 	if pick.step(delta, _rng):
 		_finish()
@@ -80,11 +114,16 @@ func _finish() -> void:
 
 
 func _refresh() -> void:
-	_timer.text = "%d" % ceili(pick.time_left)
+	if not swap_mode:
+		_timer.text = "%d" % ceili(pick.time_left)
 	for id: StringName in _buttons:
 		var button: Button = _buttons[id]
 		var slot: int = pick.picks.find(id)
 		button.set_pressed_no_signal(slot >= 0)
+	if swap_mode:
+		_ready_button.disabled = false
+		_ready_button.text = "Done"
+		return
 	_ready_button.disabled = not pick.can_confirm()
 	_ready_button.text = "Ready!" if pick.can_confirm() else "Pick %d more" % (WeaponPick.SLOTS - pick.picks.size())
 
@@ -160,6 +199,9 @@ func _label(text: String, font_size: int) -> Label:
 
 ## Closes the pick now, filling any empty slot at random.
 func force_finish() -> void:
+	if swap_mode:
+		close()
+		return
 	if not is_open():
 		return
 	pick.fill(_rng)

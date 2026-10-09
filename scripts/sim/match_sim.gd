@@ -80,6 +80,22 @@ func set_loadout(id: int, first: StringName, second: StringName) -> bool:
 	return true
 
 
+## Respawn swap: only while dead (respawn timer running), as often as you like.
+## A weapon you keep keeps its cooldown, so swapping away and back clears nothing.
+func swap_loadout(id: int, first: StringName, second: StringName) -> bool:
+	if not players.has(id) or players[id].alive:
+		return false
+	var state: PlayerState = players[id]
+	var kept: Dictionary[StringName, float] = {}
+	for slot: int in state.weapons.size():
+		kept[state.weapons[slot]] = state.weapon_cooldowns[slot]
+	if not set_loadout(id, first, second):
+		return false
+	for slot: int in state.weapons.size():
+		state.weapon_cooldowns[slot] = kept.get(state.weapons[slot], 0.0) as float
+	return true
+
+
 ## Two different random weapons (auto-fill when the pick timer runs out).
 func random_loadout() -> Array[StringName]:
 	var ids: Array[StringName] = []
