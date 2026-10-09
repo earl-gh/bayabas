@@ -78,19 +78,22 @@ var _throws: Array[QueuedThrow] = []
 var _next_id: int = 1
 
 
-## Casts `def` for `caster`. `aim` is the world-space aim stick (length 0..1, zero
-## = auto-aim). Returns false when nothing could be cast (e.g. no target in range),
-## in which case no cooldown is spent.
-func fire(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, hold_seconds: float) -> bool:
+## Casts `def` for `caster`. `aim` is the already-resolved world-space aim (length
+## 0..1 of the range; see MatchSim.resolved_aim). TARGETED weapons throw at
+## `target_id`, the enemy locked when the button was pressed, if it is still in
+## range. Returns false when nothing could be cast; then no cooldown is spent.
+func fire(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, hold_seconds: float, target_id: int = -1) -> bool:
 	match def.shape:
 		WeaponDef.Shape.TARGETED:
-			var target: PlayerState = sim.nearest_enemy(caster, def.max_range)
-			if target == null:
+			var target: PlayerState = sim.players.get(target_id) as PlayerState
+			if target == null or not sim.is_targetable(target) or target.team == caster.team:
+				return false
+			if caster.position.distance_to(target.position) > def.max_range:
 				return false
 			var projectile: Projectile = _new_projectile(caster, def, caster.position.direction_to(target.position))
 			projectile.target_id = target.id
 		WeaponDef.Shape.CONE:
-			var direction: Vector2 = aim_direction(sim, caster, def, aim)
+			var direction: Vector2 = aim_direction(caster, aim)
 			if def.delay > 0.0:
 				var cone: PendingCone = PendingCone.new()
 				cone.owner_id = caster.id
@@ -101,17 +104,17 @@ func fire(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, hold
 			else:
 				_hit_cone(sim, caster, def, direction, def.snip_count(hold_seconds))
 		WeaponDef.Shape.GROUND_AOE:
-			var point: Vector2 = aim_point(sim, caster, def, aim)
+			var point: Vector2 = aim_point(caster, def, aim)
 			var travel: float = caster.position.distance_to(point) / def.speed if def.speed > 0.0 else 0.0
 			_new_zone(caster, def, ZoneKind.EXPLOSION, point, def.radius, def.delay + travel)
 		WeaponDef.Shape.TRAP:
-			var trap: Zone = _new_zone(caster, def, ZoneKind.TRAP, aim_point(sim, caster, def, aim), def.trigger_radius, def.lifetime)
+			var trap: Zone = _new_zone(caster, def, ZoneKind.TRAP, aim_point(caster, def, aim), def.trigger_radius, def.lifetime)
 			trap.timer = def.arm_time
 		WeaponDef.Shape.FIELD:
-			var field: Zone = _new_zone(caster, def, ZoneKind.FIELD, aim_point(sim, caster, def, aim), def.radius, def.duration)
+			var field: Zone = _new_zone(caster, def, ZoneKind.FIELD, aim_point(caster, def, aim), def.radius, def.duration)
 			field.timer = 0.0
 		WeaponDef.Shape.BOOMERANG:
-			var direction: Vector2 = aim_direction(sim, caster, def, aim)
+			var direction: Vector2 = aim_direction(caster, aim)
 			_new_projectile(caster, def, direction)
 			for i: int in range(1, def.count):
 				var queued: QueuedThrow = QueuedThrow.new()
@@ -121,7 +124,7 @@ func fire(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, hold
 				queued.time_left = def.interval * i
 				_throws.append(queued)
 		WeaponDef.Shape.SHIELD:
-			var facing: Vector2 = aim_direction(sim, caster, def, aim)
+			var facing: Vector2 = aim_direction(caster, aim)
 			var shield: Shield = Shield.new()
 			shield.id = _take_id()
 			shield.team = caster.team
@@ -131,7 +134,7 @@ func fire(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, hold
 			shield.time_left = def.duration
 			shields.append(shield)
 		WeaponDef.Shape.BOUNCER, WeaponDef.Shape.SPINNER:
-			_new_projectile(caster, def, aim_direction(sim, caster, def, aim))
+			_new_projectile(caster, def, aim_direction(caster, aim))
 	return true
 
 
@@ -154,25 +157,26 @@ func reset() -> void:
 
 # ---- aiming -----------------------------------------------------------------
 
-## Aim stick direction, or toward the nearest enemy in range, or the facing.
-func aim_direction(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2) -> Vector2:
-	if aim.length() >= sim.rules.aim_deadzone:
-		return aim.normalized()
+## Auto-aim as a stick-style vector: toward the nearest enemy in range (length =
+## distance / range), else straight ahead at full range. Taken once at the press.
+func auto_aim(sim: MatchSim, caster: PlayerState, def: WeaponDef) -> Vector2:
 	var target: PlayerState = sim.nearest_enemy(caster, def.max_range)
 	if target != null and target.position != caster.position:
-		return caster.position.direction_to(target.position)
+		var offset: Vector2 = target.position - caster.position
+		if def.max_range > 0.0:
+			return (offset / def.max_range).limit_length(1.0)
+		return offset.normalized()
 	return caster.facing
 
 
-## Aimed point (stick length scales the range), or the nearest enemy in range,
-## or straight ahead at full range.
-func aim_point(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2) -> Vector2:
-	if aim.length() >= sim.rules.aim_deadzone:
-		return caster.position + aim.limit_length(1.0) * def.max_range
-	var target: PlayerState = sim.nearest_enemy(caster, def.max_range)
-	if target != null:
-		return target.position
-	return caster.position + caster.facing * def.max_range
+## Direction of a resolved aim (the facing if the aim is zero).
+func aim_direction(caster: PlayerState, aim: Vector2) -> Vector2:
+	return aim.normalized() if aim != Vector2.ZERO else caster.facing
+
+
+## Point of a resolved aim: aim length scales the range.
+func aim_point(caster: PlayerState, def: WeaponDef, aim: Vector2) -> Vector2:
+	return caster.position + aim.limit_length(1.0) * def.max_range
 
 
 # ---- per shape --------------------------------------------------------------
@@ -188,6 +192,15 @@ func _hit_cone(sim: MatchSim, caster: PlayerState, def: WeaponDef, direction: Ve
 			continue
 		for i: int in hits:
 			_hit(sim, target, def)
+	for index: int in sim.walls_in_circle(caster.team, caster.position, def.max_range):
+		var rect: Rect2 = sim.walls[index].rect
+		var closest: Vector2 = Vector2(
+			clampf(caster.position.x, rect.position.x, rect.end.x),
+			clampf(caster.position.y, rect.position.y, rect.end.y)
+		)
+		var to_wall: Vector2 = closest - caster.position
+		if to_wall.length() < 0.001 or absf(direction.angle_to(to_wall)) <= half_angle:
+			sim.damage_wall(index, def.damage * hits)
 
 
 func _step_cones(sim: MatchSim, dt: float) -> void:
@@ -235,6 +248,9 @@ func _advance_projectile(sim: MatchSim, projectile: Projectile, distance: float)
 		if not _move_projectile(sim, projectile, move):
 			return false
 		if _blocked(projectile, previous, blocking):
+			var wall: int = sim.wall_at_point(projectile.team, projectile.position)
+			if wall >= 0:
+				sim.damage_wall(wall, projectile.def.damage)
 			if projectile.def.shape == WeaponDef.Shape.BOOMERANG and not projectile.returning:
 				projectile.position = previous
 				_turn_back(projectile)
@@ -292,12 +308,17 @@ func _blocked(projectile: Projectile, previous: Vector2, blocking: Array[Rect2])
 	for rect: Rect2 in blocking:
 		if rect.has_point(projectile.position):
 			return true
+	return blocks_segment(projectile.team, previous, projectile.position)
+
+
+## True if an enemy (of `team`) paper shield crosses the segment a-b.
+func blocks_segment(team: int, a: Vector2, b: Vector2) -> bool:
 	for shield: Shield in shields:
-		if shield.team == projectile.team:
+		if shield.team == team:
 			continue
-		var a: Vector2 = shield.center - shield.along * shield.half_width
-		var b: Vector2 = shield.center + shield.along * shield.half_width
-		if Geometry2D.segment_intersects_segment(previous, projectile.position, a, b) != null:
+		var left: Vector2 = shield.center - shield.along * shield.half_width
+		var right: Vector2 = shield.center + shield.along * shield.half_width
+		if Geometry2D.segment_intersects_segment(a, b, left, right) != null:
 			return true
 	return false
 
@@ -379,6 +400,8 @@ func _step_shields(dt: float) -> void:
 func _area_hit(sim: MatchSim, team: int, def: WeaponDef, center: Vector2, radius: float) -> void:
 	for target: PlayerState in _enemies_within(sim, team, center, radius):
 		_hit(sim, target, def)
+	for wall: int in sim.walls_in_circle(team, center, radius):
+		sim.damage_wall(wall, def.damage)
 
 
 func _enemies_within(sim: MatchSim, team: int, center: Vector2, radius: float) -> Array[PlayerState]:

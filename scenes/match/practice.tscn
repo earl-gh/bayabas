@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/view/practice_match.gd" id="1_practice"]
 [ext_resource type="PackedScene" path="res://scenes/map/greybox_map.tscn" id="2_map"]
@@ -12,6 +12,8 @@
 [ext_resource type="Script" path="res://scripts/ui/weapon_pick_screen.gd" id="10_pick"]
 [ext_resource type="Script" path="res://scripts/view/weapon_fx_view.gd" id="11_fx"]
 [ext_resource type="Script" path="res://scripts/view/aim_indicator.gd" id="12_aim_indicator"]
+[ext_resource type="Script" path="res://scripts/view/walls_view.gd" id="13_walls"]
+[ext_resource type="Script" path="res://scripts/view/neutrals_view.gd" id="14_neutrals"]
 
 [node name="Practice" type="Node3D"]
 script = ExtResource("1_practice")
@@ -19,7 +21,17 @@ rules = ExtResource("3_rules")
 layout = ExtResource("4_layout")
 
 [node name="Map" parent="." instance=ExtResource("2_map")]
+unique_name_in_owner = true
 show_overview_camera = false
+build_walls = false
+
+[node name="Walls" type="Node3D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("13_walls")
+
+[node name="Neutrals" type="Node3D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("14_neutrals")
 
 [node name="Actors" type="Node3D" parent="."]
 unique_name_in_owner = true
@@ -101,8 +113,8 @@ unique_name_in_owner = true
 visible = false
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 116.0
-offset_bottom = 232.0
+offset_top = 236.0
+offset_bottom = 330.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 28
 text = "DOWN! Touch a teammate or
@@ -178,6 +190,25 @@ grow_vertical = 0
 mouse_filter = 2
 script = ExtResource("9_aim")
 
+[node name="BallButton" type="Control" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -310.0
+offset_top = -480.0
+offset_right = -206.0
+offset_bottom = -376.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("9_aim")
+label_text = "Catch"
+sub_text = "BALL"
+
 [node name="DashButton" type="Control" parent="Controls"]
 unique_name_in_owner = true
 layout_mode = 3
@@ -228,6 +259,80 @@ grow_horizontal = 0
 theme_override_font_sizes/font_size = 20
 text = "-30 HP (test)"
 
+[node name="ScoreLabel" type="Label" parent="Controls"]
+unique_name_in_owner = true
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -170.0
+offset_top = 124.0
+offset_right = 170.0
+offset_bottom = 164.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="InfoLabel" type="Label" parent="Controls"]
+unique_name_in_owner = true
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -170.0
+offset_top = 164.0
+offset_right = 170.0
+offset_bottom = 230.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Banner" type="Label" parent="Controls"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 10
+anchor_top = 0.3
+anchor_right = 1.0
+anchor_bottom = 0.3
+offset_top = -60.0
+offset_bottom = 60.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.86, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 44
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TricycleButton" type="Button" parent="Controls"]
+unique_name_in_owner = true
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -184.0
+offset_top = 126.0
+offset_right = -16.0
+offset_bottom = 182.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 18
+text = "Tricycle (test)"
+
+[node name="AgainButton" type="Button" parent="Controls"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -30.0
+offset_right = 160.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "Play again"
+
 [node name="PickScreen" type="Control" parent="Controls"]
 unique_name_in_owner = true
 visible = false
@@ -238,3 +343,4 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("10_pick")
+

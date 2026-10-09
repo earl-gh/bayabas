@@ -47,6 +47,39 @@ extends Resource
 @export var aim_deadzone: float = 0.0
 ## A returning boomerang is caught when this close to its thrower.
 @export var boomerang_catch_distance: float = 0.0
+## Scoring (volleyball format): stand in the enemy base zone this long to score.
+@export var base_capture_time: float = 0.0
+## Freeze after a point before everyone is reset to their bases.
+@export var point_freeze_time: float = 0.0
+## A set is won at `set_points_to_win` with a lead of `set_win_by`, or at `set_point_cap`.
+@export var set_points_to_win: int = 0
+@export var set_win_by: int = 0
+@export var set_point_cap: int = 0
+## Sets needed to win the match (best of 3 = 2).
+@export var match_sets_to_win: int = 0
+## Rubber ball: spawns at the lane center this long after there is no ball.
+@export var ball_spawn_interval: float = 0.0
+@export var ball_range: float = 0.0
+@export var ball_speed: float = 0.0
+@export var ball_radius: float = 0.0
+## The holder walks at this fraction of normal speed.
+@export var ball_holder_speed_scale: float = 0.0
+## KNOCKOUT duration on an enemy hit by the ball.
+@export var ball_knockout_time: float = 0.0
+@export var ball_wall_damage: int = 0
+## An enemy who pressed the ball button this recently before contact catches it (D2).
+@export var ball_catch_window: float = 0.0
+## Tricycle: first crossing and the time between crossings.
+@export var tricycle_first_time: float = 0.0
+@export var tricycle_interval: float = 0.0
+## Horn + lane marker this long before it drives in.
+@export var tricycle_warning_time: float = 0.0
+@export var tricycle_crossing_time: float = 0.0
+## Push distance away from its path (D4), spread over `tricycle_push_time`.
+@export var tricycle_knockback: float = 0.0
+@export var tricycle_push_time: float = 0.0
+@export var tricycle_length: float = 0.0
+@export var tricycle_width: float = 0.0
 ## Practice-mode training dummies (two enemies and one ally).
 @export var dummy_z: float = 0.0
 @export var dummy_stand_x: float = 0.0

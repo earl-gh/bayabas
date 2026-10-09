@@ -42,7 +42,27 @@ var weapon_cooldowns: Array[float] = [0.0, 0.0]
 var aim_hold: Array[float] = [-1.0, -1.0]
 ## Buttons from the previous tick, to see presses and releases.
 var previous_buttons: int = 0
+## Auto-aim taken once when a weapon button is pressed (stick-style vector), so a
+## held aim never follows a moving enemy. TARGETED weapons lock a target id instead.
+var aim_lock: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO]
+var aim_target: Array[int] = [-1, -1]
 var effects: StatusEffects = StatusEffects.new()
+## Seconds since the ball button was last freshly pressed (catch window, D2).
+var ball_press_age: float = 1.0e9
+## Ball throw aim: -1 = not aiming; the auto-aim is locked at the press like weapons.
+var ball_aim_hold: float = -1.0
+var ball_aim_lock: Vector2 = Vector2.ZERO
+## Knockback (tricycle): moved by `push_velocity` until `push_time_left` runs out.
+var push_velocity: Vector2 = Vector2.ZERO
+var push_time_left: float = 0.0
+## Time spent standing in the enemy base zone (scores at GameRules.base_capture_time).
+var base_time: float = 0.0
+
+
+## Bookmark can be used: off cooldown and not still out on a mark (its cooldown
+## only starts once the player is back at the mark).
+func bookmark_ready() -> bool:
+	return bookmark_cooldown_left <= 0.0 and not mark_active
 
 
 ## Alive, not in death delay, and not mid-dash or stumbling: free to use skills.

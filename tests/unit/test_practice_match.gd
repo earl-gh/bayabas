@@ -194,11 +194,31 @@ func test_bookmark_button_blinks_the_player() -> void:
 func test_a_pressed_skill_is_sent_once() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	practice.press_skill(PlayerInput.BTN_DASH)
+	practice.advance(DT)
+	var cooldown: float = player.dash_cooldown_left
+	practice.advance(DT)
+	assert_lt(player.dash_cooldown_left, cooldown, "cooldown runs, not re-triggered")
+
+
+func test_skill_buttons_are_disabled_while_on_cooldown() -> void:
+	var practice: PracticeMatch = _practice()
+	var dash: TouchButton = practice.get_node("%DashButton") as TouchButton
+	var mark: TouchButton = practice.get_node("%BookmarkButton") as TouchButton
+	_equip(practice, &"bato_light", &"papel_shield")
 	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
-	var cooldown: float = player.bookmark_cooldown_left
+	assert_true(mark.locked, "out on the mark")
+	assert_false(dash.locked)
+	practice.aim_started(1)
+	practice.aim_released(Vector2.ZERO, false, 1)
+	for i: int in 3:
+		practice.advance(DT)
+	assert_true(_weapon_button(practice, 1).locked, "shield on cooldown")
+	assert_false(_weapon_button(practice, 0).locked)
+	practice.press_skill(PlayerInput.BTN_DASH)
 	practice.advance(DT)
-	assert_lt(player.bookmark_cooldown_left, cooldown, "cooldown runs, not re-triggered")
+	assert_true(dash.locked)
 
 
 # ---- weapon pick ---------------------------------------------------------------
@@ -383,7 +403,7 @@ func test_aim_indicator_shows_range_and_landing_circle() -> void:
 	var caster: PlayerState = sim.add_player(1, 0)
 	caster.position = Vector2.ZERO
 	var def: WeaponDef = sim.weapon_defs[&"bato_heavy"]
-	var lines: Array[PackedVector2Array] = AimIndicator.outline(sim, caster, def, Vector2(0.0, -0.5))
+	var lines: Array[PackedVector2Array] = AimIndicator.outline(sim, caster, def, Vector2(0.0, -0.5), -1)
 	assert_eq(lines.size(), 3, "range circle, aim line, landing circle")
 	assert_almost_eq(lines[0][0].length(), def.max_range, 0.001)
 	assert_almost_eq(lines[1][1].y, -4.0, 0.001, "half the stick = half the range")
@@ -458,3 +478,101 @@ func test_done_closes_and_the_swap_button_reopens_while_dead() -> void:
 	assert_false(swap.visible)
 	practice.open_swap()
 	assert_false(practice.is_picking(), "no swapping while alive")
+
+
+# ---- M3: walls, scoring, ball, tricycle -----------------------------------------
+
+func _score_point(practice: PracticeMatch) -> void:
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	player.position = LAYOUT.base_center(-practice.own_side())
+	for i: int in 20:
+		practice.advance(DT)
+
+
+func _finish_freeze(practice: PracticeMatch) -> void:
+	for i: int in 100:
+		practice.advance(DT)
+
+
+func test_walls_are_drawn_from_the_sim_and_disappear_when_broken() -> void:
+	var practice: PracticeMatch = _practice()
+	var walls: WallsView = practice.get_node("%Walls") as WallsView
+	assert_eq(walls.standing_count(), 12)
+	practice.sim.damage_wall(4, 1000)
+	assert_eq(walls.standing_count(), 11)
+
+
+func test_scoring_shows_a_banner_and_updates_the_scoreboard() -> void:
+	var practice: PracticeMatch = _practice()
+	var score: Label = practice.get_node("%ScoreLabel") as Label
+	assert_string_starts_with(score.text, "YOU 0 - 0 THEM")
+	_score_point(practice)
+	assert_string_starts_with(score.text, "YOU 1 - 0 THEM")
+	assert_eq(practice.banner_text(), "POINT - YOU!")
+	assert_string_contains((practice.get_node("%InfoLabel") as Label).text, "Next point in")
+	_finish_freeze(practice)
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	assert_eq(player.position, player.spawn_position, "back at base")
+
+
+func test_new_set_turns_the_view_around_and_recolors_the_bases() -> void:
+	var practice: PracticeMatch = _practice()
+	var map: GreyboxMap = practice.get_node("%Map") as GreyboxMap
+	assert_eq(map.base_color(MapLayout.SIDE_OWN), GreyboxMap.OWN_COLOR)
+	for i: int in 5:
+		_score_point(practice)
+		_finish_freeze(practice)
+	assert_eq(practice.own_side(), MapLayout.SIDE_ENEMY, "we defend the -Z base now")
+	assert_eq(map.base_color(MapLayout.SIDE_ENEMY), GreyboxMap.OWN_COLOR, "our base is blue wherever it is")
+	var camera: Camera3D = practice.get_node("%FollowCamera") as Camera3D
+	assert_almost_eq(absf(camera.rotation_degrees.y), 180.0, 0.01, "own base still at the bottom of the screen")
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	var start_z: float = player.position.y
+	practice.set_stick(Vector2(0.0, -1.0))
+	for i: int in 15:
+		practice.advance(DT)
+	assert_gt(player.position.y, start_z, "stick up still walks toward the enemy base (+Z now)")
+
+
+func test_match_over_shows_play_again() -> void:
+	var practice: PracticeMatch = _practice()
+	var again: Button = practice.get_node("%AgainButton") as Button
+	for i: int in 10:
+		_score_point(practice)
+		_finish_freeze(practice)
+	assert_eq(practice.sim.phase, MatchSim.Phase.MATCH_OVER)
+	assert_true(again.visible)
+	assert_eq(practice.banner_text(), "YOU WIN THE MATCH!")
+
+
+func test_ball_button_throws_the_ball_at_a_dummy() -> void:
+	var practice: PracticeMatch = _practice()
+	var ball_button: AimButton = practice.get_node("%BallButton") as AimButton
+	var enemy: PlayerState = _enemy_ahead(practice, 5.0)
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	practice.sim.ball.spawn_timer = 0.0
+	player.position = Vector2(0.0, 0.0)
+	enemy.position = Vector2(0.0, -5.0)
+	practice.advance(DT)
+	practice.advance(DT)
+	assert_true(practice.sim.ball.is_holder(PracticeMatch.LOCAL_ID))
+	practice.advance(DT)
+	assert_eq(ball_button.label_text, "Throw")
+	var neutrals: NeutralsView = practice.get_node("%Neutrals") as NeutralsView
+	assert_true(neutrals.ball_visible())
+	practice.aim_started(PracticeMatch.BALL_SLOT)
+	practice.aim_released(Vector2.ZERO, false, PracticeMatch.BALL_SLOT)
+	for i: int in 15:
+		practice.advance(DT)
+	assert_true(enemy.effects.has(StatusEffects.Type.KNOCKOUT))
+	assert_eq(ball_button.label_text, "Catch")
+
+
+func test_tricycle_test_button_brings_it_now() -> void:
+	var practice: PracticeMatch = _practice()
+	(practice.get_node("%TricycleButton") as Button).pressed.emit()
+	practice.advance(DT)
+	assert_eq(practice.banner_text(), "BEEP BEEP! Tricycle!")
+	for i: int in 70:
+		practice.advance(DT)
+	assert_true((practice.get_node("%Neutrals") as NeutralsView).tricycle_visible())

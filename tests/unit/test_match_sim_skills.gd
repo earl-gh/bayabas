@@ -194,7 +194,8 @@ func test_bookmark_blinks_four_meters_and_leaves_a_mark() -> void:
 	assert_almost_eq(p.position.y, start.y - 4.0, 0.01)
 	assert_true(p.mark_active)
 	assert_eq(p.mark_position, start)
-	assert_almost_eq(p.bookmark_cooldown_left, 14.0, 0.001)
+	assert_eq(p.bookmark_cooldown_left, 0.0, "the cooldown waits until you are back at the mark")
+	assert_false(p.bookmark_ready(), "but it can't be used again while out on the mark")
 
 
 func test_bookmark_speed_bonus_is_thirty_percent() -> void:
@@ -229,16 +230,55 @@ func test_bookmark_return_is_a_data_toggle() -> void:
 	assert_almost_eq(p.position.y, start.y - 4.0, 0.01, "stays where it blinked")
 
 
-func test_bookmark_cooldown_is_fourteen_seconds() -> void:
+func test_bookmark_cooldown_starts_only_after_returning_to_the_mark() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	_run(sim, 1, Vector2.ZERO, 200)
+	_run(sim, 1, Vector2.ZERO, 100)
+	assert_eq(p.bookmark_cooldown_left, 0.0, "not counting while out on the mark")
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_false(p.mark_active, "still on cooldown at ~6.7 s")
-	_run(sim, 1, Vector2.ZERO, 250)
+	assert_true(p.mark_active, "pressing again does nothing")
+	_run(sim, 1, Vector2.ZERO, 25)
+	assert_false(p.mark_active, "back at the mark after 4 s")
+	assert_almost_eq(p.bookmark_cooldown_left, 14.0, 0.25, "the 14 s cooldown starts now")
+	_run(sim, 1, Vector2.ZERO, 400)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_true(p.mark_active, "ready after 14 s")
+	assert_false(p.mark_active, "still on cooldown ~13.4 s after the return")
+	_run(sim, 1, Vector2.ZERO, 30)
+	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
+	assert_true(p.mark_active, "ready 14 s after the return")
+
+
+func test_dying_out_on_a_mark_starts_the_bookmark_cooldown() -> void:
+	var sim: MatchSim = _sim()
+	var p: PlayerState = sim.add_player(1, 0)
+	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
+	sim.kill(1)
+	assert_false(p.mark_active)
+	assert_almost_eq(p.bookmark_cooldown_left, 14.0, 0.001)
+
+
+func test_holding_dash_through_its_cooldown_does_not_precast() -> void:
+	var sim: MatchSim = _sim()
+	var p: PlayerState = sim.add_player(1, 0)
+	_tick(sim, 1, Vector2(0.0, -1.0), PlayerInput.BTN_DASH)
+	for i: int in 300:
+		_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_DASH)
+	assert_eq(p.dash_cooldown_left, 0.0)
+	assert_eq(p.dash_time_left, 0.0, "the held button never fires on its own")
+	_tick(sim, 1, Vector2.ZERO, 0)
+	_tick(sim, 1, Vector2(0.0, -1.0), PlayerInput.BTN_DASH)
+	assert_gt(p.dash_time_left, 0.0, "a fresh press works")
+
+
+func test_holding_bookmark_through_its_cooldown_does_not_precast() -> void:
+	var sim: MatchSim = _sim()
+	var p: PlayerState = sim.add_player(1, 0)
+	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
+	for i: int in 600:
+		_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
+	assert_true(p.bookmark_ready())
+	assert_false(p.mark_active)
 
 
 func test_bookmark_blink_stops_at_enemy_walls() -> void:
