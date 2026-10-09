@@ -1,17 +1,14 @@
-## What
-<!-- One HANDOFF task, e.g. "M2.3 author 12 weapons" -->
+## What changed
+<!-- The chunk of HANDOFF work this covers, in plain words -->
 
-## Why / GDD reference
-<!-- Section of docs/GDD.md this implements or changes -->
+## Decisions for you
+<!-- Any defaults chosen where the docs were silent (also listed in docs/GDD.md "Open decisions") -->
 
-## Test on phone (after you merge)
-Live link (single link, updates on every merge to `main`): https://earl-gh.github.io/bayabas/
-Steps:
+## Check it on your phone (after you merge)
+Live link: https://earl-gh.github.io/bayabas/ (wait for the `Pages` run on `main` to finish)
 1.
 
-## Checklist
-- [ ] Conventional Commit title (`feat(scope): ...`)
-- [ ] Sim logic has unit tests; CI green
-- [ ] Works with touch and keyboard/mouse
+## Done
+- [ ] Full GUT suite passes locally
 - [ ] No hardcoded balance numbers (values in `data/`)
 - [ ] `docs/GDD.md` updated if rules/numbers changed

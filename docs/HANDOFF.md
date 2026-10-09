@@ -1,6 +1,6 @@
 # Handoff — build order
 
-Each milestone = a few small PRs, each with tests and a working web build on the single live link once merged. Finish a milestone before starting the next. Target version after each milestone is shown; release-please produces it from commit types.
+Each milestone = one or two meaningful PRs (develop continuously, not one PR per task), each with tests and a working web build on the single live link once merged. Finish a milestone before starting the next. Target version after each milestone is shown; release-please produces it from commit types.
 
 ## M0 — Scaffold (→ v0.1.0)
 1. Create Godot 4.6 project at repo root: Compatibility renderer, portrait, 720×1280 base, stretch mode `canvas_items`/aspect `expand`, warnings-as-errors for untyped code.
@@ -8,8 +8,8 @@ Each milestone = a few small PRs, each with tests and a working web build on the
 3. `export_presets.cfg` with presets named exactly **`Web`** (single-threaded, export to `build/web/index.html`), **`Android`**, **`Server`** (Linux, dedicated server feature tag).
 4. Add GUT under `addons/gut`, `.gutconfig.json`, one passing test.
 5. Title screen: "Bayabas", buttons Practice / Create Room / Join Room (stubs), version label read from `ProjectSettings application/config/version` (CI stamps it from `version.txt`, which release-please owns; keep `config/version` present in `project.godot`).
-6. Add a CI job that exports a **debug APK** (preset `Android`, debug keystore generated in CI) and uploads it as a workflow artifact, so every PR has an installable Android build.
-7. Confirm CI green, Pages shows title screen on iPhone Safari.
+6. A workflow that exports a **debug APK** (preset `Android`, debug keystore generated in the job) and uploads it as an artifact (now manual: Actions → Android APK).
+7. Pages shows the title screen on iPhone Safari.
 
 ## M1 — Offline sandbox (→ v0.2.0)
 1. Greybox map: 60×16 m lane, bases, boundary walls, 2 wall layers × 3 columns per side (placeholder boxes).
@@ -53,4 +53,4 @@ Performance budget (60 fps on recommended Android, 30+ fps on minimum spec; APK 
 ## Fast-and-safe tips
 - Write the sim test first, then the code; sim tests run in < 1 s with `godot --headless -s addons/gut/gut_cmdln.gd`.
 - Keep scenes thin; logic in scripts so diffs are reviewable from a phone.
-- When a CI export fails, read the full log — most failures are a missing preset name or export template version mismatch with `.godot-version`.
+- When the Pages or Android export fails, read the full log — most failures are a missing preset name or export template version mismatch with `.godot-version`.

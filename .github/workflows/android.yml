@@ -1,34 +1,9 @@
-name: CI
+name: Android APK
+# Manual: Actions -> "Android APK" -> Run workflow. Builds a debug APK from the chosen
+# branch and attaches it to the run as the `bayabas-debug-apk` artifact.
 on:
-  pull_request:
-  push:
-    branches: [main]
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:
 jobs:
-  test-and-export:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Read Godot version
-        id: gv
-        run: echo "version=$(cat .godot-version)" >> "$GITHUB_OUTPUT"
-      - uses: chickensoft-games/setup-godot@v2
-        with:
-          version: ${{ steps.gv.outputs.version }}
-          use-dotnet: false
-          include-templates: true
-      - name: Import project
-        run: godot --headless --import
-      - name: Run GUT tests
-        run: godot --headless -s addons/gut/gut_cmdln.gd -gexit
-      - name: Export Web (smoke test)
-        run: |
-          mkdir -p build/web
-          godot --headless --export-release "Web" build/web/index.html
-          test -f build/web/index.html
-
   android-debug-apk:
     runs-on: ubuntu-latest
     env:
