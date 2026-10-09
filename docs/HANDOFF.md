@@ -8,7 +8,8 @@ Each milestone = a few small PRs, each with tests and a working Pages preview. F
 3. `export_presets.cfg` with presets named exactly **`Web`** (single-threaded, export to `build/web/index.html`), **`Android`**, **`Server`** (Linux, dedicated server feature tag).
 4. Add GUT under `addons/gut`, `.gutconfig.json`, one passing test.
 5. Title screen: "Bayabas", buttons Practice / Create Room / Join Room (stubs), version label read from `ProjectSettings application/config/version` (CI stamps it from `version.txt`, which release-please owns; keep `config/version` present in `project.godot`).
-6. Confirm CI green, Pages shows title screen on iPhone Safari.
+6. Add a CI job that exports a **debug APK** (preset `Android`, debug keystore generated in CI) and uploads it as a workflow artifact, so every PR has an installable Android build.
+7. Confirm CI green, Pages shows title screen on iPhone Safari.
 
 ## M1 — Offline sandbox (→ v0.2.0)
 1. Greybox map: 60×16 m lane, bases, boundary walls, 2 wall layers × 3 columns per side (placeholder boxes).
@@ -18,6 +19,7 @@ Each milestone = a few small PRs, each with tests and a working Pages preview. F
 5. Input: on-screen joystick + 4 skill buttons with **drag-to-aim** and cancel zone; keyboard WASD, mouse aim, Q/E weapons, Space dash, F bookmark, R ball.
 6. HP, death, 10 s respawn; Dash (with stumble) and Bookmark.
 7. Practice mode with 2 training dummies (stand still / walk back and forth).
+8. `CharacterDef` roster + random no-duplicate assignment at match start (seeded, tested). Placeholder capsules tinted per character until M5.
 
 ## M2 — Weapons (→ v0.3.0)
 1. `WeaponDef` resource + generic shape executors: targeted projectile, skillshot, cone, ground AoE w/ delay, placed trap/field, boomerang, wall/shield, bouncing projectile, travelling spinner.
@@ -43,10 +45,10 @@ Each milestone = a few small PRs, each with tests and a working Pages preview. F
 6. Deploy doc in `server/README.md` (Fly.io or Render free tier).
 
 ## M5 — Art, UI and audio (→ v0.6.0)
-Low-poly flat-shaded `.glb` props with one palette texture: sari-sari store, houses, laundry lines, tricycle, electric post with flyers (septic siphoning, hiring, police notice, generic election poster — fictional names only), cardboard walls, street-game weapons. Character: one shared base body with team colors/cosmetic-free. Pinoy-street UI theme, weapon icons, SFX, short BGM loop.
+Low-poly flat-shaded `.glb` props with one palette texture: sari-sari store, houses, laundry lines, tricycle, electric post with flyers (septic siphoning, hiring, police notice, generic election poster — fictional names only), cardboard walls, street-game weapons. Characters: the 6 kids from PROJECT §3.2 on **one shared rig and animation set** (swap meshes/materials only), same silhouette height so hitboxes match, team-colored bandana/armband slot. Respectful design per PROJECT §3.2 — no caricature. Varied Filipino skin tones across the roster. Pinoy-street UI theme, weapon icons, SFX, short BGM loop.
 
 ## M6 — Polish and release (→ v1.0.0)
-Performance budget (60 fps mid Android, 30+ fps iPhone Safari; < 50 MB web download), balance pass, settings (volume, graphics, joystick size), tutorial overlay, Android signed release in GitHub Releases, `feat!: 1.0` release.
+Performance budget (60 fps on recommended Android, 30+ fps on minimum spec; APK < 150 MB; web < 50 MB), balance pass, settings (volume, graphics, joystick size), tutorial overlay, **Android signed release APK/AAB** attached to GitHub Releases (competition build), Android tested on a low-end device at the minimum spec in PROJECT §2.1, `feat!: 1.0` release.
 
 ## Fast-and-safe tips
 - Write the sim test first, then the code; sim tests run in < 1 s with `godot --headless -s addons/gut/gut_cmdln.gd`.

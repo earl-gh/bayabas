@@ -12,6 +12,13 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Respawn time | 10 s, at own base, weapon swap allowed during the timer |
 | Basic attack | **Decision pending (D1)** — default ON: melee "suntok", 6 dmg, 2.0 m, 0.8 s |
 
+## Characters (cosmetic, randomized)
+- Roster (`data/characters/*.tres`, `CharacterDef`): `junjun` boy, `ligaya` girl, `migo` gay boy, `toni` lesbian girl, `popoy` chubby boy, `inday` dark-skinned girl. Outfits in `docs/PROJECT.md` §3.2.
+- Assigned by the **server** at match start with the match's seeded RNG: shuffle the roster, give one per player, no duplicates (6 characters ≥ max 6 players). Fixed for the whole match, including respawns and set switches.
+- Purely visual: identical hitbox (capsule r=0.4 m), HP, speed, animations timing. Shown in loading screen, scoreboard and kill feed.
+- Team readability: team-colored bandana/armband + ground ring; enemy outline on the local client.
+- Practice mode: random character for the player, dummies use the others.
+
 ## Default skills
 | Skill | Effect | CD |
 |---|---|---|

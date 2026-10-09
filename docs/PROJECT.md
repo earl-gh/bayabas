@@ -1,45 +1,41 @@
 # Bayabas — Project Documentation
 
-> Working title. 3D low-poly multiplayer MOBA themed on Filipino street games (larong kalye).
+> 3D low-poly multiplayer MOBA for Android, themed on Filipino street games (larong kalye). Entry for an Android game development competition.
 
 ## 1. Abstract
 
-Bayabas is a 3D low-poly multiplayer MOBA built in Godot 4 for mobile and web browsers, themed around classic Filipino street games. Instead of heroes and levels, every player shares the same fixed health and equips two weapons from an arsenal of street-game items: bato-bato-pik, tumbang preso tsinelas and lata, jackstones, and trumpo, each reimagined as an attack, crowd-control or block skill. Matches of 1v1, 2v2 or 3v3 are played in private passcode rooms on a single-lane Filipino street. Teams break through layered cardboard walls, a nod to bahay-bahayan, and score by reaching the enemy's electric-post base as in agawan-base, using volleyball-style set and match scoring. A neutral rubber ball and a passing tricycle add shared, skill-based chaos. With no accounts, ranks or in-match leveling, every match is quick to join and decided by skill alone.
+Bayabas is a 3D low-poly multiplayer MOBA built in Godot 4 for Android, with optional browser play, themed around classic Filipino street games. Instead of heroes and levels, every player shares the same fixed health and equips two weapons from an arsenal of street-game items: bato-bato-pik, tumbang preso tsinelas and lata, jackstones, and trumpo, each reimagined as an attack, crowd-control or block skill. Each player is randomly cast as one of six Filipino kids in everyday Pinoy outfits. Matches of 1v1, 2v2 or 3v3 are played in private passcode rooms on a single-lane Filipino street. Teams break through layered cardboard walls, a nod to bahay-bahayan, and score by reaching the enemy's electric-post base as in agawan-base, using volleyball-style set and match scoring. A neutral rubber ball and a passing tricycle add shared chaos. With no accounts, ranks or leveling, every match is quick to join and decided by skill.
 
-## 2. Hardware and Software Requirements
+## 2. Hardware and Software Requirements (for playing)
 
-### 2.1 Players (client)
+### 2.1 Android app (primary)
 
-| Platform | Minimum | Recommended |
+| Item | Minimum | Recommended |
 |---|---|---|
-| Android (native APK) | Android 8.0 (API 26), 3 GB RAM, OpenGL ES 3.0 GPU | Android 11+, 4 GB RAM |
-| iPhone / iPad (browser) | iOS/iPadOS 16.4+, Safari with WebGL 2 | iPhone 12 or newer |
-| Desktop browser | Chrome/Edge 110+, Firefox 115+, Safari 16.4+, WebGL 2, 4 GB RAM | Dedicated or recent integrated GPU, 8 GB RAM |
-| Network | Stable 4G or Wi-Fi, under 150 ms to server | Under 80 ms to server |
+| Operating system | Android 8.0 Oreo (API 26) | Android 11 or newer |
+| Processor | Quad-core 1.8 GHz, 64-bit (ARMv8) | Octa-core 2.0 GHz+ (e.g. Snapdragon 680 / Helio G85 class or better) |
+| Memory (RAM) | 3 GB | 4 GB or more |
+| Graphics | OpenGL ES 3.0 support | Adreno 610 / Mali-G52 class or better |
+| Storage | 200 MB free | 500 MB free |
+| Display | 5.0", 1280 × 720, landscape | 6.0"+, 1920 × 1080 |
+| Network | Internet for multiplayer (Wi-Fi or 4G), latency under 150 ms | Wi-Fi or 4G/5G, latency under 80 ms |
+| Input | Touchscreen (virtual joystick + drag-to-aim skill buttons) | — |
+| Software | Bayabas APK installed (no Google account or sign-in needed) | — |
 
-Inputs: touch (virtual joystick + drag-to-aim skill buttons) on mobile; keyboard + mouse on desktop. Touch also works on mobile browsers.
+Practice mode works offline; online rooms need an internet connection.
 
-### 2.2 Development
+### 2.2 Web browser (optional)
 
-| Item | Requirement |
+Players without the app can join the same rooms from a browser.
+
+| Item | Minimum |
 |---|---|
-| Engine | Godot 4.6.x stable (pinned in `.godot-version`), **Compatibility renderer** (required for web + low-end mobile) |
-| Language | GDScript, fully statically typed |
-| Testing | GUT (Godot Unit Test) run headless in CI |
-| 3D assets | Blender 4.x, exported as `.glb`; low-poly, flat-shaded, shared palette texture |
-| Version control | Git + GitHub (Conventional Commits, PRs, release-please) |
-| CI/CD | GitHub Actions: tests, web export, GitHub Pages deploy, PR previews, tagged releases |
-| Android build | Android SDK + OpenJDK 17, Godot Android export templates |
-| Dev machine | Windows 10+/macOS 12+/Linux, 8 GB RAM (16 GB recommended), GPU with OpenGL 3.3 |
-
-### 2.3 Game server
-
-| Item | Requirement |
-|---|---|
-| Runtime | Godot 4.6.x headless (Linux server export) in Docker |
-| Transport | WebSocket over TLS (`wss://`) — the only transport that works for both browser and native |
-| Hosting | Any container host (e.g. Fly.io, Render, a small VPS) |
-| Size | 1 vCPU / 512 MB RAM handles several concurrent rooms at a 30 Hz tick |
+| Android browser | Chrome 110+ on Android 8.0+, same phone specs as above |
+| Other devices (optional) | Safari 16.4+ on iOS/iPadOS, or a desktop browser (Chrome, Edge, Firefox, Safari) with WebGL 2 |
+| Graphics | WebGL 2.0 enabled |
+| Memory | 3 GB RAM on mobile, 4 GB on desktop |
+| Network | Same as the Android app; first load downloads about 40–50 MB |
+| Input | Touch on mobile, keyboard + mouse on desktop |
 
 ## 3. Product Features
 
@@ -50,8 +46,24 @@ Inputs: touch (virtual joystick + drag-to-aim skill buttons) on mobile; keyboard
 - Host can start when all present players are ready and **at least one team is full** while the other is at most one short (2v2 and 3v3). 1v1 needs both players.
 - **Loading screen** before the match.
 
-### 3.2 Players and combat
-- **Fixed health** for everyone; no levels, items, heroes or damage types.
+### 3.2 Characters (randomized)
+- When the match starts, every player is **randomly assigned** one of six Filipino kid characters, each wearing a classic Pinoy kid outfit. No two players in a match share a character.
+- Characters are **cosmetic only**: same health, speed and hitbox, so the random draw never affects fairness.
+- Each character wears a **team-colored bandana/armband** and has a team ring under their feet so teams stay readable.
+
+| Character | Represents | Outfit |
+|---|---|---|
+| Junjun | Boy | White sando, basketball shorts, tsinelas, bimpo tucked at the back |
+| Ligaya | Girl | Floral bestida, ponytail with clip, tsinelas |
+| Migo | Gay boy | Pastel graphic tee knotted at the side, belt bag, colorful headband, printed tsinelas |
+| Toni | Lesbian girl | Short haircut, backward cap, oversized basketball jersey, cargo shorts, rubber shoes |
+| Popoy | Chubby boy | Striped polo shirt, jersey shorts, tsinelas, ice candy in hand during idle |
+| Inday | Dark-skinned girl | PE shirt, jogging pants, pigtails with ponytail bands, rubber shoes |
+
+All six are written with respect: identity is shown through the clothes and style a kid would choose, never through jokes, slurs or exaggerated features. Every character gets the same animation quality and the same confident poses.
+
+### 3.3 Players and combat
+- **Fixed health** for everyone; no levels, items, hero classes or damage types.
 - **Weapon pick:** 10 seconds at match start to choose 2 weapons from the arsenal. Duplicate weapon *types* allowed.
 - **Death:** 10-second respawn at base, with the option to swap both weapons.
 - **Default skills for all:**
@@ -59,7 +71,7 @@ Inputs: touch (virtual joystick + drag-to-aim skill buttons) on mobile; keyboard
   - *Bookmark* — blink forward with bonus speed, leaving a bookmark; snap back to it after 4 s.
 - MOBA-style aiming (drag-to-aim on mobile, mouse on desktop) with range indicators.
 
-### 3.3 Arsenal (12 weapons, 3 types: Attack, Crowd Control, Block)
+### 3.4 Arsenal (12 weapons, 3 types: Attack, Crowd Control, Block)
 
 | Street game | Weapon | Type | Effect |
 |---|---|---|---|
@@ -78,17 +90,17 @@ Inputs: touch (virtual joystick + drag-to-aim skill buttons) on mobile; keyboard
 
 Every weapon has a type icon. All values (damage, cooldowns, ranges) are data-driven and balanced against each other.
 
-### 3.4 Map and objectives
+### 3.5 Map and objectives
 - **Single mid lane**, Filipino street setting (sari-sari store, jeepney/tricycle stop, laundry lines, basketball ring, etc.).
 - **Cardboard walls (bahay-bahayan):** 2 layers per side, each split into 3 columns with their own HP. Break through to open a path.
 - **Base (agawan-base):** a concrete electric post covered in flyers (septic siphoning, hiring, police notices, election posters). Stepping on the enemy base scores a point.
 - **Volleyball scoring:** points win sets, sets win the match. Teams **switch bases every set**.
 
-### 3.5 Neutral events
+### 3.6 Neutral events
 - **Rubber ball (center):** spawns every 15 s. Aimed throw knocks out a hit enemy for 3 s; enemies can catch and throw it back; hitting an ally passes it; damages walls. While it travels freely, the thrower can blink to it. The ball despawns on hit and the 15 s timer restarts.
 - **Tricycle:** every 2 minutes it crosses the middle of the map from left or right, pushing back anyone it touches.
 
-### 3.6 Platforms and delivery
-- One codebase for **web (GitHub Pages)**, **Android**, and an **iOS-friendly web build**.
+### 3.7 Platforms and delivery
+- **Android app** is the main release (APK). The **browser version is optional**, built from the same code and hosted on GitHub Pages; app and browser players can play in the same rooms.
 - **Offline practice mode** (vs. training dummies) so builds can be tested on a phone without a server.
 - Every PR gets a **playable web preview link** for testing from an iPhone.

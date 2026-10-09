@@ -1,7 +1,7 @@
 # CLAUDE.md — rules for Claude Code in this repo
 
 Read first: `docs/HANDOFF.md` (what to build, in order), `docs/GDD.md` (rules + numbers), `docs/PROJECT.md` (scope).
-The owner works from an **iPhone** in cloud sessions: they can't run the editor. Every change must be verifiable through CI and the **GitHub Pages web build / PR preview link**.
+**Android is the primary target** (competition entry); the browser build is optional for players but is the owner's testing channel. The owner works from an **iPhone** in cloud sessions: they can't run the editor. Every change must be verifiable through CI and the **GitHub Pages web build / PR preview link**.
 
 ## Stack (do not change without asking)
 - Godot **4.6.x** stable (exact version in `.godot-version`), **Compatibility renderer**, GDScript with static types everywhere.
@@ -19,7 +19,7 @@ The owner works from an **iPhone** in cloud sessions: they can't run the editor.
 
 ## Folder layout
 ```
-scenes/{ui,match,map,props,fx}   scripts/{sim,view,net,ui,input}   data/{weapons,rules}
+scenes/{ui,match,map,props,fx}   scripts/{sim,view,net,ui,input}   data/{weapons,characters,rules}
 assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 ```
 
@@ -41,5 +41,6 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 ## Don'ts
 - No C#/GDExtension (breaks single-threaded web export). No addons except GUT unless asked.
 - No ENet/UDP for gameplay (doesn't work in browsers).
-- No accounts, ranked, leveling, items, heroes, damage types — out of scope by design.
+- No accounts, ranked, leveling, items, hero classes/abilities, damage types — out of scope by design. Characters are cosmetic only and randomly assigned.
+- Never let a character choice change gameplay (hitbox, stats, timing).
 - Don't guess on items listed under "Open decisions" in GDD: implement the default and keep it a data toggle.
