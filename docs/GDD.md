@@ -52,6 +52,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Walls block movement and projectiles. Walls take damage from all attacks and the ball (ball: 60).
 - Base zone: circle r=2 around the electric post. A living, non-CC'd enemy standing in it for 0.5 s scores.
 - Boundary walls on the long sides (house fronts, fences).
+- Greybox placeholder geometry (base 4 m from each lane end, wall layers 7 m and 12 m from the base, 1 m thick) lives in `data/rules/map_layout.tres`; adjust there, not in code.
 
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.

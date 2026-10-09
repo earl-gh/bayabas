@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="MapLayout" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/map_layout.gd" id="1_layout"]
+
+[resource]
+script = ExtResource("1_layout")
+lane_length = 60.0
+lane_width = 16.0
+base_inset = 4.0
+base_radius = 2.0
+wall_layers = 2
+wall_columns_per_layer = 3
+wall_first_layer_from_base = 7.0
+wall_layer_spacing = 5.0
+wall_thickness = 1.0
+wall_gap = 0.3
+wall_hp = 300
+boundary_thickness = 0.6
+overview_height = 60.0
+overview_size = 68.0

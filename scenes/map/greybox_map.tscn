@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/view/greybox_map.gd" id="1_map"]
+[ext_resource type="Resource" path="res://data/rules/map_layout.tres" id="2_layout"]
+
+[node name="GreyboxMap" type="Node3D"]
+script = ExtResource("1_map")
+layout = ExtResource("2_layout")
+
+[node name="Geometry" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Camera" type="Camera3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="BackButton" type="Button" parent="Hud"]
+unique_name_in_owner = true
+offset_left = 24.0
+offset_top = 64.0
+offset_right = 184.0
+offset_bottom = 136.0
+theme_override_font_sizes/font_size = 28
+text = "Back"
