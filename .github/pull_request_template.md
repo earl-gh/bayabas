@@ -4,8 +4,8 @@
 ## Why / GDD reference
 <!-- Section of docs/GDD.md this implements or changes -->
 
-## Test on phone
-Preview: https://earl-gh.github.io/bayabas/pr-preview/pr-<number>/
+## Test on phone (after you merge)
+Live link (single link, updates on every merge to `main`): https://earl-gh.github.io/bayabas/
 Steps:
 1.
 

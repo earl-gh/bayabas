@@ -1,6 +1,6 @@
 # Handoff — build order
 
-Each milestone = a few small PRs, each with tests and a working Pages preview. Finish a milestone before starting the next. Target version after each milestone is shown; release-please produces it from commit types.
+Each milestone = a few small PRs, each with tests and a working web build on the single live link once merged. Finish a milestone before starting the next. Target version after each milestone is shown; release-please produces it from commit types.
 
 ## M0 — Scaffold (→ v0.1.0)
 1. Create Godot 4.6 project at repo root: Compatibility renderer, portrait, 720×1280 base, stretch mode `canvas_items`/aspect `expand`, warnings-as-errors for untyped code.

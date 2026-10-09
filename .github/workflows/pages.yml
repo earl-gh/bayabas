@@ -1,17 +1,21 @@
 name: Pages
+# One live site: every push to main rebuilds and replaces
+#   https://earl-gh.github.io/bayabas/
+# Needs Settings -> Pages -> Source: "GitHub Actions". PRs are verified by ci.yml
+# (tests + web/Android exports); they are not deployed.
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [opened, reopened, synchronize, closed]
+  workflow_dispatch:
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pages: write
+  id-token: write
 concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 jobs:
-  build-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,32 +25,26 @@ jobs:
           echo "godot=$(cat .godot-version)" >> "$GITHUB_OUTPUT"
           echo "app=$(cat version.txt)" >> "$GITHUB_OUTPUT"
       - uses: chickensoft-games/setup-godot@v2
-        if: github.event.action != 'closed'
         with:
           version: ${{ steps.gv.outputs.godot }}
           use-dotnet: false
           include-templates: true
       - name: Stamp version and export Web
-        if: github.event.action != 'closed'
         run: |
-          SUFFIX=""
-          if [ "${{ github.event_name }}" = "pull_request" ]; then SUFFIX="-pr${{ github.event.number }}+${GITHUB_SHA::7}"; fi
-          sed -i "s|^config/version=.*|config/version=\"${{ steps.gv.outputs.app }}${SUFFIX}\"|" project.godot
+          sed -i "s|^config/version=.*|config/version=\"${{ steps.gv.outputs.app }}+${GITHUB_SHA::7}\"|" project.godot
           godot --headless --import
           mkdir -p build/web
           godot --headless --export-release "Web" build/web/index.html
-          touch build/web/.nojekyll
-      - name: Deploy main to Pages root
-        if: github.event_name == 'push'
-        uses: JamesIves/github-pages-deploy-action@v4
+          test -f build/web/index.html
+      - uses: actions/upload-pages-artifact@v3
         with:
-          folder: build/web
-          branch: gh-pages
-          clean-exclude: pr-preview
-      - name: Deploy PR preview
-        if: github.event_name == 'pull_request'
-        uses: rossjrw/pr-preview-action@v1
-        with:
-          source-dir: build/web
-          preview-branch: gh-pages
-          umbrella-dir: pr-preview
+          path: build/web
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
