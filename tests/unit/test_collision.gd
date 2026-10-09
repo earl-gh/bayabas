@@ -53,7 +53,7 @@ func test_player_stops_at_the_enemy_wall() -> void:
 func test_a_team_walks_straight_through_its_own_walls() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
-	_run(sim, 1, Vector2(0.0, -1.0), 110)
+	_run(sim, 1, Vector2(0.0, -1.0), 260)
 	# from the own base at z = 26, through the own layers at z = 19 and z = 14,
 	# to the enemy wall's near face at z = -13.5
 	assert_almost_eq(p.position.y, -13.5 + p.radius, 0.05)
@@ -62,7 +62,7 @@ func test_a_team_walks_straight_through_its_own_walls() -> void:
 func test_the_other_team_is_blocked_by_that_teams_walls_and_passes_its_own() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 1)
-	_run(sim, 1, Vector2(0.0, 1.0), 110)
+	_run(sim, 1, Vector2(0.0, 1.0), 260)
 	# team 1 passes its own layers (z = -19, -14) and stops at team 0's wall face z = 13.5
 	assert_almost_eq(p.position.y, 13.5 - p.radius, 0.05)
 
