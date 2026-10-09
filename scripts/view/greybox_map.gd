@@ -18,6 +18,8 @@ const RING_HEIGHT: float = 0.06
 const GROUND_HEIGHT: float = 0.1
 
 @export var layout: MapLayout
+## Off when a match scene supplies its own (follow) camera.
+@export var show_overview_camera: bool = true
 
 @onready var _geometry: Node3D = %Geometry
 @onready var _camera: Camera3D = %Camera
@@ -27,7 +29,8 @@ const GROUND_HEIGHT: float = 0.1
 
 func _ready() -> void:
 	_build_map()
-	_setup_camera()
+	if show_overview_camera:
+		_setup_camera()
 	_sun.rotation_degrees = Vector3(-60.0, 30.0, 0.0)
 	_back_button.pressed.connect(_on_back_pressed)
 
@@ -52,13 +55,18 @@ func _setup_camera() -> void:
 	_camera.size = layout.overview_size
 	_camera.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
 	_camera.position = Vector3(0.0, layout.overview_height, 0.0)
+	_camera.environment = make_environment()
+
+
+## Shared flat background + ambient light for every camera that views the map.
+static func make_environment() -> Environment:
 	var env: Environment = Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = BACKGROUND_COLOR
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color.WHITE
 	env.ambient_light_energy = 0.5
-	_camera.environment = env
+	return env
 
 
 func _add_rect(rect: Rect2, height: float, color: Color) -> void:
