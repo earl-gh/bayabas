@@ -11,3 +11,21 @@ var facing: Vector2 = Vector2.ZERO
 var hp: int = 0
 var alive: bool = true
 var radius: float = 0.0
+## Where this player (re)spawns.
+var spawn_position: Vector2 = Vector2.ZERO
+var respawn_time_left: float = 0.0
+
+var dash_time_left: float = 0.0
+var dash_direction: Vector2 = Vector2.ZERO
+var stumble_time_left: float = 0.0
+var dash_cooldown_left: float = 0.0
+
+var bookmark_cooldown_left: float = 0.0
+var boost_time_left: float = 0.0
+var mark_active: bool = false
+var mark_position: Vector2 = Vector2.ZERO
+
+
+## Alive and not mid-dash or stumbling: free to move and use skills.
+func can_act() -> bool:
+	return alive and dash_time_left <= 0.0 and stumble_time_left <= 0.0

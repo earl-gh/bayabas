@@ -25,6 +25,8 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Takbo (Dash) | 5 m dash over 0.2 s, then 0.4 s stumble (can't move/cast) | 8 s |
 | Bookmark | Place mark, blink 4 m forward, +30% speed for 4 s, then return to mark | 14 s |
 
+Dash and Bookmark blink stop at walls (they never pass through). Death cancels active dash/stumble/bookmark effects; cooldowns keep running through death and respawn.
+
 ## Weapons
 Status effects: `STUN` (no move/cast), `SLOW(x%)`, `AIRBORNE` (stun + vertical anim, no knockback), `POLYMORPH` (can: no cast, 50% speed), `BOUNCE` (short airborne), `KNOCKOUT` (ball; downed, no actions).
 Effects do not stack with themselves; a new hard CC refreshes duration.
@@ -90,4 +92,5 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - **D3** Who can blink to the ball (default: thrower only).
 - **D4** Tricycle push direction (default: perpendicular, away from vehicle).
 - **D5** Original brief for walls ends with "This must …" — unfinished requirement; ask designer.
+- **D7** Bookmark "then return to mark": default = the player is moved back to the mark when the 4 s speed boost ends (data toggle `bookmark_returns` in `data/rules/game_rules.tres`).
 - **D6** Only one Block weapon exists — consider a second one for loadout variety.

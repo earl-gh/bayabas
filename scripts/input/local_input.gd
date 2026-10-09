@@ -18,6 +18,16 @@ static func keyboard_vector() -> Vector2:
 	return Vector2(x, y).limit_length(1.0)
 
 
+## Space = dash, F = bookmark (HANDOFF keyboard map; Q/E/R arrive with weapons and the ball).
+static func keyboard_buttons() -> int:
+	var buttons: int = 0
+	if Input.is_physical_key_pressed(KEY_SPACE):
+		buttons |= PlayerInput.BTN_DASH
+	if Input.is_physical_key_pressed(KEY_F):
+		buttons |= PlayerInput.BTN_BOOKMARK
+	return buttons
+
+
 static func combine(a: Vector2, b: Vector2) -> Vector2:
 	return (a + b).limit_length(1.0)
 
