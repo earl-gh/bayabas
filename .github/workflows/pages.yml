@@ -35,8 +35,15 @@ jobs:
       - name: Unit tests (GUT)
         run: godot --headless -s addons/gut/gut_cmdln.gd -gexit
       - name: Stamp version and export Web
+        env:
+          # Optional repo variable (Settings -> Secrets and variables -> Actions ->
+          # Variables): the deployed game server, e.g. wss://bayabas.onrender.com
+          SERVER_URL: ${{ vars.BAYABAS_SERVER_URL }}
         run: |
           sed -i "s|^config/version=.*|config/version=\"${{ steps.gv.outputs.app }}+${GITHUB_SHA::7}\"|" project.godot
+          if [ -n "$SERVER_URL" ]; then
+            sed -i "s|^network/server_url=.*|network/server_url=\"$SERVER_URL\"|" project.godot
+          fi
           mkdir -p build/web
           godot --headless --export-release "Web" build/web/index.html
           test -f build/web/index.html

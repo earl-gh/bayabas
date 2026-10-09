@@ -207,3 +207,10 @@ func force_finish() -> void:
 	pick.fill(_rng)
 	pick.done = true
 	_finish()
+
+
+## Hides the screen without confirming anything (online: the server decided).
+func dismiss() -> void:
+	if pick != null:
+		pick.done = true
+	visible = false

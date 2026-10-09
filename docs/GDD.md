@@ -114,6 +114,21 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Modes: 1v1, 2v2, 3v3. Passcode: 6 chars, A–Z/2–9, no ambiguous chars.
 - Start allowed when: every present player is Ready AND one team has N players AND the other has ≥ N−1 (N=1 requires both).
 - Host leaves in lobby → next player becomes host. Player disconnect in match → slot stays, 60 s to reconnect.
+- Implementation defaults (M4):
+  - A new player joins the smaller team; tap **Join** on the other team to switch, which un-readies you.
+  - Names are up to 12 characters ("Player" if empty).
+  - Loading waits up to 15 s for every client, then starts anyway.
+  - The 10 s weapon pick has 1 s of grace on the server; empty picks are filled at random.
+  - A dropped player stands still in the match.
+  - The match screen reconnects by itself, and **Rejoin last match** in the lobby (or reloading the page) works within the 60 s.
+  - After the window the slot just stays idle.
+  - Rooms live in server memory only.
+  - Numbers are in `data/rules/net_rules.tres`.
+- Netcode:
+  - Clients send their input every sim tick (30 Hz). The server applies one input per tick per player, oldest first, so a quick tap is never lost.
+  - Snapshots go out at 20 Hz.
+  - Your own movement is predicted and corrected; other players are drawn 0.1 s in the past between snapshots.
+  - Server-side events (hits, deaths, points, the ball, the tricycle) are replayed on the client as the same signals the offline game uses.
 
 ## Open decisions (defaults are implemented; change if the designer says so)
 - **D1** ~~Basic attack~~ **Decided: no basic attack** (owner). See D10.
