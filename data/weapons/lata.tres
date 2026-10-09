@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/weapon_def.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+id = &"lata"
+display_name = "Lata"
+short_name = "Lata"
+street_game = "Tumbang preso"
+kind = 1
+shape = 2
+cooldown = 14.0
+max_range = 7.0
+damage = 5
+radius = 1.5
+speed = 14.0
+effect = 4
+effect_duration = 2.0

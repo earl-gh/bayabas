@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/weapon_def.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+id = &"bato_light"
+display_name = "Bato (Light)"
+short_name = "Bato"
+street_game = "Bato-bato-pik"
+kind = 0
+shape = 0
+cooldown = 4.0
+max_range = 7.0
+damage = 14
+speed = 14.0
+projectile_radius = 0.3

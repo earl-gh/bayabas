@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/character_def.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = &"junjun"
+display_name = "Junjun"
+tint = Color(0.95, 0.95, 0.9, 1)

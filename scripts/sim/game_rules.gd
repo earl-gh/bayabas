@@ -35,6 +35,18 @@ extends Resource
 @export var post_touch_distance: float = 0.0
 ## Data toggle (GDD D8): can enemies damage a player in death delay? Default no.
 @export var death_delay_takes_damage: bool = false
+## Every weapon in the game (docs/GDD.md "Weapons"); each player equips two different ones.
+@export var weapons: Array[WeaponDef] = []
+## The six cosmetic characters, assigned at random with no duplicates.
+@export var characters: Array[CharacterDef] = []
+## Weapon pick time (match start and while waiting to respawn).
+@export var weapon_pick_time: float = 0.0
+## POLYMORPH: walk at this fraction of normal speed (no casting).
+@export var polymorph_speed_scale: float = 0.0
+## Aim stick shorter than this counts as "no aim" and the weapon auto-aims.
+@export var aim_deadzone: float = 0.0
+## A returning boomerang is caught when this close to its thrower.
+@export var boomerang_catch_distance: float = 0.0
 ## Practice-mode training dummies (two enemies and one ally).
 @export var dummy_z: float = 0.0
 @export var dummy_stand_x: float = 0.0

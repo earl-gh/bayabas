@@ -311,3 +311,4 @@ func test_there_is_no_basic_attack_button() -> void:
 		assert_eq(seen & bit, 0, "bit %d reused" % bit)
 		seen |= bit
 	assert_eq(seen, 31, "only weapons, dash, bookmark and ball exist")
+	assert_eq(seen & PlayerInput.BTN_AIM_CANCEL, 0, "aim-cancel is its own bit")

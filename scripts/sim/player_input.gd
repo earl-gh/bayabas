@@ -8,6 +8,8 @@ const BTN_WEAPON_2: int = 1 << 1
 const BTN_DASH: int = 1 << 2
 const BTN_BOOKMARK: int = 1 << 3
 const BTN_BALL: int = 1 << 4
+## Sent on the tick a weapon button is released over the cancel zone: no cast.
+const BTN_AIM_CANCEL: int = 1 << 5
 
 ## Movement stick, x = left/right, y = along the lane (screen up = -1). Length <= 1.
 var move: Vector2 = Vector2.ZERO
