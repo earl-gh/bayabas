@@ -1,7 +1,7 @@
 # CLAUDE.md — rules for Claude Code in this repo
 
 Read first: `docs/HANDOFF.md` (what to build, in order), `docs/GDD.md` (rules + numbers), `docs/PROJECT.md` (scope).
-**Android is the primary target** (competition entry); the browser build is optional for players but is the owner's testing channel. The owner works from an **iPhone** in cloud sessions: they can't run the editor. Every change must be verifiable through CI and the **GitHub Pages web build / PR preview link**.
+**Android is the primary target** (competition entry); the browser build is optional for players but is the owner's testing channel. The owner works from an **iPhone** in cloud sessions: they can't run the editor. Every change must be verifiable through CI and the **GitHub Pages web build (one live link, updated on every merge to `main`)**.
 
 ## Stack (do not change without asking)
 - Godot **4.6.x** stable (exact version in `.godot-version`), **Compatibility renderer**, GDScript with static types everywhere.
@@ -26,19 +26,18 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 ## Workflow — versioning and PRs (mandatory)
 - **Never commit to `main`.** One branch per task: `feat/<scope>-<short>`, `fix/...`, `chore/...`, `docs/...`, `test/...`.
 - **Conventional Commits** (`feat(weapons): add trumpo airborne`). Breaking: `feat!:`. This drives release-please.
-- Small PRs (one HANDOFF task each). Use `.github/pull_request_template.md`. Include the **PR preview URL** in the PR body and how to test it on a phone.
+- Small PRs (one HANDOFF task each). Use `.github/pull_request_template.md`. In the PR body say how to test it on a phone on the single live link (`https://earl-gh.github.io/bayabas/`, valid after the owner merges).
 - PR must be green: GUT tests + web export. Squash-merge only.
 - Releases: release-please opens a release PR on `main`; merging it tags `vX.Y.Z` and updates `CHANGELOG.md`. Don't edit versions or the changelog by hand. Pre-1.0: `feat` = minor, `fix` = patch.
-- **Ship loop (owner-approved), one phase/task at a time:**
+- **Ship loop, one phase/task at a time. The owner merges and checks live; Claude does not merge.**
   1. **Make the PR** from a feature branch (small, one HANDOFF task, tests included).
-  2. **Review the PR** yourself before merging: read the full diff (run the code-review skill), check CI is green, and check against the Definition of done below. Fix anything found on the same branch and re-check.
-  3. **Merge if correct** (squash). If CI is red and not obviously fixable, or the change is risky/outward-facing, stop and ask instead.
-  4. **Confirm it is live** before telling the owner anything: the Pages run for the `main` commit succeeded, the `gh-pages` branch head names that commit, and the site responds. If the deploy was cancelled or failed, fix or re-run it first.
-  5. **Then** give the owner the live link (`https://earl-gh.github.io/bayabas/`) and exactly what to check.
-  The release-please release PR (tags a version) is merged only when the owner says so.
+  2. **Review the PR** yourself: read the full diff (run the code-review skill), wait for CI green (tests + web and Android exports), and check against the Definition of done below. Fix anything found on the same branch and re-check.
+  3. **Hand over:** tell the owner the PR link, CI status, and exactly what to check on the live link after merging. Then stop. Do not merge, do not verify the live site, and do not merge the release-please release PR.
+  4. If the owner asks for changes, push them to the same PR and repeat from step 2.
+  There are no per-PR preview links: the one live link (`https://earl-gh.github.io/bayabas/`) is rebuilt from `main` when the owner merges.
 
 ## Platforms and how the owner tests
-- **Dev channel = web build on the owner's iPhone browser** (Pages root for `main`, `pr-preview/pr-<N>/` for PRs). Always end a ship loop with that link.
+- **Dev channel = web build on the owner's iPhone browser** (the single Pages link, rebuilt on every merge to `main`). Always hand over with that link and what to check.
 - **Android stays releasable at all times:** the `android-debug-apk` CI job must stay green on every PR (artifact `bayabas-debug-apk`). Never merge a change that breaks the `Android` preset or needs desktop-only/thread APIs. Signed release APK/AAB is M6.
 - Android-only problems (touch, safe areas, performance) can't be seen on the iPhone web build; call them out in the PR instead of assuming they work.
 

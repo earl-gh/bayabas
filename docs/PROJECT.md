@@ -103,7 +103,7 @@ Every weapon has a type icon. All values (damage, cooldowns, ranges) are data-dr
 ### 3.7 Platforms and delivery
 - **Android app** is the main release (APK). The **browser version is optional**, built from the same code and hosted on GitHub Pages; app and browser players can play in the same rooms.
 - **Offline practice mode** (vs. training dummies) so builds can be tested on a phone without a server.
-- Every PR gets a **playable web preview link** for testing from an iPhone.
+- **One live web link** (GitHub Pages, rebuilt on every merge to `main`) for testing from an iPhone.
 
 ### 3.8 Visual style and orientation
 - **Portrait (vertical) only, by design.** Bayabas is a one-hand-friendly vertical MOBA: the phone is held upright, the lane runs up the screen, your base is at the bottom and the enemy base at the top. Android is locked to portrait; the web build shows a "rotate your phone" prompt if held in landscape.
