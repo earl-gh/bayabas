@@ -25,7 +25,15 @@ var boost_time_left: float = 0.0
 var mark_active: bool = false
 var mark_position: Vector2 = Vector2.ZERO
 
+## Death delay: at 0 HP the player keeps walking on draining "gray HP" (hp stays 0).
+var death_delay: bool = false
+var gray_hp: float = 0.0
+## Set when the delay has been used; cleared on respawn (once per respawn).
+var death_delay_used: bool = false
+## Training dummies never get a death delay.
+var death_delay_allowed: bool = true
 
-## Alive and not mid-dash or stumbling: free to move and use skills.
+
+## Alive, not in death delay, and not mid-dash or stumbling: free to use skills.
 func can_act() -> bool:
-	return alive and dash_time_left <= 0.0 and stumble_time_left <= 0.0
+	return alive and not death_delay and dash_time_left <= 0.0 and stumble_time_left <= 0.0

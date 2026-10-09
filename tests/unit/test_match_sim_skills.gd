@@ -41,25 +41,38 @@ func test_damage_reduces_hp() -> void:
 	assert_true(p.alive)
 
 
-func test_overkill_clamps_to_zero_and_kills() -> void:
+func test_overkill_clamps_to_zero_and_starts_the_death_delay() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
 	watch_signals(sim)
 	sim.damage(1, 500)
 	assert_eq(p.hp, 0)
+	assert_true(p.alive, "still on their feet during the death delay")
+	assert_true(p.death_delay)
+	assert_signal_emitted_with_parameters(sim, "player_death_delay_started", [1])
+	assert_signal_not_emitted(sim, "player_died")
+
+
+func test_kill_is_immediate_death() -> void:
+	var sim: MatchSim = _sim()
+	var p: PlayerState = sim.add_player(1, 0)
+	watch_signals(sim)
+	sim.kill(1)
 	assert_false(p.alive)
+	assert_false(p.death_delay)
 	assert_signal_emitted_with_parameters(sim, "player_died", [1])
 
 
 func test_damage_to_a_dead_or_unknown_player_is_ignored() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
-	sim.damage(1, 100)
+	sim.kill(1)
 	watch_signals(sim)
 	sim.damage(1, 10)
 	sim.damage(99, 10)
 	sim.damage(1, 0)
 	assert_signal_not_emitted(sim, "player_died")
+	assert_signal_not_emitted(sim, "player_death_delay_started")
 	assert_eq(p.hp, 0)
 
 
@@ -67,7 +80,7 @@ func test_respawn_after_ten_seconds_at_own_base_with_full_hp() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
 	_run(sim, 1, Vector2(1.0, 0.0), 5)
-	sim.damage(1, 100)
+	sim.kill(1)
 	watch_signals(sim)
 	_run(sim, 1, Vector2.ZERO, 295)
 	assert_false(p.alive, "still down just before 10 s")
@@ -81,7 +94,7 @@ func test_respawn_after_ten_seconds_at_own_base_with_full_hp() -> void:
 func test_other_team_respawns_at_its_own_base() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(2, 1)
-	sim.damage(2, 100)
+	sim.kill(2)
 	_run(sim, 2, Vector2.ZERO, 305)
 	assert_true(p.alive)
 	assert_eq(p.position, LAYOUT.base_center(MapLayout.SIDE_ENEMY))

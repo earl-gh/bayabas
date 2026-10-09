@@ -85,7 +85,7 @@ func test_no_input_means_no_movement() -> void:
 func test_dead_players_do_not_move() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
-	sim.damage(1, 100)
+	sim.kill(1)
 	assert_false(p.alive)
 	var start: Vector2 = p.position
 	_run(sim, 1, Vector2(1.0, 0.0), 10)

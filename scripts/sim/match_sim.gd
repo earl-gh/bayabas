@@ -6,6 +6,11 @@ extends RefCounted
 
 signal player_died(id: int)
 signal player_respawned(id: int)
+signal player_death_delay_started(id: int)
+## `by_id` is the reviving teammate, or -1 when the player touched their own base post.
+signal player_revived(id: int, by_id: int)
+
+const REVIVED_BY_POST: int = -1
 
 var rules: GameRules
 var layout: MapLayout
@@ -17,6 +22,7 @@ var players: Dictionary[int, PlayerState] = {}
 var walls: Array[MapLayout.WallSpec] = []
 
 var _inputs: Dictionary[int, PlayerInput] = {}
+var _brains: Dictionary[int, DummyBrain] = {}
 var _team_counts: Dictionary[int, int] = {}
 var _boundaries: Array[Rect2] = []
 
@@ -54,23 +60,55 @@ func add_player(id: int, team: int) -> PlayerState:
 	return state
 
 
+## A training dummy: a normal player on `team` placed at `position`, driven by `brain`.
+## It has no death delay and respawns at the same spot.
+func add_dummy(id: int, team: int, position: Vector2, brain: DummyBrain) -> PlayerState:
+	var state: PlayerState = add_player(id, team)
+	state.position = position
+	state.spawn_position = position
+	state.death_delay_allowed = false
+	_brains[id] = brain
+	return state
+
+
 func set_input(id: int, input: PlayerInput) -> void:
 	_inputs[id] = input
 
 
-## Applies damage. At 0 HP the player dies and respawns after rules.respawn_time.
+## Applies damage. At 0 HP the player enters the death delay (once per respawn),
+## otherwise dies and respawns after rules.respawn_time.
 func damage(id: int, amount: int) -> void:
 	if not players.has(id) or amount <= 0:
 		return
 	var state: PlayerState = players[id]
 	if not state.alive:
 		return
+	if state.death_delay:
+		if rules.death_delay_takes_damage:
+			state.gray_hp -= amount
+			if state.gray_hp <= 0.0:
+				_die(state)
+		return
 	state.hp = maxi(0, state.hp - amount)
-	if state.hp == 0:
+	if state.hp > 0:
+		return
+	if rules.death_delay_enabled and state.death_delay_allowed and not state.death_delay_used:
+		_start_death_delay(state)
+	else:
 		_die(state)
 
 
+## Immediate death (no death delay), e.g. for scripted or out-of-play kills.
+func kill(id: int) -> void:
+	if players.has(id) and players[id].alive:
+		players[id].hp = 0
+		_die(players[id])
+
+
 func step(dt: float) -> void:
+	for id: int in _brains:
+		if players[id].alive:
+			_inputs[id] = _brains[id].think(players[id])
 	for id: int in players:
 		var state: PlayerState = players[id]
 		var input: PlayerInput = _inputs[id] if _inputs.has(id) else null
@@ -91,6 +129,8 @@ func _step_alive(state: PlayerState, input: PlayerInput, dt: float) -> void:
 		elif input.is_pressed(PlayerInput.BTN_BOOKMARK) and state.bookmark_cooldown_left <= 0.0:
 			_use_bookmark(state)
 	_move(state, input, dt)
+	if state.death_delay:
+		_step_death_delay(state)
 
 
 func _step_dead(state: PlayerState, dt: float) -> void:
@@ -100,15 +140,54 @@ func _step_dead(state: PlayerState, dt: float) -> void:
 		state.facing = Vector2(0.0, -side_for_team(state.team))
 		state.hp = rules.player_max_hp
 		state.alive = true
+		state.death_delay_used = false
 		_clear_actions(state)
 		player_respawned.emit(state.id)
 
 
 func _die(state: PlayerState) -> void:
 	state.alive = false
+	state.death_delay = false
+	state.gray_hp = 0.0
 	state.respawn_time_left = rules.respawn_time
 	_clear_actions(state)
 	player_died.emit(state.id)
+
+
+func _start_death_delay(state: PlayerState) -> void:
+	state.death_delay = true
+	state.death_delay_used = true
+	state.gray_hp = rules.death_delay_gray_hp
+	_clear_actions(state)
+	player_death_delay_started.emit(state.id)
+
+
+## After moving: gray HP running out is a real death; otherwise a touch can revive.
+func _step_death_delay(state: PlayerState) -> void:
+	if state.gray_hp <= 0.0:
+		_die(state)
+		return
+	var post: Vector2 = layout.base_center(side_for_team(state.team))
+	if state.position.distance_to(post) <= rules.post_touch_distance:
+		_revive(state, REVIVED_BY_POST)
+		return
+	for id: int in players:
+		var other: PlayerState = players[id]
+		if other.team != state.team or other.id == state.id:
+			continue
+		if not other.alive or other.death_delay:
+			continue
+		if state.position.distance_to(other.position) <= rules.revive_touch_distance:
+			_revive(state, other.id)
+			return
+
+
+## Back on their feet with the gray HP they had left (at least 1).
+func _revive(state: PlayerState, by_id: int) -> void:
+	state.death_delay = false
+	state.hp = maxi(1, ceili(state.gray_hp))
+	state.gray_hp = 0.0
+	player_revived.emit(state.id, by_id)
 
 
 ## Dash, stumble and bookmark effects end on death/respawn. Cooldowns keep running.
@@ -168,6 +247,9 @@ func _move(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	var speed: float = rules.move_speed
 	if state.boost_time_left > 0.0:
 		speed *= 1.0 + rules.bookmark_speed_bonus
+	if state.death_delay:
+		speed *= rules.death_delay_move_speed_scale
+		state.gray_hp -= rules.death_delay_drain_per_second * move.length() * dt
 	_move_by(state, move * speed * dt)
 
 
