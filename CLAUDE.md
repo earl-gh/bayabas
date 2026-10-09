@@ -57,5 +57,6 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 - No C#/GDExtension (breaks single-threaded web export). No addons except GUT unless asked.
 - No ENet/UDP for gameplay (doesn't work in browsers).
 - No accounts, ranked, leveling, items, hero classes/abilities, damage types — out of scope by design. Characters are cosmetic only and randomly assigned.
+- **No basic attack.** Players only use their picked weapons plus the default skills (Dash, Bookmark).
 - Never let a character choice change gameplay (hitbox, stats, timing).
 - Don't guess on items listed under "Open decisions" in GDD: implement the default and keep it a data toggle.
