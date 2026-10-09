@@ -403,3 +403,19 @@ func test_enemy_walls_stop_projectiles_own_walls_do_not() -> void:
 	_cast(other, 0)
 	_wait(other, 1.0)
 	assert_eq(past_own_wall.hp, 86, "the rock flies through our own wall at z = 14")
+
+
+# ---- respawn swap ----------------------------------------------------------------
+
+func test_swap_only_while_dead_and_kept_weapons_keep_their_cooldown() -> void:
+	var sim: MatchSim = _sim()
+	var caster: PlayerState = _caster(sim, &"bato_heavy", &"lata")
+	assert_false(sim.swap_loadout(CASTER, &"jacks", &"bola"), "not while alive")
+	caster.weapon_cooldowns = [5.0, 3.0] as Array[float]
+	sim.kill(CASTER)
+	assert_true(sim.swap_loadout(CASTER, &"jacks", &"bato_heavy"))
+	assert_eq(caster.weapons, [&"jacks", &"bato_heavy"] as Array[StringName])
+	assert_eq(caster.weapon_cooldowns, [0.0, 5.0] as Array[float])
+	assert_true(sim.swap_loadout(CASTER, &"bato_heavy", &"lata"), "again, no limit")
+	assert_eq(caster.weapon_cooldowns, [5.0, 0.0] as Array[float], "swapping away and back clears nothing")
+	assert_false(sim.swap_loadout(CASTER, &"lata", &"lata"))
