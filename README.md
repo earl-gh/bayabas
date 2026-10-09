@@ -13,7 +13,12 @@
 ## One-time GitHub setup
 1. **Settings → Pages →** Build and deployment → Source: **GitHub Actions** (the `Pages` workflow deploys the web build of `main`).
 2. **Settings → Actions → General →** Workflow permissions: *Read and write*, and tick *Allow GitHub Actions to create and approve pull requests* (needed by release-please).
-3. **Settings → Branches →** protect `main`: require PR, require the `CI` check, squash merge only.
+3. **Settings → Branches →** protect `main`: require a PR (no required status checks; there is no CI on PRs).
+
+## Workflows
+- **Pages** (on every push to `main`): runs the unit tests, exports the web build and deploys the live link. If a test fails, nothing is deployed.
+- **Android APK** (manual, Actions tab → Run workflow): builds an installable debug APK.
+- **release-please** (on `main`): keeps the release PR up to date.
 
 ## Versioning
 Conventional Commits → release-please opens a release PR → merging it tags `vX.Y.Z` and updates `CHANGELOG.md`.

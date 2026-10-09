@@ -1,8 +1,9 @@
 name: Pages
 # One live site: every push to main rebuilds and replaces
 #   https://earl-gh.github.io/bayabas/
-# Needs Settings -> Pages -> Source: "GitHub Actions". PRs are verified by ci.yml
-# (tests + web/Android exports); they are not deployed.
+# Needs Settings -> Pages -> Source: "GitHub Actions". There is no CI on PRs: the
+# unit tests run here, and a failing test stops the deploy (the site keeps the last
+# good build).
 on:
   push:
     branches: [main]
@@ -29,10 +30,13 @@ jobs:
           version: ${{ steps.gv.outputs.godot }}
           use-dotnet: false
           include-templates: true
+      - name: Import project
+        run: godot --headless --import
+      - name: Unit tests (GUT)
+        run: godot --headless -s addons/gut/gut_cmdln.gd -gexit
       - name: Stamp version and export Web
         run: |
           sed -i "s|^config/version=.*|config/version=\"${{ steps.gv.outputs.app }}+${GITHUB_SHA::7}\"|" project.godot
-          godot --headless --import
           mkdir -p build/web
           godot --headless --export-release "Web" build/web/index.html
           test -f build/web/index.html
