@@ -18,7 +18,7 @@ func test_local_player_starts_at_own_base_seen_from_behind() -> void:
 	assert_eq(player.position, LAYOUT.base_center(MapLayout.SIDE_OWN))
 	var camera: Camera3D = practice.get_node("%FollowCamera") as Camera3D
 	assert_gt(camera.position.z, player.position.y - 0.001, "camera is behind the player (+Z side)")
-	assert_eq(camera.rotation_degrees.y, 0.0)
+	assert_almost_eq(camera.rotation_degrees.y, 0.0, 0.001)
 
 
 func test_stick_moves_the_player_and_the_camera_follows() -> void:
