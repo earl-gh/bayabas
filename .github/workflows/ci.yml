@@ -31,7 +31,6 @@ jobs:
 
   android-debug-apk:
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('project.godot') != '' }}
     env:
       ANDROID_BUILD_TOOLS: "35.0.1"
       ANDROID_PLATFORM: "android-35"
