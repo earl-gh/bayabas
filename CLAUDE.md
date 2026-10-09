@@ -29,7 +29,7 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 - Small PRs (one HANDOFF task each). Use `.github/pull_request_template.md`. Include the **PR preview URL** in the PR body and how to test it on a phone.
 - PR must be green: GUT tests + web export. Squash-merge only.
 - Releases: release-please opens a release PR on `main`; merging it tags `vX.Y.Z` and updates `CHANGELOG.md`. Don't edit versions or the changelog by hand. Pre-1.0: `feat` = minor, `fix` = patch.
-- Don't merge your own PR unless the owner says so in the session.
+- **Ship loop (owner-approved):** Claude opens the PR, waits for CI green, squash-merges it, waits for the Pages deploy of `main` to finish, then gives the owner the live link (`https://earl-gh.github.io/bayabas/`) plus what to check. Stop and ask instead if CI is red and not obviously fixable, or if the change is risky or outward-facing. The release-please release PR (tags a version) is still merged only when the owner says so.
 
 ## Definition of done (per task)
 - Static-typed, no warnings (treat warnings as errors in project settings).
