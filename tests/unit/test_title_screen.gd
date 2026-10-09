@@ -14,5 +14,5 @@ func test_version_label_matches_project_setting() -> void:
 func test_stub_button_sets_status() -> void:
 	var screen: TitleScreen = autofree(TITLE_SCENE.instantiate()) as TitleScreen
 	add_child(screen)
-	(screen.get_node("%PracticeButton") as Button).pressed.emit()
-	assert_eq((screen.get_node("%StatusLabel") as Label).text, "Practice: coming soon")
+	(screen.get_node("%CreateRoomButton") as Button).pressed.emit()
+	assert_eq((screen.get_node("%StatusLabel") as Label).text, "Create Room: coming soon")
