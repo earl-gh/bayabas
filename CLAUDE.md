@@ -42,6 +42,10 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 - **Android stays releasable at all times:** the `android-debug-apk` CI job must stay green on every PR (artifact `bayabas-debug-apk`). Never merge a change that breaks the `Android` preset or needs desktop-only/thread APIs. Signed release APK/AAB is M6.
 - Android-only problems (touch, safe areas, performance) can't be seen on the iPhone web build; call them out in the PR instead of assuming they work.
 
+## Art and orientation (binding)
+- Landscape only (Android locked; web shows a rotate prompt in portrait).
+- Art style: Clash of Clans-like, low-poly flat-shaded 3D with a Filipino street theme. Chunky, bright, saturated, readable at phone size. Inspired by, never copied: no Supercell assets, names or logos. Full spec in `docs/PROJECT.md` section 3.8.
+
 ## Definition of done (per task)
 - Static-typed, no warnings (treat warnings as errors in project settings).
 - Unit tests for every sim rule touched (`tests/unit/test_<thing>.gd`).

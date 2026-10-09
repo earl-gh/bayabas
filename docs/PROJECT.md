@@ -104,3 +104,10 @@ Every weapon has a type icon. All values (damage, cooldowns, ranges) are data-dr
 - **Android app** is the main release (APK). The **browser version is optional**, built from the same code and hosted on GitHub Pages; app and browser players can play in the same rooms.
 - **Offline practice mode** (vs. training dummies) so builds can be tested on a phone without a server.
 - Every PR gets a **playable web preview link** for testing from an iPhone.
+
+### 3.8 Visual style and orientation
+- **Landscape only.** The game always plays in landscape (Android locked to landscape). On the web build a phone held in portrait shows a "rotate your phone" prompt instead of the game.
+- **Style target: Clash of Clans-like, low-poly 3D, Filipino street theme.** Chunky, toy-like proportions; bright, saturated, high-contrast colours; clean flat-shaded low-poly meshes with one shared palette texture; soft rounded shapes, thick readable silhouettes, light cartoon outlines and bouncy, exaggerated animation; playful UI with big rounded buttons. Everything must read clearly from the isometric ~55 degree camera on a small phone screen.
+- **Pinoy flavour:** colours and details from the street (jeepney paint, faded sari-sari signage, laundry lines, tarpaulin posters, concrete and cardboard, bahay-kubo/barong-barong roofs), warm daylight, and kids in everyday clothes.
+- **Inspired by, not copied:** match the look and feel only. Do not reuse or imitate any Clash of Clans / Supercell asset, character, logo, UI art or name.
+- Keep to the performance budget in HANDOFF M6 (low poly counts, one material per prop where possible).
