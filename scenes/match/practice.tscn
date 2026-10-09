@@ -67,6 +67,19 @@ theme_override_font_sizes/font_size = 48
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="DelayLabel" type="Label" parent="Controls"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 116.0
+offset_bottom = 232.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 28
+text = "DOWN! Touch a teammate or
+your base post to get up"
+horizontal_alignment = 1
+
 [node name="DashButton" type="Control" parent="Controls"]
 unique_name_in_owner = true
 layout_mode = 3

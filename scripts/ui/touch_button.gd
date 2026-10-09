@@ -22,6 +22,9 @@ const MOUSE_POINTER: int = -2
 ## 1.0 = just used, 0.0 = ready.
 var cooldown_fraction: float = 0.0
 
+## While locked (e.g. skills off in the death delay) the button is dimmed and ignores presses.
+var locked: bool = false
+
 var _pointer: int = NO_POINTER
 
 
@@ -40,11 +43,17 @@ func set_cooldown(remaining: float, total: float) -> void:
 		queue_redraw()
 
 
+func set_locked(value: bool) -> void:
+	if value != locked:
+		locked = value
+		queue_redraw()
+
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		var touch: InputEventScreenTouch = event as InputEventScreenTouch
 		if touch.pressed:
-			if _pointer == NO_POINTER and _hit(touch.position):
+			if _pointer == NO_POINTER and not locked and _hit(touch.position):
 				_pointer = touch.index
 				pressed.emit()
 		elif touch.index == _pointer:
@@ -54,7 +63,7 @@ func _input(event: InputEvent) -> void:
 		if click.device == InputEvent.DEVICE_ID_EMULATION or click.button_index != MOUSE_BUTTON_LEFT:
 			return
 		if click.pressed:
-			if _pointer == NO_POINTER and _hit(click.position):
+			if _pointer == NO_POINTER and not locked and _hit(click.position):
 				_pointer = MOUSE_POINTER
 				pressed.emit()
 		elif _pointer == MOUSE_POINTER:
@@ -65,6 +74,8 @@ func _draw() -> void:
 	var center: Vector2 = size / 2.0
 	var radius: float = minf(size.x, size.y) / 2.0
 	draw_circle(center, radius, READY_COLOR)
+	if locked:
+		draw_circle(center, radius, COOLDOWN_COLOR)
 	if cooldown_fraction > 0.0:
 		draw_circle(center, radius, COOLDOWN_COLOR)
 		draw_arc(center, radius - ARC_WIDTH, -PI / 2.0, -PI / 2.0 + TAU * cooldown_fraction, ARC_POINTS, ARC_COLOR, ARC_WIDTH)

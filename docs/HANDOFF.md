@@ -17,8 +17,8 @@ Each milestone = a few small PRs, each with tests and a working Pages preview. F
 3. Movement + collision in sim (simple circle vs AABB, no physics engine dependency in sim).
 4. Isometric-style follow camera (ML-like, ~55° pitch); team-relative so your base is always at the bottom and the enemy base at the top (vertical lane); the full 16 m lane width fits the screen width.
 5. Input: on-screen joystick + 4 skill buttons with **drag-to-aim** and cancel zone; keyboard WASD, mouse aim, Q/E weapons, Space dash, F bookmark, R ball.
-6. HP, death, 10 s respawn; Dash (with stumble) and Bookmark.
-7. Practice mode with 2 training dummies (stand still / walk back and forth).
+6. HP, death delay (gray HP, revive by teammate touch or own base post, once per respawn), 10 s respawn; Dash (with stumble) and Bookmark.
+7. Practice mode with 2 training dummies (stand still / walk back and forth) plus 1 ally dummy to test revives.
 8. `CharacterDef` roster + random no-duplicate assignment at match start (seeded, tested). Placeholder capsules tinted per character until M5.
 
 ## M2 — Weapons (→ v0.3.0)
