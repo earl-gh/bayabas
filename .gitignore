@@ -1,0 +1,8 @@
+.godot/
+.import/
+build/
+export_credentials.cfg
+*.translation
+*.keystore
+.DS_Store
+Thumbs.db
