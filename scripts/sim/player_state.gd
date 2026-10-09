@@ -33,7 +33,21 @@ var death_delay_used: bool = false
 ## Training dummies never get a death delay.
 var death_delay_allowed: bool = true
 
+## Cosmetic only (CharacterDef id).
+var character_id: StringName = &""
+## The two equipped weapon ids (slot 0 = weapon 1, slot 1 = weapon 2).
+var weapons: Array[StringName] = []
+var weapon_cooldowns: Array[float] = [0.0, 0.0]
+## Seconds each weapon button has been held; -1 when not held.
+var aim_hold: Array[float] = [-1.0, -1.0]
+## Buttons from the previous tick, to see presses and releases.
+var previous_buttons: int = 0
+var effects: StatusEffects = StatusEffects.new()
+
 
 ## Alive, not in death delay, and not mid-dash or stumbling: free to use skills.
 func can_act() -> bool:
-	return alive and not death_delay and dash_time_left <= 0.0 and stumble_time_left <= 0.0
+	return (
+		alive and not death_delay and dash_time_left <= 0.0 and stumble_time_left <= 0.0
+		and effects.can_cast()
+	)

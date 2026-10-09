@@ -20,6 +20,10 @@ var tick: int = 0
 var players: Dictionary[int, PlayerState] = {}
 ## Wall columns (from the map layout). A column with hp <= 0 no longer blocks.
 var walls: Array[MapLayout.WallSpec] = []
+## Live weapon effects (projectiles, zones, shields).
+var weapons: WeaponSystem = WeaponSystem.new()
+## id -> WeaponDef, from rules.weapons.
+var weapon_defs: Dictionary[StringName, WeaponDef] = {}
 
 var _inputs: Dictionary[int, PlayerInput] = {}
 var _brains: Dictionary[int, DummyBrain] = {}
@@ -33,6 +37,8 @@ func _init(p_rules: GameRules, p_layout: MapLayout, seed_value: int) -> void:
 	rng.seed = seed_value
 	walls = layout.wall_columns()
 	_boundaries = layout.boundary_rects()
+	for def: WeaponDef in rules.weapons:
+		weapon_defs[def.id] = def
 
 
 ## Team 0 starts on the own (+Z) base, team 1 on the enemy (-Z) base.
@@ -58,6 +64,84 @@ func add_player(id: int, team: int) -> PlayerState:
 	state.radius = rules.player_radius
 	players[id] = state
 	return state
+
+
+## Equips two different weapons. Returns false (and changes nothing) for an
+## unknown weapon or the same weapon twice; two of the same *type* is fine.
+func set_loadout(id: int, first: StringName, second: StringName) -> bool:
+	if not players.has(id) or first == second:
+		return false
+	if not weapon_defs.has(first) or not weapon_defs.has(second):
+		return false
+	var state: PlayerState = players[id]
+	state.weapons = [first, second]
+	state.weapon_cooldowns = [0.0, 0.0]
+	state.aim_hold = [-1.0, -1.0]
+	return true
+
+
+## Two different random weapons (auto-fill when the pick timer runs out).
+func random_loadout() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	for def: WeaponDef in rules.weapons:
+		ids.append(def.id)
+	var first: int = rng.randi_range(0, ids.size() - 1)
+	var second: int = rng.randi_range(0, ids.size() - 2)
+	if second >= first:
+		second += 1
+	return [ids[first], ids[second]]
+
+
+## Gives every player a random character, no duplicates (seeded, so the server and
+## replays agree). Purely cosmetic.
+func assign_characters() -> void:
+	var ids: Array[StringName] = []
+	for character: CharacterDef in rules.characters:
+		ids.append(character.id)
+	for i: int in range(ids.size() - 1, 0, -1):
+		var j: int = rng.randi_range(0, i)
+		var swap: StringName = ids[i]
+		ids[i] = ids[j]
+		ids[j] = swap
+	var index: int = 0
+	for id: int in players:
+		players[id].character_id = ids[index % ids.size()]
+		index += 1
+
+
+## Living players that can be hit (not dead, not in the death delay).
+func is_targetable(state: PlayerState) -> bool:
+	return state.alive and not state.death_delay
+
+
+func enemies_of(team: int) -> Array[PlayerState]:
+	var result: Array[PlayerState] = []
+	for id: int in players:
+		var state: PlayerState = players[id]
+		if state.team != team and is_targetable(state):
+			result.append(state)
+	return result
+
+
+func nearest_enemy(caster: PlayerState, max_range: float) -> PlayerState:
+	var best: PlayerState = null
+	var best_distance: float = max_range
+	for target: PlayerState in enemies_of(caster.team):
+		var distance: float = caster.position.distance_to(target.position)
+		if distance <= best_distance:
+			best_distance = distance
+			best = target
+	return best
+
+
+## Status effect from a weapon. Hard CC also cancels a dash in progress.
+func apply_effect(id: int, type: StatusEffects.Type, duration: float, magnitude: float) -> void:
+	if not players.has(id) or not is_targetable(players[id]):
+		return
+	var state: PlayerState = players[id]
+	state.effects.apply(type, duration, magnitude)
+	if state.effects.is_hard_cc(type):
+		state.dash_time_left = 0.0
 
 
 ## A training dummy: a normal player on `team` placed at `position`, driven by `brain`.
@@ -116,10 +200,14 @@ func step(dt: float) -> void:
 			_step_alive(state, input, dt)
 		else:
 			_step_dead(state, dt)
+	weapons.step(self, dt)
 	tick += 1
 
 
 func _step_alive(state: PlayerState, input: PlayerInput, dt: float) -> void:
+	state.effects.step(dt)
+	for slot: int in state.weapon_cooldowns.size():
+		state.weapon_cooldowns[slot] = maxf(0.0, state.weapon_cooldowns[slot] - dt)
 	state.dash_cooldown_left = maxf(0.0, state.dash_cooldown_left - dt)
 	state.bookmark_cooldown_left = maxf(0.0, state.bookmark_cooldown_left - dt)
 	_tick_boost(state, dt)
@@ -128,6 +216,8 @@ func _step_alive(state: PlayerState, input: PlayerInput, dt: float) -> void:
 			_start_dash(state, input)
 		elif input.is_pressed(PlayerInput.BTN_BOOKMARK) and state.bookmark_cooldown_left <= 0.0:
 			_use_bookmark(state)
+	if input != null:
+		_handle_weapon_buttons(state, input, dt)
 	_move(state, input, dt)
 	if state.death_delay:
 		_step_death_delay(state)
@@ -190,12 +280,39 @@ func _revive(state: PlayerState, by_id: int) -> void:
 	player_revived.emit(state.id, by_id)
 
 
-## Dash, stumble and bookmark effects end on death/respawn. Cooldowns keep running.
+## Dash, stumble, bookmark, status effects and weapon aiming end on death/respawn.
+## Cooldowns keep running.
 func _clear_actions(state: PlayerState) -> void:
 	state.dash_time_left = 0.0
 	state.stumble_time_left = 0.0
 	state.boost_time_left = 0.0
 	state.mark_active = false
+	state.effects.clear()
+	state.aim_hold = [-1.0, -1.0]
+
+
+## Weapons cast on release: press starts aiming, hold time counts up (cone snips),
+## release casts at the aim from that tick unless it was released over the cancel zone.
+func _handle_weapon_buttons(state: PlayerState, input: PlayerInput, dt: float) -> void:
+	var bits: Array[int] = [PlayerInput.BTN_WEAPON_1, PlayerInput.BTN_WEAPON_2]
+	for slot: int in bits.size():
+		var held: bool = input.is_pressed(bits[slot])
+		var was_held: bool = (state.previous_buttons & bits[slot]) != 0
+		if held:
+			state.aim_hold[slot] = 0.0 if not was_held or state.aim_hold[slot] < 0.0 else state.aim_hold[slot] + dt
+		elif was_held and state.aim_hold[slot] >= 0.0:
+			if not input.is_pressed(PlayerInput.BTN_AIM_CANCEL):
+				_try_fire(state, slot, input.aim, state.aim_hold[slot])
+			state.aim_hold[slot] = -1.0
+	state.previous_buttons = input.buttons
+
+
+func _try_fire(state: PlayerState, slot: int, aim: Vector2, hold_seconds: float) -> void:
+	if not state.can_act() or slot >= state.weapons.size() or state.weapon_cooldowns[slot] > 0.0:
+		return
+	var def: WeaponDef = weapon_defs[state.weapons[slot]]
+	if weapons.fire(self, state, def, aim, hold_seconds):
+		state.weapon_cooldowns[slot] = def.cooldown
 
 
 func _start_dash(state: PlayerState, input: PlayerInput) -> void:
@@ -239,7 +356,7 @@ func _move(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	if state.stumble_time_left > 0.0:
 		state.stumble_time_left = maxf(0.0, state.stumble_time_left - dt)
 		return
-	if input == null:
+	if input == null or not state.effects.can_move():
 		return
 	var move: Vector2 = input.move.limit_length(1.0)
 	if move.length_squared() > 0.0:
@@ -247,6 +364,7 @@ func _move(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	var speed: float = rules.move_speed
 	if state.boost_time_left > 0.0:
 		speed *= 1.0 + rules.bookmark_speed_bonus
+	speed *= state.effects.speed_multiplier(rules.polymorph_speed_scale)
 	if state.death_delay:
 		speed *= rules.death_delay_move_speed_scale
 		state.gray_hp -= rules.death_delay_drain_per_second * move.length() * dt
@@ -277,7 +395,13 @@ func _spawn_position(side: int, slot: int) -> Vector2:
 ## What stops this player: the boundary walls plus every standing wall column on the
 ## OTHER team's side. A team walks straight through its own cardboard walls.
 func _blocking_rects_for(state: PlayerState) -> Array[Rect2]:
-	var own_side: int = side_for_team(state.team)
+	return blocking_rects_for_team(state.team)
+
+
+## Lane edges plus the other team's standing wall columns (what stops `team`'s
+## players and projectiles).
+func blocking_rects_for_team(team: int) -> Array[Rect2]:
+	var own_side: int = side_for_team(team)
 	var rects: Array[Rect2] = []
 	rects.append_array(_boundaries)
 	for wall: MapLayout.WallSpec in walls:

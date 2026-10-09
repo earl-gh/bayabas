@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/weapon_def.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+id = &"bola"
+display_name = "Bola"
+short_name = "Bola"
+street_game = "Jackstone"
+kind = 1
+shape = 7
+cooldown = 12.0
+max_range = 9.0
+damage = 6
+radius = 1.2
+speed = 12.0
+count = 2
+projectile_radius = 0.3
+effect = 5
+effect_duration = 1.0

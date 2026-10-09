@@ -18,7 +18,17 @@ static func keyboard_vector() -> Vector2:
 	return Vector2(x, y).limit_length(1.0)
 
 
-## Space = dash, F = bookmark (HANDOFF keyboard map; Q/E/R arrive with weapons and the ball).
+## Q = weapon 1, E = weapon 2 (held to aim with the mouse, released to cast).
+static func weapon_key_held(slot: int) -> bool:
+	return Input.is_physical_key_pressed(KEY_Q if slot == 0 else KEY_E)
+
+
+## Escape or right mouse button while aiming with Q/E cancels the cast.
+static func cancel_held() -> bool:
+	return Input.is_physical_key_pressed(KEY_ESCAPE) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+
+
+## Space = dash, F = bookmark (HANDOFF keyboard map; R arrives with the ball).
 static func keyboard_buttons() -> int:
 	var buttons: int = 0
 	if Input.is_physical_key_pressed(KEY_SPACE):

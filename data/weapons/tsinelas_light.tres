@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/weapon_def.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+id = &"tsinelas_light"
+display_name = "Tsinelas (Light)"
+short_name = "Tsinelas"
+street_game = "Tumbang preso"
+kind = 0
+shape = 5
+cooldown = 6.0
+max_range = 7.0
+damage = 8
+speed = 16.0
+count = 3
+interval = 0.15
+projectile_radius = 0.3

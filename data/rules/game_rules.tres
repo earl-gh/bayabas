@@ -1,6 +1,26 @@
-[gd_resource type="Resource" script_class="GameRules" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="GameRules" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/sim/game_rules.gd" id="1_rules"]
+[ext_resource type="Script" path="res://scripts/sim/weapon_def.gd" id="w_script"]
+[ext_resource type="Script" path="res://scripts/sim/character_def.gd" id="c_script"]
+[ext_resource type="Resource" path="res://data/weapons/bato_light.tres" id="w_bato_light"]
+[ext_resource type="Resource" path="res://data/weapons/bato_heavy.tres" id="w_bato_heavy"]
+[ext_resource type="Resource" path="res://data/weapons/gunting_light.tres" id="w_gunting_light"]
+[ext_resource type="Resource" path="res://data/weapons/gunting_heavy.tres" id="w_gunting_heavy"]
+[ext_resource type="Resource" path="res://data/weapons/papel_trap.tres" id="w_papel_trap"]
+[ext_resource type="Resource" path="res://data/weapons/papel_shield.tres" id="w_papel_shield"]
+[ext_resource type="Resource" path="res://data/weapons/tsinelas_light.tres" id="w_tsinelas_light"]
+[ext_resource type="Resource" path="res://data/weapons/tsinelas_heavy.tres" id="w_tsinelas_heavy"]
+[ext_resource type="Resource" path="res://data/weapons/lata.tres" id="w_lata"]
+[ext_resource type="Resource" path="res://data/weapons/jacks.tres" id="w_jacks"]
+[ext_resource type="Resource" path="res://data/weapons/bola.tres" id="w_bola"]
+[ext_resource type="Resource" path="res://data/weapons/trumpo.tres" id="w_trumpo"]
+[ext_resource type="Resource" path="res://data/characters/junjun.tres" id="c_junjun"]
+[ext_resource type="Resource" path="res://data/characters/ligaya.tres" id="c_ligaya"]
+[ext_resource type="Resource" path="res://data/characters/migo.tres" id="c_migo"]
+[ext_resource type="Resource" path="res://data/characters/toni.tres" id="c_toni"]
+[ext_resource type="Resource" path="res://data/characters/popoy.tres" id="c_popoy"]
+[ext_resource type="Resource" path="res://data/characters/inday.tres" id="c_inday"]
 
 [resource]
 script = ExtResource("1_rules")
@@ -33,3 +53,9 @@ dummy_patrol_range = 3.0
 dummy_patrol_speed_scale = 0.5
 dummy_ally_x = 0.0
 dummy_ally_z = 11.0
+weapons = Array[ExtResource("w_script")]([ExtResource("w_bato_light"), ExtResource("w_bato_heavy"), ExtResource("w_gunting_light"), ExtResource("w_gunting_heavy"), ExtResource("w_papel_trap"), ExtResource("w_papel_shield"), ExtResource("w_tsinelas_light"), ExtResource("w_tsinelas_heavy"), ExtResource("w_lata"), ExtResource("w_jacks"), ExtResource("w_bola"), ExtResource("w_trumpo")])
+characters = Array[ExtResource("c_script")]([ExtResource("c_junjun"), ExtResource("c_ligaya"), ExtResource("c_migo"), ExtResource("c_toni"), ExtResource("c_popoy"), ExtResource("c_inday")])
+weapon_pick_time = 10.0
+polymorph_speed_scale = 0.5
+aim_deadzone = 0.1
+boomerang_catch_distance = 0.8

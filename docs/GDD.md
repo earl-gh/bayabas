@@ -57,6 +57,17 @@ Effects do not stack with themselves; a new hard CC refreshes duration.
 
 Two copies of the same weapon cannot be equipped; two weapons of the same *type* can.
 
+### Casting and aiming
+- **Cast on release.** Hold a weapon button to aim, release to cast. Releasing over the **Cancel** zone (shown above the buttons while aiming) cancels; nothing is spent. Keyboard: hold Q / E to aim at the mouse, release to cast; Esc or right mouse while holding cancels.
+- **Auto-aim:** a tap (or a drag shorter than the deadzone, `aim_deadzone` 0.1 of full stick) aims at the nearest targetable enemy in range; with nobody in range it fires straight ahead (ground shapes land at full range). Drag length scales the distance for ground shapes (lata, bato heavy, papel trap, jacks).
+- `bato_light` needs a target: with no enemy in range nothing is thrown and **no cooldown** is spent. It homes on its target.
+- `gunting_light` snips: 2 on a tap, +1 per 0.25 s held, max 6, all on release.
+- Projectiles are stopped by enemy cardboard walls, the lane edges and enemy paper shields; they pass through their own team's walls and shields (D11).
+- Boomerangs (tsinelas) hit each enemy once going out and once coming back, turn back at max range or when they hit a wall, and are caught within 0.8 m of the thrower (`boomerang_catch_distance`).
+- An unarmed `papel_trap` waits on the ground for 20 s (`lifetime`) before it disappears.
+- Lata travels at 14 m/s to its point before it lands; bato heavy lands 0.6 s after the cast.
+- Effects are applied before damage. Players in the death delay are not hit by anything (D8).
+
 ## Map (single mid lane, ~60 m long × 16 m wide)
 - Layout per side, from base outward: base post → wall layer 1 → wall layer 2 → mid.
 - Each wall layer = 3 columns (left / center / right), each column 300 HP. A column at 0 HP is removed and opens that slot.
@@ -101,9 +112,11 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - **D3** Who can blink to the ball (default: thrower only).
 - **D4** Tricycle push direction (default: perpendicular, away from vehicle).
 - **D5** Original brief for walls ends with "This must …" — unfinished requirement. Partly answered by the owner: a team can pass through its own walls (implemented). Ask whether anything else was meant.
-- **D11** Do a team's own projectiles pass through its own walls? Default yes (matches movement); applies once projectiles exist (M2).
+- **D11** Do a team's own projectiles pass through its own walls? Default **yes** (matches movement; implemented in M2).
 - **D7** Bookmark "then return to mark": default = the player is moved back to the mark when the 4 s speed boost ends (data toggle `bookmark_returns` in `data/rules/game_rules.tres`).
 - **D8** Can enemies damage a player in the death delay? Default **no** (untargetable); data toggle `death_delay_takes_damage` (damage then drains gray HP).
 - **D9** Death-delay numbers (gray HP 50, drain 8/s, touch distances) are placeholders; tune in data.
 - **D10** With no basic attack, a loadout of only non-damaging weapons (e.g. `papel_trap` + `papel_shield`) deals no damage. Default: allowed; consider requiring at least one damaging weapon at pick time.
+- **D12** Unarmed papel trap lifetime (not in the brief): default 20 s.
+- **D13** Respawn weapon swap: the swap screen opens on death with your current weapons pre-picked; the choice applies at once (you are dead anyway) and the screen closes when you respawn.
 - **D6** Only one Block weapon exists — consider a second one for loadout variety.

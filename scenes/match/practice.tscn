@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/view/practice_match.gd" id="1_practice"]
 [ext_resource type="PackedScene" path="res://scenes/map/greybox_map.tscn" id="2_map"]
@@ -8,6 +8,10 @@
 [ext_resource type="Script" path="res://scripts/view/follow_camera.gd" id="6_follow"]
 [ext_resource type="Script" path="res://scripts/ui/virtual_joystick.gd" id="7_stick"]
 [ext_resource type="Script" path="res://scripts/ui/touch_button.gd" id="8_button"]
+[ext_resource type="Script" path="res://scripts/ui/aim_button.gd" id="9_aim"]
+[ext_resource type="Script" path="res://scripts/ui/weapon_pick_screen.gd" id="10_pick"]
+[ext_resource type="Script" path="res://scripts/view/weapon_fx_view.gd" id="11_fx"]
+[ext_resource type="Script" path="res://scripts/view/aim_indicator.gd" id="12_aim_indicator"]
 
 [node name="Practice" type="Node3D"]
 script = ExtResource("1_practice")
@@ -19,6 +23,14 @@ show_overview_camera = false
 
 [node name="Actors" type="Node3D" parent="."]
 unique_name_in_owner = true
+
+[node name="WeaponFx" type="Node3D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("11_fx")
+
+[node name="AimIndicator" type="MeshInstance3D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("12_aim_indicator")
 
 [node name="FollowCamera" type="Camera3D" parent="."]
 unique_name_in_owner = true
@@ -80,6 +92,75 @@ text = "DOWN! Touch a teammate or
 your base post to get up"
 horizontal_alignment = 1
 
+[node name="CancelZone" type="Control" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -170.0
+offset_top = -540.0
+offset_right = -60.0
+offset_bottom = -430.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+visible = false
+
+[node name="CancelBack" type="ColorRect" parent="Controls/CancelZone"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.85, 0.15, 0.15, 0.55)
+
+[node name="CancelLabel" type="Label" parent="Controls/CancelZone"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 24
+text = "Cancel"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="WeaponButton1" type="Control" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -194.0
+offset_top = -194.0
+offset_right = -44.0
+offset_bottom = -44.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("9_aim")
+
+[node name="WeaponButton2" type="Control" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -360.0
+offset_top = -150.0
+offset_right = -230.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("9_aim")
+
 [node name="DashButton" type="Control" parent="Controls"]
 unique_name_in_owner = true
 layout_mode = 3
@@ -88,10 +169,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -174.0
-offset_top = -234.0
-offset_right = -46.0
-offset_bottom = -106.0
+offset_left = -170.0
+offset_top = -370.0
+offset_right = -58.0
+offset_bottom = -258.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
@@ -106,10 +187,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -312.0
-offset_top = -174.0
-offset_right = -184.0
-offset_bottom = -46.0
+offset_left = -330.0
+offset_top = -320.0
+offset_right = -218.0
+offset_bottom = -208.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
@@ -122,10 +203,21 @@ layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -260.0
+offset_left = -184.0
 offset_top = 64.0
-offset_right = -24.0
-offset_bottom = 124.0
+offset_right = -16.0
+offset_bottom = 120.0
 grow_horizontal = 0
-theme_override_font_sizes/font_size = 22
-text = "DEBUG: -30 HP"
+theme_override_font_sizes/font_size = 20
+text = "-30 HP (test)"
+
+[node name="PickScreen" type="Control" parent="Controls"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("10_pick")

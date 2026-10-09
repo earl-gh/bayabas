@@ -6,7 +6,9 @@ extends Control
 
 signal pressed
 
-const READY_COLOR: Color = Color(1.0, 1.0, 1.0, 0.35)
+const READY_COLOR: Color = Color(0.1, 0.1, 0.16, 0.55)
+const RIM_COLOR: Color = Color(1.0, 1.0, 1.0, 0.6)
+const FONT_SIZE: int = 26
 const COOLDOWN_COLOR: Color = Color(0.0, 0.0, 0.0, 0.45)
 const ARC_COLOR: Color = Color(1.0, 1.0, 1.0, 0.8)
 const TEXT_COLOR: Color = Color(1.0, 1.0, 1.0, 0.95)
@@ -18,6 +20,9 @@ const NO_POINTER: int = -1
 const MOUSE_POINTER: int = -2
 
 @export var label_text: String = ""
+## Small second line, e.g. the weapon type (ATK / CC / BLOCK).
+@export var sub_text: String = ""
+@export var sub_color: Color = Color(1.0, 1.0, 1.0, 0.8)
 
 ## 1.0 = just used, 0.0 = ready.
 var cooldown_fraction: float = 0.0
@@ -74,15 +79,21 @@ func _draw() -> void:
 	var center: Vector2 = size / 2.0
 	var radius: float = minf(size.x, size.y) / 2.0
 	draw_circle(center, radius, READY_COLOR)
+	draw_arc(center, radius - 1.5, 0.0, TAU, ARC_POINTS, RIM_COLOR, 3.0)
 	if locked:
 		draw_circle(center, radius, COOLDOWN_COLOR)
 	if cooldown_fraction > 0.0:
 		draw_circle(center, radius, COOLDOWN_COLOR)
 		draw_arc(center, radius - ARC_WIDTH, -PI / 2.0, -PI / 2.0 + TAU * cooldown_fraction, ARC_POINTS, ARC_COLOR, ARC_WIDTH)
 	var font: Font = ThemeDB.fallback_font
-	var font_size: int = ThemeDB.fallback_font_size
+	var font_size: int = FONT_SIZE
 	var text_size: Vector2 = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
-	draw_string(font, center + Vector2(-text_size.x / 2.0, text_size.y / 4.0), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, TEXT_COLOR)
+	var line_shift: float = 0.0 if sub_text.is_empty() else -text_size.y / 3.0
+	draw_string(font, center + Vector2(-text_size.x / 2.0, text_size.y / 4.0 + line_shift), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, TEXT_COLOR)
+	if not sub_text.is_empty():
+		var sub_size: int = roundi(font_size * 0.75)
+		var sub_width: float = font.get_string_size(sub_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, sub_size).x
+		draw_string(font, center + Vector2(-sub_width / 2.0, text_size.y), sub_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, sub_size, sub_color)
 
 
 func _hit(viewport_position: Vector2) -> bool:
