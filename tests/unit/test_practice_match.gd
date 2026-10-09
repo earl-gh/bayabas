@@ -194,11 +194,31 @@ func test_bookmark_button_blinks_the_player() -> void:
 func test_a_pressed_skill_is_sent_once() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	practice.press_skill(PlayerInput.BTN_DASH)
+	practice.advance(DT)
+	var cooldown: float = player.dash_cooldown_left
+	practice.advance(DT)
+	assert_lt(player.dash_cooldown_left, cooldown, "cooldown runs, not re-triggered")
+
+
+func test_skill_buttons_are_disabled_while_on_cooldown() -> void:
+	var practice: PracticeMatch = _practice()
+	var dash: TouchButton = practice.get_node("%DashButton") as TouchButton
+	var mark: TouchButton = practice.get_node("%BookmarkButton") as TouchButton
+	_equip(practice, &"bato_light", &"papel_shield")
 	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
-	var cooldown: float = player.bookmark_cooldown_left
+	assert_true(mark.locked, "out on the mark")
+	assert_false(dash.locked)
+	practice.aim_started(1)
+	practice.aim_released(Vector2.ZERO, false, 1)
+	for i: int in 3:
+		practice.advance(DT)
+	assert_true(_weapon_button(practice, 1).locked, "shield on cooldown")
+	assert_false(_weapon_button(practice, 0).locked)
+	practice.press_skill(PlayerInput.BTN_DASH)
 	practice.advance(DT)
-	assert_lt(player.bookmark_cooldown_left, cooldown, "cooldown runs, not re-triggered")
+	assert_true(dash.locked)
 
 
 # ---- weapon pick ---------------------------------------------------------------
@@ -383,7 +403,7 @@ func test_aim_indicator_shows_range_and_landing_circle() -> void:
 	var caster: PlayerState = sim.add_player(1, 0)
 	caster.position = Vector2.ZERO
 	var def: WeaponDef = sim.weapon_defs[&"bato_heavy"]
-	var lines: Array[PackedVector2Array] = AimIndicator.outline(sim, caster, def, Vector2(0.0, -0.5))
+	var lines: Array[PackedVector2Array] = AimIndicator.outline(sim, caster, def, Vector2(0.0, -0.5), -1)
 	assert_eq(lines.size(), 3, "range circle, aim line, landing circle")
 	assert_almost_eq(lines[0][0].length(), def.max_range, 0.001)
 	assert_almost_eq(lines[1][1].y, -4.0, 0.001, "half the stick = half the range")

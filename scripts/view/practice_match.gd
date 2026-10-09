@@ -332,8 +332,9 @@ func _sync_hud(player: PlayerState) -> void:
 	_swap_button.visible = not player.alive and not _pick_screen.visible
 	if not player.alive:
 		_pick_screen.show_time(player.respawn_time_left)
-	_dash_button.set_locked(player.death_delay)
-	_bookmark_button.set_locked(player.death_delay)
+	# Disabled while on cooldown too: no pressing or precasting until ready.
+	_dash_button.set_locked(player.death_delay or player.dash_cooldown_left > 0.0)
+	_bookmark_button.set_locked(player.death_delay or not player.bookmark_ready())
 	_dash_button.set_cooldown(player.dash_cooldown_left, rules.dash_cooldown)
 	_bookmark_button.set_cooldown(player.bookmark_cooldown_left, rules.bookmark_cooldown)
 	var weapons_off: bool = not player.alive or player.death_delay or not player.effects.can_cast()
@@ -348,7 +349,7 @@ func _sync_hud(player: PlayerState) -> void:
 			button.sub_text = def.kind_label()
 			button.sub_color = WeaponPickScreen.kind_color(def.kind)
 			button.queue_redraw()
-		button.set_locked(weapons_off)
+		button.set_locked(weapons_off or player.weapon_cooldowns[slot] > 0.0)
 		button.set_cooldown(player.weapon_cooldowns[slot], def.cooldown)
 
 
@@ -357,16 +358,23 @@ func _sync_aim(player: PlayerState) -> void:
 	for slot: int in _weapon_buttons.size():
 		if slot >= player.weapons.size() or not player.alive:
 			continue
-		var def: WeaponDef = sim.weapon_defs[player.weapons[slot]]
+		var stick: Vector2
+		var cancelled: bool
 		if _touch_held[slot]:
-			var button: AimButton = _weapon_buttons[slot]
-			_aim_indicator.show_aim(sim, player, def, _screen_to_world(button.aim), button.over_cancel)
-			any_aiming = true
-			break
-		if _key_held[slot]:
-			_aim_indicator.show_aim(sim, player, def, _key_aim[slot], _key_cancel[slot])
-			any_aiming = true
-			break
+			stick = _screen_to_world(_weapon_buttons[slot].aim)
+			cancelled = _weapon_buttons[slot].over_cancel
+		elif _key_held[slot]:
+			stick = _key_aim[slot]
+			cancelled = _key_cancel[slot]
+		else:
+			continue
+		if player.aim_hold[slot] < 0.0 and not sim.weapon_ready(player, slot):
+			continue
+		var def: WeaponDef = sim.weapon_defs[player.weapons[slot]]
+		var aim: Vector2 = sim.resolved_aim(player, slot, stick)
+		_aim_indicator.show_aim(sim, player, def, aim, sim.resolved_target(player, slot), cancelled)
+		any_aiming = true
+		break
 	if not any_aiming:
 		_aim_indicator.clear()
 	_cancel_zone.visible = _touch_held[0] or _touch_held[1]

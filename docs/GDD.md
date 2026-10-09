@@ -32,7 +32,9 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Skill | Effect | CD |
 |---|---|---|
 | Takbo (Dash) | 5 m dash over 0.2 s, then 0.4 s stumble (can't move/cast) | 8 s |
-| Bookmark | Place mark, blink 4 m forward, +30% speed for 4 s, then return to mark | 14 s |
+| Bookmark | Place mark, blink 4 m forward, +30% speed for 4 s, then return to mark | 14 s, **starting when you are back at the mark** |
+
+**No precasting (owner):** a skill or weapon on cooldown is disabled. Its button is dimmed and ignores presses, and holding a key or button through the cooldown does nothing when the cooldown ends; it needs a fresh press. Bookmark can't be used again while you are still out on a mark, and its cooldown only starts after the return (or when you die out on a mark).
 
 Dash and Bookmark blink stop at walls that block you, i.e. the enemy's walls and the lane edges (your own team's walls are passable). Death cancels active dash/stumble/bookmark effects; cooldowns keep running through death and respawn.
 
@@ -60,7 +62,9 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 ### Casting and aiming
 - **Cast on release.** Hold a weapon button to aim, release to cast. Releasing over the **Cancel** zone (shown above the buttons while aiming) cancels; nothing is spent. Keyboard: hold Q / E to aim at the mouse, release to cast; Esc or right mouse while holding cancels.
 - **Auto-aim:** a tap (or a drag shorter than the deadzone, `aim_deadzone` 0.1 of full stick) aims at the nearest targetable enemy in range; with nobody in range it fires straight ahead (ground shapes land at full range). Drag length scales the distance for ground shapes (lata, bato heavy, papel trap, jacks).
-- `bato_light` needs a target: with no enemy in range nothing is thrown and **no cooldown** is spent. It homes on its target.
+- **Auto-aim never follows a moving enemy while you hold (owner, fairness).** It is taken once, at the moment you press: the spot (relative to you) or, for `bato_light`, the enemy. Holding keeps that aim; if the enemy walks away the cast still goes where they were. Dragging past the deadzone aims by hand instead.
+- `bato_light` throws at the enemy locked at the press. If that enemy has left range (or is down) when you release, nothing is thrown and **no cooldown** is spent. Once thrown, the rock homes on that enemy (a targeted projectile, per the weapon table).
+- A hard CC (or going down) while aiming drops the aim; press again when it ends.
 - `gunting_light` snips: 2 on a tap, +1 per 0.25 s held, max 6, all on release.
 - Projectiles are stopped by enemy cardboard walls, the lane edges and enemy paper shields; they pass through their own team's walls and shields (D11).
 - Boomerangs (tsinelas) hit each enemy once going out and once coming back, turn back at max range or when they hit a wall, and are caught within 0.8 m of the thrower (`boomerang_catch_distance`).

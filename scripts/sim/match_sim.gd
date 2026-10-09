@@ -227,10 +227,13 @@ func _step_alive(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	state.dash_cooldown_left = maxf(0.0, state.dash_cooldown_left - dt)
 	state.bookmark_cooldown_left = maxf(0.0, state.bookmark_cooldown_left - dt)
 	_tick_boost(state, dt)
+	# Skills fire on a fresh press only: holding a key through a cooldown does not
+	# queue a cast for the moment it ends (no precasting).
+	var just_pressed: int = input.buttons & ~state.previous_buttons if input != null else 0
 	if input != null and state.can_act():
-		if input.is_pressed(PlayerInput.BTN_DASH) and state.dash_cooldown_left <= 0.0:
+		if just_pressed & PlayerInput.BTN_DASH and state.dash_cooldown_left <= 0.0:
 			_start_dash(state, input)
-		elif input.is_pressed(PlayerInput.BTN_BOOKMARK) and state.bookmark_cooldown_left <= 0.0:
+		elif just_pressed & PlayerInput.BTN_BOOKMARK and state.bookmark_ready():
 			_use_bookmark(state)
 	if input != null:
 		_handle_weapon_buttons(state, input, dt)
@@ -302,32 +305,79 @@ func _clear_actions(state: PlayerState) -> void:
 	state.dash_time_left = 0.0
 	state.stumble_time_left = 0.0
 	state.boost_time_left = 0.0
+	if state.mark_active:
+		state.bookmark_cooldown_left = rules.bookmark_cooldown
 	state.mark_active = false
 	state.effects.clear()
 	state.aim_hold = [-1.0, -1.0]
 
 
-## Weapons cast on release: press starts aiming, hold time counts up (cone snips),
-## release casts at the aim from that tick unless it was released over the cancel zone.
+## Weapons cast on release: a fresh press starts aiming (only if the weapon is
+## ready: no precasting during a cooldown), hold time counts up (cone snips) and
+## release casts unless it was released over the cancel zone. Auto-aim is taken
+## once at the press; hard CC or the death delay drops a held aim.
 func _handle_weapon_buttons(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	var bits: Array[int] = [PlayerInput.BTN_WEAPON_1, PlayerInput.BTN_WEAPON_2]
 	for slot: int in bits.size():
 		var held: bool = input.is_pressed(bits[slot])
 		var was_held: bool = (state.previous_buttons & bits[slot]) != 0
-		if held:
-			state.aim_hold[slot] = 0.0 if not was_held or state.aim_hold[slot] < 0.0 else state.aim_hold[slot] + dt
-		elif was_held and state.aim_hold[slot] >= 0.0:
+		if held and not was_held:
+			if weapon_ready(state, slot):
+				state.aim_hold[slot] = 0.0
+				_lock_aim(state, slot)
+			else:
+				state.aim_hold[slot] = -1.0
+		elif held and state.aim_hold[slot] >= 0.0:
+			if state.death_delay or not state.effects.can_cast():
+				state.aim_hold[slot] = -1.0
+			else:
+				state.aim_hold[slot] += dt
+		elif not held and was_held and state.aim_hold[slot] >= 0.0:
 			if not input.is_pressed(PlayerInput.BTN_AIM_CANCEL):
 				_try_fire(state, slot, input.aim, state.aim_hold[slot])
 			state.aim_hold[slot] = -1.0
 	state.previous_buttons = input.buttons
 
 
-func _try_fire(state: PlayerState, slot: int, aim: Vector2, hold_seconds: float) -> void:
-	if not state.can_act() or slot >= state.weapons.size() or state.weapon_cooldowns[slot] > 0.0:
+## A weapon slot can start aiming: equipped, off cooldown, and casting allowed.
+func weapon_ready(state: PlayerState, slot: int) -> bool:
+	return (
+		state.alive and not state.death_delay and state.effects.can_cast()
+		and slot < state.weapons.size() and state.weapon_cooldowns[slot] <= 0.0
+	)
+
+
+## The aim a release would use: the stick if it is past the deadzone, otherwise the
+## auto-aim locked at the press (or a live auto-aim if the slot is not held yet).
+func resolved_aim(state: PlayerState, slot: int, stick: Vector2) -> Vector2:
+	if stick.length() >= rules.aim_deadzone:
+		return stick.limit_length(1.0)
+	if state.aim_hold[slot] >= 0.0:
+		return state.aim_lock[slot]
+	return weapons.auto_aim(self, state, weapon_defs[state.weapons[slot]])
+
+
+## The target a TARGETED weapon would throw at (locked at the press while held).
+func resolved_target(state: PlayerState, slot: int) -> int:
+	if state.aim_hold[slot] >= 0.0:
+		return state.aim_target[slot]
+	var target: PlayerState = nearest_enemy(state, weapon_defs[state.weapons[slot]].max_range)
+	return target.id if target != null else -1
+
+
+func _lock_aim(state: PlayerState, slot: int) -> void:
+	var def: WeaponDef = weapon_defs[state.weapons[slot]]
+	state.aim_lock[slot] = weapons.auto_aim(self, state, def)
+	var target: PlayerState = nearest_enemy(state, def.max_range)
+	state.aim_target[slot] = target.id if target != null else -1
+
+
+func _try_fire(state: PlayerState, slot: int, stick: Vector2, hold_seconds: float) -> void:
+	if not state.can_act() or not weapon_ready(state, slot):
 		return
 	var def: WeaponDef = weapon_defs[state.weapons[slot]]
-	if weapons.fire(self, state, def, aim, hold_seconds):
+	var aim: Vector2 = resolved_aim(state, slot, stick)
+	if weapons.fire(self, state, def, aim, hold_seconds, state.aim_target[slot]):
 		state.weapon_cooldowns[slot] = def.cooldown
 
 
@@ -345,7 +395,6 @@ func _use_bookmark(state: PlayerState) -> void:
 	state.mark_position = state.position
 	state.mark_active = true
 	state.boost_time_left = rules.bookmark_boost_duration
-	state.bookmark_cooldown_left = rules.bookmark_cooldown
 	_move_by(state, state.facing * rules.bookmark_blink)
 
 
@@ -358,6 +407,8 @@ func _tick_boost(state: PlayerState, dt: float) -> void:
 		if state.mark_active and rules.bookmark_returns:
 			state.position = state.mark_position
 		state.mark_active = false
+		# the cooldown only starts once the player is back at the mark
+		state.bookmark_cooldown_left = rules.bookmark_cooldown
 
 
 func _move(state: PlayerState, input: PlayerInput, dt: float) -> void:

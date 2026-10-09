@@ -419,3 +419,77 @@ func test_swap_only_while_dead_and_kept_weapons_keep_their_cooldown() -> void:
 	assert_true(sim.swap_loadout(CASTER, &"bato_heavy", &"lata"), "again, no limit")
 	assert_eq(caster.weapon_cooldowns, [5.0, 0.0] as Array[float], "swapping away and back clears nothing")
 	assert_false(sim.swap_loadout(CASTER, &"lata", &"lata"))
+
+
+
+# ---- no precast, no following -------------------------------------------------
+
+func test_holding_a_weapon_through_its_cooldown_does_not_precast() -> void:
+	var sim: MatchSim = _sim()
+	var caster: PlayerState = _caster(sim, &"bato_light")
+	var enemy: PlayerState = _target(sim, 2, Vector2(0.0, -5.0))
+	_cast(sim, 0)
+	_wait(sim, 1.0)
+	assert_eq(enemy.hp, 86)
+	# press during the cooldown and keep holding until it is over, then let go
+	_cast(sim, 0, Vector2.ZERO, 150)
+	_wait(sim, 1.0)
+	assert_eq(enemy.hp, 86, "a press during the cooldown never starts an aim")
+	assert_eq(caster.weapon_cooldowns[0], 0.0)
+
+
+func test_auto_aim_is_taken_at_the_press_and_does_not_follow_the_enemy() -> void:
+	var sim: MatchSim = _sim()
+	_caster(sim, &"bato_heavy")
+	var enemy: PlayerState = _target(sim, 2, Vector2(0.0, -6.0))
+	sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, PlayerInput.BTN_WEAPON_1, sim.tick))
+	sim.step(DT)
+	enemy.position = Vector2(4.0, -6.0)
+	for i: int in 10:
+		sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, PlayerInput.BTN_WEAPON_1, sim.tick))
+		sim.step(DT)
+	sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, 0, sim.tick))
+	sim.step(DT)
+	_wait(sim, 1.0)
+	assert_eq(enemy.hp, 100, "the rock lands where the enemy was at the press")
+	assert_eq(sim.weapons.zones.size(), 0)
+
+
+func test_targeted_bato_throws_at_the_enemy_locked_at_the_press() -> void:
+	var sim: MatchSim = _sim()
+	var caster: PlayerState = _caster(sim, &"bato_light")
+	var first: PlayerState = _target(sim, 2, Vector2(0.0, -3.0))
+	var second: PlayerState = _target(sim, 3, Vector2(0.0, -5.0))
+	sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, PlayerInput.BTN_WEAPON_1, sim.tick))
+	sim.step(DT)
+	first.position = Vector2(0.0, -6.5)
+	_cast(sim, 0, Vector2.ZERO, 0)
+	_wait(sim, 1.0)
+	assert_eq(first.hp, 86, "still the locked enemy, not the now-nearer one")
+	assert_eq(second.hp, 100)
+	assert_gt(caster.weapon_cooldowns[0], 0.0)
+
+
+func test_targeted_bato_does_nothing_if_the_locked_enemy_left_range() -> void:
+	var sim: MatchSim = _sim()
+	var caster: PlayerState = _caster(sim, &"bato_light")
+	var enemy: PlayerState = _target(sim, 2, Vector2(0.0, -5.0))
+	sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, PlayerInput.BTN_WEAPON_1, sim.tick))
+	sim.step(DT)
+	enemy.position = Vector2(0.0, -9.0)
+	_cast(sim, 0, Vector2.ZERO, 0)
+	assert_eq(caster.weapon_cooldowns[0], 0.0, "nothing thrown, no cooldown spent")
+
+
+func test_a_stun_while_aiming_drops_the_aim() -> void:
+	var sim: MatchSim = _sim()
+	var caster: PlayerState = _caster(sim, &"bato_heavy")
+	sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, PlayerInput.BTN_WEAPON_1, sim.tick))
+	sim.step(DT)
+	sim.apply_effect(CASTER, T.STUN, 0.2, 0.0)
+	for i: int in 15:
+		sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, PlayerInput.BTN_WEAPON_1, sim.tick))
+		sim.step(DT)
+	sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, 0, sim.tick))
+	sim.step(DT)
+	assert_eq(caster.weapon_cooldowns[0], 0.0, "press again after the stun")
