@@ -2,9 +2,9 @@
 
 Run: python3 tools/art/make_buttons.py
 Run slice_skill_art.py first. Output: assets/icons/btn_<id>.png (256 px). Each button
-is the cardboard disc with the painted skill icon cropped inside its flat face and a
-thin ring coloured by the skill's type (attack red, crowd control violet, block blue,
-heal green, the pin navy). The weapon types are read from data/weapons/*.tres.
+is the cardboard disc with the whole painted skill icon on its flat face. The icon's own
+glow shows the type (attack red, crowd control violet, block blue, heal green). The weapon
+types are read from data/weapons/*.tres.
 """
 import os
 import re
@@ -62,13 +62,11 @@ def radial(top, bottom):
 
 ART = os.path.join(ICONS, "art")
 DISC = os.path.join(ROOT, "assets", "ui", "skill_disc.png")
-# type ring colours: attack red, crowd control violet, block blue, heal green, pin navy
-RING = {0: (230, 60, 52), 1: (150, 90, 235), 2: (60, 130, 245), "heal": (80, 200, 70), "move": (60, 90, 170)}
-FACE_RATIO = 0.38  # radius of the flat cardboard face, as a fraction of the disc width
+FACE_RATIO = 0.44  # radius of the flat cardboard face, as a fraction of the disc width
 
 
-def compose(icon_path, ring_color, scale=1.12, nudge=(0, 0)):
-    """The cardboard disc with the icon cropped inside its flat face and a thin type-coloured ring."""
+def compose(icon_path, scale=0.92, nudge=(0, 0)):
+    """The cardboard disc with the whole painted icon sitting inside its flat face (not cropped)."""
     img = Image.new("RGBA", (N, N), (0, 0, 0, 0))
     disc = Image.open(DISC).convert("RGBA")
     side = int(N * 0.97)
@@ -79,34 +77,20 @@ def compose(icon_path, ring_color, scale=1.12, nudge=(0, 0)):
     img.alpha_composite(shadow)
     img.alpha_composite(disc, (ox, oy))
     cx, cy = ox + disc.width / 2, oy + disc.height / 2
-    r = disc.width * FACE_RATIO
-    face = Image.new("L", (N, N), 0)
-    ImageDraw.Draw(face).ellipse([cx - r, cy - r, cx + r, cy + r], fill=255)
     icon = Image.open(icon_path).convert("RGBA")
-    isz = int(r * 2 * scale)
+    isz = int(disc.width * FACE_RATIO * 2 * scale)
     icon = icon.resize((isz, isz), Image.LANCZOS)
-    layer = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-    layer.alpha_composite(icon, (int(cx - isz / 2 + nudge[0] * SS), int(cy - isz / 2 + nudge[1] * SS)))
-    layer.putalpha(ImageChops.multiply(layer.split()[3], face))
-    # a dark well behind the icon so the glow reads, then the icon, then the ring
-    well = Image.new("RGBA", (N, N), (60, 30, 20, 70))
-    well.putalpha(face.point(lambda v: v * 70 // 255))
-    img.alpha_composite(well)
-    img.alpha_composite(layer)
-    ring = ImageChops.subtract(face, face.filter(ImageFilter.MinFilter(2 * 5 * SS + 1)))
-    img.paste(Image.new("RGBA", (N, N), ring_color + (255,)), (0, 0), ring)
-    rim = ImageChops.subtract(face.filter(ImageFilter.MaxFilter(2 * 2 * SS + 1)), face)
-    img.paste(Image.new("RGBA", (N, N), (40, 22, 14, 255)), (0, 0), rim.point(lambda v: v * 200 // 255))
+    img.alpha_composite(icon, (int(cx - isz / 2 + nudge[0] * SS), int(cy - isz / 2 + nudge[1] * SS)))
     return img.resize((SIZE, SIZE), Image.LANCZOS)
 
 
 def main():
     for wid, kind in weapon_kinds().items():
-        compose(os.path.join(ART, wid + ".png"), RING[kind]).save(os.path.join(ICONS, "btn_%s.png" % wid), optimize=True)
+        compose(os.path.join(ART, wid + ".png")).save(os.path.join(ICONS, "btn_%s.png" % wid), optimize=True)
         print("btn_" + wid, ["ATK", "CC", "BLK"][kind])
-    compose(os.path.join(ART, "heal.png"), RING["heal"]).save(os.path.join(ICONS, "btn_guava.png"), optimize=True)
-    compose(os.path.join(ICONS, "guava.png"), RING["heal"], scale=0.9).save(os.path.join(ICONS, "btn_ball.png"), optimize=True)
-    compose(os.path.join(ICONS, "pin.png"), RING["move"], scale=0.9, nudge=(0, 2)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)
+    compose(os.path.join(ART, "heal.png")).save(os.path.join(ICONS, "btn_guava.png"), optimize=True)
+    compose(os.path.join(ICONS, "guava.png"), scale=0.74).save(os.path.join(ICONS, "btn_ball.png"), optimize=True)
+    compose(os.path.join(ICONS, "pin.png"), scale=0.74, nudge=(0, 2)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)
     print("buttons done")
 
 
