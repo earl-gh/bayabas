@@ -1,7 +1,8 @@
 """Slices the 5-direction sprite sheets into keyed PNG cells.
 
 usage: python3 tools/sprites/slice_sheets.py <kid> <anim>=<sheet image> [...]
-Each sheet is one row of 5 equal cells: toward, toward-right, right, away-right, away
+A sheet with several rows names them top to bottom: ko_stagger+ko_lying=sheet.webp
+Each row is 5 equal cells: toward, toward-right, right, away-right, away
 (left-facing views are mirrored in game). Magenta (#FF00FF) is keyed to transparent
 and the pink fringe is despilled. Output: assets/sprites/<kid>/<anim>_<dir>.png
 """
@@ -35,13 +36,16 @@ def main():
     folder = os.path.join(OUT, kid)
     os.makedirs(folder, exist_ok=True)
     for spec in sys.argv[2:]:
-        anim, path = spec.split("=", 1)
+        names, path = spec.split("=", 1)
         sheet = Image.open(path)
+        rows = names.split("+")
         cell = sheet.width // len(DIRS)
-        for i, name in enumerate(DIRS):
-            part = key_magenta(sheet.crop((i * cell, 0, (i + 1) * cell, sheet.height)))
-            part.save(os.path.join(folder, "%s_%s.png" % (anim, name)))
-            print(anim, name, part.size, part.getbbox())
+        height = sheet.height // len(rows)
+        for r, anim in enumerate(rows):
+            for i, name in enumerate(DIRS):
+                part = key_magenta(sheet.crop((i * cell, r * height, (i + 1) * cell, (r + 1) * height)))
+                part.save(os.path.join(folder, "%s_%s.png" % (anim, name)))
+                print(anim, name, part.size, part.getbbox())
 
 
 main()
