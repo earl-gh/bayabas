@@ -1,8 +1,9 @@
 class_name LaneMinimap
 extends Control
-## Slim vertical minimap of the lane on the left edge (docs/GDD.md "Vertical
-## layout"): your base at the bottom, standing walls, both bases, players as
-## dots (you are white-ringed), the ball and the tricycle when they are out.
+## Square minimap in the top left corner (docs/GDD.md "HUD"): the lane runs
+## slanted from your base (bottom left) to the enemy base (top right), with the
+## standing walls, both bases, players as dots (you are white-ringed), the ball
+## and the tricycle when they are out.
 
 const PANEL: Color = Color(0.1, 0.08, 0.14, 0.75)
 const ROAD: Color = Color(0.36, 0.37, 0.42, 0.9)
@@ -12,6 +13,17 @@ const ENEMY: Color = Color(1.0, 0.35, 0.35)
 const BALL: Color = Color(0.62, 0.86, 0.3)
 ## Gold frame, like the skill buttons.
 const FRAME: Color = Color(1.0, 0.8, 0.32)
+const SIDEWALK_COLOR: Color = Color(0.62, 0.58, 0.5, 0.9)
+## Sidewalk drawn on both sides of the lane, in metres.
+const SIDEWALK: float = 2.0
+## Walls are thin on the map; grow them a little so they read.
+const WALL_GROW: float = 0.4
+## How much of the square's diagonal the lane uses.
+const LANE_FILL: float = 0.86
+const SQRT_TWO: float = 1.41421356
+## Screen directions of the slanted lane: toward the enemy (up right) and its right side.
+const UP_RIGHT: Vector2 = Vector2(0.70710678, -0.70710678)
+const RIGHT_OF_LANE: Vector2 = Vector2(0.70710678, 0.70710678)
 
 var _sim: MatchSim
 var _local_id: int = -1
@@ -25,16 +37,19 @@ func setup(sim: MatchSim, local_id: int, local_team: int) -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
-## Lane x/z to minimap pixels; your base is always at the bottom.
+## Lane x/z to minimap pixels. The square map shows the lane slanted from your
+## base at the bottom left to the enemy base at the top right.
 func to_map(world: Vector2) -> Vector2:
 	var layout: MapLayout = _sim.layout
 	var own_side: int = _sim.side_for_team(_local_team)
-	var u: float = (world.x / layout.lane_width + 0.5)
-	var v: float = (world.y * own_side / layout.lane_length + 0.5)
+	var across: float = world.x / layout.lane_width
+	var along: float = world.y * own_side / layout.lane_length
 	if own_side < 0:
-		u = 1.0 - u
+		across = -across
 	var inner: Rect2 = _inner()
-	return inner.position + Vector2(u * inner.size.x, v * inner.size.y)
+	var length: float = inner.size.x * SQRT_TWO * LANE_FILL
+	var width: float = length * layout.lane_width / layout.lane_length
+	return inner.get_center() - UP_RIGHT * along * length + RIGHT_OF_LANE * across * width
 
 
 func _inner() -> Rect2:
@@ -46,20 +61,21 @@ func _draw() -> void:
 		return
 	var box: StyleBoxFlat = StyleBoxFlat.new()
 	box.bg_color = PANEL
-	box.set_corner_radius_all(14)
+	box.set_corner_radius_all(16)
 	box.border_color = FRAME
 	box.set_border_width_all(4)
 	box.shadow_color = Color(0.0, 0.0, 0.0, 0.35)
 	box.shadow_size = 4
 	box.shadow_offset = Vector2(0, 3)
 	draw_style_box(box, Rect2(Vector2.ZERO, size))
-	draw_rect(_inner(), ROAD)
+	var layout: MapLayout = _sim.layout
+	var half: Vector2 = Vector2(layout.lane_width, layout.lane_length) / 2.0
+	# sidewalks, then the lane on top
+	_draw_quad(Rect2(-half - Vector2(SIDEWALK, 0.0), (half + Vector2(SIDEWALK, 0.0)) * 2.0), SIDEWALK_COLOR)
+	_draw_quad(Rect2(-half, half * 2.0), ROAD)
 	for wall: MapLayout.WallSpec in _sim.walls:
-		if wall.hp <= 0:
-			continue
-		var a: Vector2 = to_map(wall.rect.position)
-		var b: Vector2 = to_map(wall.rect.end)
-		draw_rect(Rect2(a, b - a).abs().grow(0.5), WALL)
+		if wall.hp > 0:
+			_draw_quad(wall.rect.grow(WALL_GROW), WALL)
 	for side: int in [MapLayout.SIDE_OWN, MapLayout.SIDE_ENEMY]:
 		var mine: bool = side == _sim.side_for_team(_local_team)
 		draw_circle(to_map(_sim.layout.base_center(side)), 6.0, OWN if mine else ENEMY)
@@ -75,3 +91,11 @@ func _draw() -> void:
 		if id == _local_id:
 			draw_circle(at, 6.0, Color.WHITE)
 		draw_circle(at, 4.0, OWN if state.team == _local_team else ENEMY)
+
+
+## A world rectangle (x, z) drawn as the slanted quad it becomes on the map.
+func _draw_quad(rect: Rect2, color: Color) -> void:
+	draw_colored_polygon(PackedVector2Array([
+		to_map(rect.position), to_map(Vector2(rect.end.x, rect.position.y)),
+		to_map(rect.end), to_map(Vector2(rect.position.x, rect.end.y)),
+	]), color)

@@ -609,6 +609,7 @@ func test_minimap_puts_our_base_at_the_bottom_even_after_the_switch() -> void:
 	own_base = minimap.to_map(LAYOUT.base_center(practice.own_side()))
 	their_base = minimap.to_map(LAYOUT.base_center(-practice.own_side()))
 	assert_gt(own_base.y, their_base.y, "still at the bottom")
+	assert_lt(own_base.x, their_base.x, "slanted: our base bottom left, theirs top right")
 
 
 func test_skill_buttons_show_cooldown_seconds() -> void:

@@ -1,10 +1,11 @@
 class_name MatchHud
 extends Control
 ## The whole in-match HUD, built in code (no scene text to patch): overhead bars,
-## top row (minimap and settings button on the left, score and timers on the right),
-## the settings menu (resume, test buttons, exit), joystick, art-only skill buttons, the
-## cancel zone, status labels, banner and test buttons. The match screen feeds it
-## sim state through `sync_player()` and `sync_score()`.
+## top row (square slanted minimap and settings button on the left, guava and
+## tricycle timers in the centre, score on the right), the settings menu, and the
+## one-thumb controls: the joystick sits where a MOBA's basic attack would (bottom
+## right) with the skills in an arc around it; the left-handed setting mirrors them.
+## The match screen feeds it sim state through `sync_player()` and `sync_score()`.
 
 signal swap_pressed
 signal again_pressed
@@ -15,11 +16,24 @@ signal exit_pressed
 const BANNER_TIME: float = 2.0
 const TOP_ROW_Y: float = 40.0
 const MARGIN: float = 14.0
-const MINIMAP_SIZE: Vector2 = Vector2(92.0, 280.0)
+const MINIMAP_SIZE: Vector2 = Vector2(150.0, 150.0)
 const GEAR_SIZE: float = 64.0
-const SCORE_SIZE: Vector2 = Vector2(224.0, 84.0)
-const INFO_WIDTH: float = 300.0
-const MENU_COLOR: Color = Color(0.1, 0.12, 0.26, 0.96)
+const SCORE_SIZE: Vector2 = Vector2(210.0, 84.0)
+const INFO_SIZE: Vector2 = Vector2(150.0, 58.0)
+## One-thumb controls, as (distance from the near side edge, distance from the
+## bottom) of each control's centre on the 720x1280 base, for the right hand.
+const STICK_CENTER: Vector2 = Vector2(140.0, 150.0)
+const STICK_ZONE: float = 270.0
+const ARC_RADIUS: float = 232.0
+## Arc angles (degrees from straight left, toward straight up) of weapon 1,
+## weapon 2, Dash and Bookmark around the joystick.
+const ARC_ANGLES: Array[float] = [0.0, 30.0, 60.0, 90.0]
+const WEAPON_SIZE: float = 120.0
+const SKILL_SIZE: float = 104.0
+const GUAVA_SIZE: float = 100.0
+const GUAVA_AT: Vector2 = Vector2(415.0, 415.0)
+const CANCEL_AT: Vector2 = Vector2(118.0, 520.0)
+const CANCEL_SIZE: Vector2 = Vector2(110.0, 100.0)
 const DOWN_TEXT: String = "YOU'RE DOWN!\nTouch a teammate or your base post to get back up"
 
 var overhead: OverheadHud
@@ -42,16 +56,19 @@ var hurt_button: Button
 var tricycle_button: Button
 var again_button: Button
 var settings_button: TextureButton
-var menu: PanelContainer
+var menu: MatchMenu
+var left_handed: bool = false
 var banner: Label
 
 var _banner_left: float = 0.0
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
+	layout_controls(Settings.left_handed)
+	Settings.handedness_changed.connect(layout_controls)
 
 
 ## Pixels the top row is pushed down to clear a notch or status bar.
@@ -138,7 +155,7 @@ func sync_score(sim: MatchSim, rules: GameRules, local_team: int, delta: float) 
 		info.append("Tricycle %d:%02d" % [floori(arrival) / 60, floori(arrival) % 60])
 	if sim.phase == MatchSim.Phase.POINT_FREEZE:
 		info.append("Next round in %d" % ceili(sim.freeze_left))
-	info_label.text = "  |  ".join(info)
+	info_label.text = "\n".join(info)
 	again_button.visible = sim.phase == MatchSim.Phase.MATCH_OVER
 	if sim.phase != MatchSim.Phase.MATCH_OVER and _banner_left > 0.0:
 		_banner_left -= delta
@@ -168,7 +185,7 @@ func _build() -> void:
 	add_child(overhead)
 	_build_top_row()
 	joystick = VirtualJoystick.new()
-	_place(joystick, Vector4(0, 0.45, 0.5, 1), Vector4.ZERO)
+	joystick.rest_fraction = Vector2(0.5, 0.5)
 	joystick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(joystick)
 	respawn_label = _pill_label("", 44, Vector4(0.5, 1, 0.5, 1), Vector4(-170, -250, 170, -170))
@@ -178,17 +195,17 @@ func _build() -> void:
 	swap_button.visible = false
 	swap_button.pressed.connect(swap_pressed.emit)
 	cancel_zone = _build_cancel_zone()
-	var weapon_one: AimButton = _aim_button(Vector4(-194, -194, -44, -44))
-	var weapon_two: AimButton = _aim_button(Vector4(-360, -150, -230, -20))
-	ball_button = _aim_button(Vector4(-310, -480, -206, -376))
+	var weapon_one: AimButton = _aim_button()
+	var weapon_two: AimButton = _aim_button()
+	ball_button = _aim_button()
 	ball_button.icon_id = &"ball"
 	ball_button.label_text = "Catch"
 	weapon_buttons = [weapon_one, weapon_two]
 	aim_buttons = [weapon_one, weapon_two, ball_button]
 	for button: AimButton in aim_buttons:
 		button.cancel_zone = cancel_zone
-	dash_button = _skill_button(Vector4(-170, -370, -58, -258), &"dash", "Dash")
-	bookmark_button = _skill_button(Vector4(-330, -320, -218, -208), &"bookmark", "Mark")
+	dash_button = _skill_button(&"dash", "Dash")
+	bookmark_button = _skill_button(&"bookmark", "Mark")
 	banner = Label.new()
 	_place(banner, Vector4(0, 0.3, 1, 0.3), Vector4(0, -60, 0, 60))
 	banner.visible = false
@@ -204,7 +221,37 @@ func _build() -> void:
 	again_button.pressed.connect(again_pressed.emit)
 	again_button.visible = false
 	# last, so it draws over the skill buttons
-	_build_menu()
+	menu = MatchMenu.new()
+	add_child(menu)
+	hurt_button = menu.hurt_button
+	tricycle_button = menu.tricycle_button
+	menu.hurt_pressed.connect(hurt_pressed.emit)
+	menu.tricycle_pressed.connect(tricycle_pressed.emit)
+	menu.exit_pressed.connect(exit_pressed.emit)
+	menu.closed.connect(set_controls_active.bind(true))
+
+
+## Puts the joystick at the bottom corner (right, or left when `left`) and the
+## skills in an arc around it; everything mirrors for the left hand.
+func layout_controls(left: bool) -> void:
+	left_handed = left
+	_put(joystick, STICK_CENTER, Vector2(STICK_ZONE, STICK_ZONE))
+	var arc: Array[Control] = [weapon_buttons[0], weapon_buttons[1], dash_button, bookmark_button]
+	for i: int in arc.size():
+		var angle: float = deg_to_rad(ARC_ANGLES[i])
+		var at: Vector2 = STICK_CENTER + Vector2(cos(angle), sin(angle)) * ARC_RADIUS
+		var side: float = WEAPON_SIZE if i < 2 else SKILL_SIZE
+		_put(arc[i], at, Vector2(side, side))
+	_put(ball_button, GUAVA_AT, Vector2(GUAVA_SIZE, GUAVA_SIZE))
+	_put(cancel_zone, CANCEL_AT, CANCEL_SIZE)
+
+
+## Places `control` with its centre `at` = (from the near side edge, from the bottom).
+func _put(control: Control, at: Vector2, extent: Vector2) -> void:
+	var anchor_x: float = 0.0 if left_handed else 1.0
+	var center_x: float = at.x if left_handed else -at.x
+	_place(control, Vector4(anchor_x, 1, anchor_x, 1), Vector4(
+		center_x - extent.x / 2.0, -at.y - extent.y / 2.0, center_x + extent.x / 2.0, -at.y + extent.y / 2.0))
 
 
 func _build_top_row() -> void:
@@ -212,7 +259,7 @@ func _build_top_row() -> void:
 	_place(top, Vector4(0, 0, 1, 0), Vector4(0, 0, 0, 520))
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(top)
-	# left: minimap, then the settings button beside it (top aligned)
+	# left: square minimap, then the settings button beside it (top aligned)
 	minimap = LaneMinimap.new()
 	_place(minimap, Vector4(0, 0, 0, 0), Vector4(MARGIN, TOP_ROW_Y, MARGIN + MINIMAP_SIZE.x, TOP_ROW_Y + MINIMAP_SIZE.y))
 	minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -225,73 +272,33 @@ func _build_top_row() -> void:
 	_place(settings_button, Vector4(0, 0, 0, 0), Vector4(gear_x, TOP_ROW_Y, gear_x + GEAR_SIZE, TOP_ROW_Y + GEAR_SIZE))
 	settings_button.pressed.connect(toggle_menu)
 	top.add_child(settings_button)
-	# right: score, with the guava and tricycle timers under it
-	scoreboard = Scoreboard.new()
-	_place(scoreboard, Vector4(1, 0, 1, 0), Vector4(-MARGIN - SCORE_SIZE.x, TOP_ROW_Y, -MARGIN, TOP_ROW_Y + SCORE_SIZE.y))
-	scoreboard.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_child(scoreboard)
+	# centre: guava and tricycle countdowns
 	info_label = Label.new()
-	var info_y: float = TOP_ROW_Y + SCORE_SIZE.y + 6.0
-	_place(info_label, Vector4(1, 0, 1, 0), Vector4(-MARGIN - INFO_WIDTH, info_y, -MARGIN, info_y + 34.0))
+	_place(info_label, Vector4(0.5, 0, 0.5, 0), Vector4(-INFO_SIZE.x / 2.0, TOP_ROW_Y, INFO_SIZE.x / 2.0, TOP_ROW_Y + INFO_SIZE.y))
 	info_label.theme_type_variation = &"HudPill"
-	info_label.add_theme_font_size_override("font_size", 16)
+	info_label.add_theme_font_size_override("font_size", 17)
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	info_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_child(info_label)
-
-
-## The settings menu: resume, the practice test buttons, exit the match.
-func _build_menu() -> void:
-	menu = PanelContainer.new()
-	_place(menu, Vector4(0.5, 0.5, 0.5, 0.5), Vector4(-200, -200, 200, 200))
-	menu.visible = false
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = MENU_COLOR
-	style.border_color = Scoreboard.RIM
-	style.set_border_width_all(5)
-	style.set_corner_radius_all(24)
-	style.set_content_margin_all(26)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.5)
-	style.shadow_size = 12
-	menu.add_theme_stylebox_override("panel", style)
-	add_child(menu)
-	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
-	menu.add_child(column)
-	var title: Label = Label.new()
-	title.text = "Menu"
-	title.add_theme_font_size_override("font_size", 34)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	column.add_child(title)
-	var resume: Button = _menu_button("Resume", column)
-	resume.pressed.connect(toggle_menu)
-	hurt_button = _menu_button("-30 HP (test)", column)
-	hurt_button.pressed.connect(hurt_pressed.emit)
-	tricycle_button = _menu_button("Tricycle (test)", column)
-	tricycle_button.pressed.connect(tricycle_pressed.emit)
-	var leave: Button = _menu_button("Exit match", column)
-	leave.pressed.connect(exit_pressed.emit)
-
-
-func _menu_button(text: String, parent: Control) -> Button:
-	var button: Button = Button.new()
-	button.text = text
-	button.custom_minimum_size = Vector2(0, 56)
-	button.add_theme_font_size_override("font_size", 24)
-	parent.add_child(button)
-	return button
+	# right: score
+	scoreboard = Scoreboard.new()
+	_place(scoreboard, Vector4(1, 0, 1, 0), Vector4(-MARGIN - SCORE_SIZE.x, TOP_ROW_Y, -MARGIN, TOP_ROW_Y + SCORE_SIZE.y))
+	scoreboard.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(scoreboard)
 
 
 ## Open or close the settings menu; the controls ignore touches while it is open.
 func toggle_menu() -> void:
-	menu.visible = not menu.visible
-	set_controls_active(not menu.visible)
+	if menu.visible:
+		menu.close()
+		return
+	set_controls_active(false)
+	menu.open()
 
 
 func _build_cancel_zone() -> Control:
 	var zone: Control = Control.new()
-	_place(zone, Vector4(1, 1, 1, 1), Vector4(-170, -540, -60, -430))
 	zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	zone.visible = false
 	add_child(zone)
@@ -345,17 +352,15 @@ func _button(text: String, font_size: int, anchors: Vector4, offsets: Vector4, p
 	return button
 
 
-func _aim_button(offsets: Vector4) -> AimButton:
+func _aim_button() -> AimButton:
 	var button: AimButton = AimButton.new()
-	_place(button, Vector4(1, 1, 1, 1), offsets)
 	button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(button)
 	return button
 
 
-func _skill_button(offsets: Vector4, icon: StringName, label: String) -> TouchButton:
+func _skill_button(icon: StringName, label: String) -> TouchButton:
 	var button: TouchButton = TouchButton.new()
-	_place(button, Vector4(1, 1, 1, 1), offsets)
 	button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.icon_id = icon
 	button.label_text = label
