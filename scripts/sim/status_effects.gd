@@ -1,8 +1,8 @@
 class_name StatusEffects
 extends RefCounted
-## Status effects on one player (docs/GDD.md "Weapons"). An effect does not stack
-## with itself: re-applying keeps the longer remaining time (so a new hard CC
-## refreshes the duration) and, for SLOW, the stronger slow.
+## Status effects on one player (docs/GDD.md "Weapons"). Only ONE status is active
+## at a time: a new status of a different kind overwrites the current one. The same
+## status re-applied keeps the longer remaining time and, for SLOW, the stronger slow.
 
 enum Type { NONE, STUN, SLOW, AIRBORNE, POLYMORPH, BOUNCE, KNOCKOUT }
 
@@ -26,6 +26,9 @@ func apply(type: Type, duration: float, magnitude: float = 0.0) -> void:
 	if type == Type.NONE or duration <= 0.0:
 		return
 	var current: float = _time_left[type] if _time_left.has(type) else 0.0
+	if current <= 0.0:
+		_time_left.clear()
+		_slow = 0.0
 	_time_left[type] = maxf(current, duration)
 	if type == Type.SLOW:
 		_slow = maxf(_slow if current > 0.0 else 0.0, magnitude)

@@ -65,11 +65,19 @@ func test_slow_and_none_do_not_stop_anything() -> void:
 func test_clear_and_names() -> void:
 	var fx: StatusEffects = StatusEffects.new()
 	fx.apply(T.STUN, 1.0)
-	fx.apply(T.SLOW, 1.0, 0.5)
-	assert_eq(fx.active_names().size(), 2)
-	assert_true(fx.active_names().has("STUN"))
 	assert_true(fx.display_names().has("Stunned"))
-	assert_true(fx.display_names().has("Slowed"))
 	fx.clear()
 	assert_true(fx.can_move())
 	assert_eq(fx.speed_multiplier(0.5), 1.0)
+
+
+func test_a_new_status_overwrites_the_current_one() -> void:
+	var fx: StatusEffects = StatusEffects.new()
+	fx.apply(T.STUN, 2.0)
+	fx.apply(T.SLOW, 1.0, 0.5)
+	assert_eq(fx.active_names().size(), 1)
+	assert_true(fx.has(T.SLOW))
+	assert_false(fx.has(T.STUN))
+	assert_true(fx.can_move(), "the stun is gone")
+	fx.apply(T.SLOW, 3.0, 0.3)
+	assert_almost_eq(fx.time_left(T.SLOW), 3.0, 0.001, "the same status keeps the longer time")
