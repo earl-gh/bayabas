@@ -23,7 +23,7 @@ Goal: the look of the owner's reference image (League of Legends mid view, Clash
 | P1 ✅ | The match screen is split into `MatchInput`, `MatchHud` (all HUD built in code) and wiring; `practice.tscn` is 79 lines | behaviour unchanged, tests green |
 | P2 ✅ | HUD spec below | screenshot matches the spec |
 | P3 ✅ | League of Legends camera | numbers below, camera tests updated |
-| P4 ✅ | Blender pipeline; six kids as skinned `.glb` with painted vertex colours and baked AO (poses driven procedurally onto the skeleton) | kids load in game, same height and hitbox |
+| P4 | Sprite kids (replaces the Blender kids): Junjun done; Ligaya, Migo, Toni, Popoy, Inday waiting for sheets | all six kids use their own sprites |
 | P5 | Environment kit in Blender (tin roofs, cardboard sheets, tyres, plants, hoop, drains, tricycle with driver, base post with posters) | street matches the reference |
 | P6 | Effects: impact debris, trails, dust, ground rings, per-weapon projectiles | every weapon has a clear effect |
 | P7 | UI pass: painted skill icons, team portraits and timer across the top, framed minimap | HUD matches the reference |
@@ -53,5 +53,5 @@ Budgets (M6): 60 fps on a recommended Android phone, 30+ on the minimum; APK und
 - No basic attack; death delay with gray HP; teams pass through their own walls (see `GDD.md`).
 - The neutral is the guava; eating it heals half max HP and you keep it to throw (change in one data value).
 - Game name: **Kalyeah**. Tagline: *Mga larong Pinoy sa kalye*. Android package `com.kalyeah.game`.
-- Assets are made in Blender (the `bpy` Python module works in the cloud session); no generated-image or generated-3D services.
+- Environment assets are made in Blender (the `bpy` Python module works in the cloud session). The kids are sprites from sheets the owner generates (`tools/sprites/slice_sheets.py` cuts them).
 - Multiplayer is built and tested; deploying the server and setting `KALYEAH_SERVER_URL` is the owner's step (`server/README.md`).
