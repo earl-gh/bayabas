@@ -6,6 +6,10 @@ extends Control
 
 signal pressed
 
+## The skill button a finger is holding right now (drag-to-aim), if any: while it is held no
+## other skill button can be pressed.
+static var holder: TouchButton = null
+
 const READY_COLOR: Color = Color(0.14, 0.12, 0.2, 0.7)
 const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.35)
 const RIM_COLOR: Color = Color(1.0, 0.9, 0.6, 0.95)
@@ -78,6 +82,16 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 
+## False while locked, or while a different skill button is being held.
+func can_press() -> bool:
+	return not locked and (holder == null or holder == self)
+
+
+func _exit_tree() -> void:
+	if holder == self:
+		holder = null
+
+
 func set_locked(value: bool) -> void:
 	if value != locked:
 		locked = value
@@ -88,7 +102,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		var touch: InputEventScreenTouch = event as InputEventScreenTouch
 		if touch.pressed:
-			if _pointer == NO_POINTER and not locked and _hit(touch.position):
+			if _pointer == NO_POINTER and can_press() and _hit(touch.position):
 				_pointer = touch.index
 				pressed.emit()
 		elif touch.index == _pointer:
@@ -98,7 +112,7 @@ func _input(event: InputEvent) -> void:
 		if click.device == InputEvent.DEVICE_ID_EMULATION or click.button_index != MOUSE_BUTTON_LEFT:
 			return
 		if click.pressed:
-			if _pointer == NO_POINTER and not locked and _hit(click.position):
+			if _pointer == NO_POINTER and can_press() and _hit(click.position):
 				_pointer = MOUSE_POINTER
 				pressed.emit()
 		elif _pointer == MOUSE_POINTER:

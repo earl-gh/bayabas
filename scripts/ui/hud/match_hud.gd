@@ -83,6 +83,13 @@ func sync_player(sim: MatchSim, rules: GameRules, player: PlayerState, local_id:
 	respawn_label.visible = not player.alive
 	respawn_label.text = "RESPAWN IN %d" % ceili(player.respawn_time_left)
 	swap_button.visible = not player.alive and not pick_open
+	# while you wait to respawn the controls are hidden so the countdown and button sit alone at the bottom
+	joystick.visible = player.alive
+	dash_button.visible = player.alive
+	bookmark_button.visible = player.alive
+	ball_button.visible = player.alive
+	for button: AimButton in weapon_buttons:
+		button.visible = player.alive
 	# disabled while on cooldown too: no pressing or precasting until ready
 	dash_button.set_locked(player.death_delay or player.dash_cooldown_left > 0.0)
 	bookmark_button.set_locked(player.death_delay or not player.bookmark_ready())
@@ -154,9 +161,10 @@ func _build() -> void:
 	_place(joystick, Vector4(0, 0.45, 0.5, 1), Vector4.ZERO)
 	joystick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(joystick)
-	respawn_label = _pill_label("", 48, Vector4(0.5, 0.5, 0.5, 0.5), Vector4(-260, -40, 260, 40))
-	delay_label = _pill_label(DOWN_TEXT, 28, Vector4(0, 0, 1, 0), Vector4(70, 236, -70, 330))
-	swap_button = _button("CHANGE WEAPONS", 30, Vector4(0.5, 0.5, 0.5, 0.5), Vector4(-160, 60, 160, 148))
+	respawn_label = _pill_label("", 44, Vector4(0.5, 1, 0.5, 1), Vector4(-170, -250, 170, -170))
+	delay_label = _pill_label(DOWN_TEXT, 26, Vector4(0, 0, 1, 0), Vector4(70, 236, -70, 350))
+	delay_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	swap_button = _button("CHANGE WEAPONS", 28, Vector4(0.5, 1, 0.5, 1), Vector4(-170, -150, 170, -62))
 	swap_button.visible = false
 	swap_button.pressed.connect(swap_pressed.emit)
 	cancel_zone = _build_cancel_zone()
