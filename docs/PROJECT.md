@@ -1,10 +1,10 @@
-# Bayabas — Project Documentation
+# Kalyeah — Project Documentation
 
-> 3D low-poly multiplayer MOBA for Android, themed on Filipino street games (larong kalye). Entry for an Android game development competition.
+> 3D stylised multiplayer MOBA for Android, themed on Filipino street games (*mga larong Pinoy sa kalye*). Entry for an Android game development competition.
 
 ## 1. Abstract
 
-Bayabas is a 3D low-poly multiplayer MOBA built in Godot 4 for Android, with optional browser play, themed around classic Filipino street games. Instead of heroes and levels, every player shares the same fixed health and equips two weapons from an arsenal of street-game items: bato-bato-pik, tumbang preso tsinelas and lata, jackstones, and trumpo, each reimagined as an attack, crowd-control or block skill. Each player is randomly cast as one of six Filipino kids in everyday Pinoy outfits. Matches of 1v1, 2v2 or 3v3 are played in private passcode rooms on a single-lane Filipino street. Teams break through layered cardboard walls, a nod to bahay-bahayan, and score by reaching the enemy's electric-post base as in agawan-base, using volleyball-style set and match scoring. A neutral rubber ball and a passing tricycle add shared chaos. With no accounts, ranks or leveling, every match is quick to join and decided by skill.
+Kalyeah is a stylised 3D multiplayer MOBA built in Godot 4 for Android, with optional browser play, themed around classic Filipino street games. Instead of heroes and levels, every player shares the same fixed health and equips two weapons from an arsenal of street-game items: bato-bato-pik, tumbang preso tsinelas and lata, jackstones, and trumpo, each reimagined as an attack, crowd-control or block skill. Each player is randomly cast as one of six Filipino kids in everyday Pinoy outfits. Matches of 1v1, 2v2 or 3v3 are played in private passcode rooms on a single-lane Filipino street. Teams break through layered cardboard walls, a nod to bahay-bahayan, and score by reaching the enemy's electric-post base as in agawan-base, using volleyball-style set and match scoring. A neutral guava that heals whoever eats it and a passing tricycle add shared chaos. With no accounts, ranks or leveling, every match is quick to join and decided by skill.
 
 ## 2. Hardware and Software Requirements (for playing)
 
@@ -20,7 +20,7 @@ Bayabas is a 3D low-poly multiplayer MOBA built in Godot 4 for Android, with opt
 | Display | 5.0", 720 × 1280, portrait | 6.0"+, 1080 × 1920, portrait |
 | Network | Internet for multiplayer (Wi-Fi or 4G), latency under 150 ms | Wi-Fi or 4G/5G, latency under 80 ms |
 | Input | Touchscreen (virtual joystick + drag-to-aim skill buttons) | — |
-| Software | Bayabas APK installed (no Google account or sign-in needed) | — |
+| Software | Kalyeah APK installed (no Google account or sign-in needed) | — |
 
 Practice mode works offline; online rooms need an internet connection.
 
@@ -99,7 +99,7 @@ Every weapon has a type icon. All values (damage, cooldowns, ranges) are data-dr
 - **Volleyball scoring:** points win sets, sets win the match. Teams **switch bases every set**.
 
 ### 3.6 Neutral events
-- **Rubber ball (center):** spawns every 15 s. Aimed throw knocks out a hit enemy for 3 s; enemies can catch and throw it back; hitting an ally passes it; damages walls. While it travels freely, the thrower can blink to it. The ball despawns on hit and the 15 s timer restarts.
+- **Guava (center):** spawns every 15 s. Eating it off the ground heals half your max HP, and you carry it. An aimed throw knocks out a hit enemy for 3 s; enemies can catch and throw it back; hitting an ally passes it; it damages walls. While it travels freely, the thrower can blink to it. The guava despawns on hit and the 15 s timer restarts.
 - **Tricycle:** every 2 minutes it crosses the middle of the map from left or right, pushing back anyone it touches.
 
 ### 3.7 Platforms and delivery
@@ -108,10 +108,10 @@ Every weapon has a type icon. All values (damage, cooldowns, ranges) are data-dr
 - **One live web link** (GitHub Pages, rebuilt on every merge to `main`) for testing from an iPhone.
 
 ### 3.8 Visual style and orientation
-- **Portrait (vertical) only, by design.** Bayabas is a one-hand-friendly vertical MOBA: the phone is held upright, the lane runs up the screen, your base is at the bottom and the enemy base at the top. Android is locked to portrait; the web build shows a "rotate your phone" prompt if held in landscape.
-- **Vertical UI layout:** left thumb = virtual joystick (bottom-left); right thumb = 4 skill buttons in an arc (bottom-right) with drag-to-aim and cancel zone; top bar = score/sets, ball timer, tricycle warning; slim vertical lane minimap on one edge; kill feed and weapon pick screen designed for a tall screen. Keep the centre of the screen clear for gameplay.
-- **Vertical gameplay adaptation:** the camera sits at a Mobile Legends Brawl-like height and angle, close to the heroes: about 12 m of the 16 m lane width and roughly 16-20 m of lane ahead are visible, and it slides sideways with you; offscreen threats are shown by the lane minimap. Rules and numbers are unchanged (see `docs/GDD.md`); only camera, UI and framing change.
-- **Style target: Clash of Clans-like, low-poly 3D, Filipino street theme.** Chunky, toy-like proportions; bright, saturated, high-contrast colours; clean flat-shaded low-poly meshes with one shared palette texture; soft rounded shapes, thick readable silhouettes, light cartoon outlines and bouncy, exaggerated animation; playful UI with big rounded buttons. Everything must read clearly from the isometric ~55 degree camera on a small phone screen.
+- **Portrait (vertical) only, by design.** Kalyeah is a one-hand-friendly vertical MOBA: the phone is held upright, the lane runs up the screen, your base is at the bottom and the enemy base at the top. Android is locked to portrait; the web build shows a "rotate your phone" prompt if held in landscape.
+- **Vertical UI layout:** left thumb = virtual joystick (bottom-left); right thumb = round art-only skill buttons in an arc (bottom-right: two weapons with an ATK / CC / BLK tag, Dash, Mark, and the guava) with drag-to-aim and a cancel zone; top = team portraits, the score and set pips, a timer; a slim lane minimap on the left edge; the kill feed and the weapon pick screen are designed for a tall screen. Over each hero: a health bar, an italic status line above it, and a Dash and a Mark cooldown bar under it (no names). Keep the centre of the screen clear for gameplay.
+- **Camera: League of Legends.** The gameplay camera copies League of Legends: 56° pitch, 30° vertical field of view, far and flat. Its distance is chosen so about 13 m of the lane width is visible on a phone (see `docs/ROADMAP.md`). The lane minimap shows the rest; rules and numbers are unchanged (see `docs/GDD.md`).
+- **Style target: Clash of Clans design language, stylised 3D, Filipino street theme.** Chunky, toy-like proportions; soft rounded shapes with bevels and painted-looking textures; bright, saturated, high-contrast colours; soft shadows; thick readable silhouettes; bouncy, exaggerated animation; big rounded buttons and painted icons. Everything must read clearly from the camera on a small phone screen.
 - **Pinoy flavour:** colours and details from the street (jeepney paint, faded sari-sari signage, laundry lines, tarpaulin posters, concrete and cardboard, bahay-kubo/barong-barong roofs), warm daylight, and kids in everyday clothes.
-- **Inspired by, not copied:** match the look and feel only. Do not reuse or imitate any Clash of Clans / Supercell asset, character, logo, UI art or name.
-- Keep to the performance budget in HANDOFF M6 (low poly counts, one material per prop where possible).
+- **Inspired by, not copied:** match the look and feel only. Do not reuse or imitate any Clash of Clans / Supercell or League of Legends / Riot asset, character, logo, UI art or name.
+- Keep to the performance budgets in `docs/ROADMAP.md` (light meshes, shared materials and texture atlases, no more than a few small textures per prop).

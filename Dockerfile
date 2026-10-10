@@ -1,6 +1,6 @@
-# Bayabas dedicated game server (headless Godot, WebSocket on $PORT).
-# Build:  docker build -t bayabas-server .
-# Run:    docker run -p 8080:8080 bayabas-server
+# Kalyeah dedicated game server (headless Godot, WebSocket on $PORT).
+# Build:  docker build -t kalyeah-server .
+# Run:    docker run -p 8080:8080 kalyeah-server
 FROM ubuntu:24.04
 
 ARG GODOT_VERSION=4.6.2

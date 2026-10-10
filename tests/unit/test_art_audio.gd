@@ -100,7 +100,7 @@ func test_the_ui_theme_is_applied_everywhere() -> void:
 	add_child(button)
 	var box: StyleBoxFlat = button.get_theme_stylebox("normal") as StyleBoxFlat
 	assert_not_null(box, "every button gets the chunky style")
-	assert_eq(box.bg_color, BayabasTheme.BUTTON)
+	assert_eq(box.bg_color, KalyeahTheme.BUTTON)
 
 
 func test_the_rig_runs_throws_flinches_and_falls() -> void:

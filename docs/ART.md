@@ -1,81 +1,37 @@
-# Art, UI and audio (M5)
+# Art, UI and audio
 
-Everything visual and audible is **built in code**: no image, model or sound
-files to license, review or download. Phone-friendly and small (the web build
-stays tiny). Style target: docs/PROJECT.md 3.8 (Clash of Clans-like low-poly,
-Filipino street; inspired by, never copied).
+Look: **Clash of Clans design language** (soft, chunky, painted-looking, toy-like) on a **League of Legends camera**, in a Filipino street. Inspired by, never copied (`docs/PROJECT.md` 3.8). The target is the owner's reference image; the work to get there is the visual overhaul in `docs/ROADMAP.md`.
 
-## 3D: low-poly kit
-- `scripts/view/art/low_poly.gd` (`LowPoly`): boxes, prisms/cones, chunky spheres and
-  gable roofs with **one colour per face** (vertex colours) and flat normals. Every
-  mesh uses **one shared material** (`LowPoly.material()`), the "one palette"
-  budget in HANDOFF M6.
-- `scripts/view/art/palette.gd` (`Palette`): the single colour palette (jeepney
-  red/blue, sari-sari yellow, house pastels, cardboard, asphalt, team colours).
-- `scripts/view/art/props.gd` (`Props`): sari-sari store, houses, laundry lines,
-  electric post with flyers, cardboard walls, basketball ring, jeepney, stop sign,
-  plants, tricycle, rubber ball, the thrown weapon objects, and the polymorph can.
-  Meshes are cached and checked by a test to stay under 3000 vertices each.
-- `scripts/view/street_map.gd` (`StreetMap`): the street around the unchanged lane:
-  - asphalt with lane paint;
-  - a cross street at the midline (where the tricycle drives), with zebra crossings;
-  - curbs on the boundaries, sidewalks, rows of houses;
-  - an electric post with a team-coloured band at each base.
+## Where we are
+The current art is a first pass built **in code**: procedural meshes, vector icons and synthesised sound, with no asset files. It is soft-shaded and readable but not final. The plan replaces it piece by piece with real assets made in Blender (see "Asset pipeline").
 
-## Characters
-- `scripts/view/art/kid_model.gd` (`KidModel`): one shared body for all six kids.
-  - Same height and proportions for everyone; the hitbox is always `GameRules.player_radius`.
-  - Drawn 1.3x for chunky, toy-like proportions (visual only).
-  - The outfit comes from `CharacterDef` (`data/characters/*.tres`): hair, top, bottom, shoes or tsinelas, extra (bimpo, hair clip, headband + belt bag, ice candy, pony bands), colours, and skin tone. The skin tones vary across the roster.
-  - A team-coloured bandana and armband, plus a team ring on the ground.
-- Animation is code-driven:
-  - walk swing and idle breathing;
-  - lean on dash and on stumble;
-  - spin when airborne or bounced, wobble when stunned or knocked out;
-  - a can when polymorphed, grey in the death delay.
-- Characters are written with respect (PROJECT 3.2): identity shows through clothes and style only.
+### 3D (procedural, current)
+- `scripts/view/art/low_poly.gd` (`LowPoly`): bevelled boxes, smooth cylinders and spheres, gable roofs, with vertex colours and **one shared matte material** (wrap lighting, soft rim, no hard speculars). Cartoon outlines come from an inverted shell (`add_outline`).
+- `scripts/view/art/palette.gd` (`Palette`): the shared colour palette.
+- `scripts/view/art/props.gd` (`Props`): sari-sari store, houses (one and two storey), laundry lines, electric post with flyers, power poles and wires, banderitas, tarpaulins, basketball ring, jeepney, tricycle, plants and trees, manholes, hopscotch, the guava, the thrown weapon objects, and the polymorph can. Meshes are cached and kept under a vertex budget by a test.
+- **Cardboard walls** are the bahay-bahayan: disassembled boxes as single flat sheets (creases, tape, printing, curled flaps, a torn corner) leaning on sticks. Never stacked boxes.
+- `scripts/view/street_map.gd` (`StreetMap`): asphalt, lane paint, a cross street with zebra crossings, curbs, sidewalks, house rows, base pads and posts, props. The lane geometry comes from `MapLayout` and never changes for looks.
+- Lighting: one sun with soft shadows, 2x MSAA, saturation grading, a light distance haze.
 
-## UI
-- `scripts/ui/bayabas_theme.gd` (`BayabasTheme`): chunky rounded buttons with a dark
-  rim and a drop shadow, outlined text, cream text fields. It is merged into the
-  engine default theme at startup, so every Control gets it.
-- `scripts/ui/icons.gd` (`Icons`): vector icons for the 12 weapons, dash, bookmark,
-  ball and the title guava. They're drawn on the round skill buttons and the weapon pick cards.
+### Characters (current)
+- `scripts/view/art/kid_model.gd` (`KidModel`): the six kids on **one jointed rig** (hips, spine, neck, thighs, knees, shoulders, elbows) with procedural animation: run cycle, idle, throw, hit flinch, dash, stumble, stun, airborne tumble, knockout, down, and the can when polymorphed. Footstep signals drive footstep sounds.
+- All six share one height and proportion; the hitbox is always `GameRules.player_radius`. Outfits, hair and skin tones (varied across the roster) come from `CharacterDef` (`data/characters/*.tres`). A team bandana, armband and ground ring show the team.
+- Written with respect (PROJECT 3.2): identity through clothes and style only.
 
-## Soft Clash-of-Clans look
-- Boxes are bevelled with a light rim on the top edges, spheres and cylinders are smooth-shaded, one matte wrap-lit material (no hard speculars, a gentle rim light), 2x MSAA and soft shadows, a light distance haze, and chunky rounded UI. The title screen stands three kids in the live 3D street.
-- **Cardboard walls** are the bahay-bahayan: DISASSEMBLED boxes, flat single sheets (fold creases, tape, FRAGILE marks, curled flaps, torn corner) leaning on wooden sticks. They are not stacked boxes.
-- **The guava** replaces the rubber ball everywhere: prop, minimap dot, button icon.
-
-## Rig and animation
-The kids have real joints (hips, spine, neck, thighs, knees, shoulders, elbows) with procedural animation: a run cycle with knee/elbow bend, counter-twist and head bob, idle breathing and head turns, a throw, a hit flinch, dash lean, stumble, stun wobble, airborne tumble, knockout lying down, a slump when down, and a can when polymorphed. Footsteps, a camera shake on hits and wall breaks, a pop-in for banners, and heal numbers add the juice.
-
-## Depth
-- Real sun shadows (one orthogonal shadow map, 45 m), saturated colour grading.
-- Cartoon outlines on the kids and the can (an inside-out shell, `LowPoly.add_outline`).
-- Street life: banderitas strung across the street, power poles with wires, chalk piko,
-  manholes, the tambayan bench, drums, mango trees and banana plants, two-storey houses
-  with balconies and water tanks, fiesta tarpaulins (fictional), base pads.
-
-## HUD (Mobile Legends / LoL style)
-- **Overhead bars** (`scripts/ui/hud/overhead_hud.gd`):
-  - Drawn in screen space: name, a segmented HP bar (green = you, blue = ally, red = enemy, grey = gray HP), status effects.
-  - Floating damage numbers.
-- **Player card** top-left (portrait in the character colour, name, HP bar), **scoreboard pill**
-  top-centre (blue vs red points, set number, set pips), ball / tricycle timer pill, and a **lane
-  minimap** on the left edge (your base at the bottom).
-  - The top HUD moves below the notch (safe area).
-- **Skill buttons** show the cooldown in seconds and flash when ready.
-- **Joystick:** always visible at rest (golden thumb, arrows), and it floats to wherever you touch.
+## HUD and UI
+- Theme (`scripts/ui/kalyeah_theme.gd`, `KalyeahTheme`): chunky rounded buttons with a dark rim and drop shadow, outlined text, cream text fields, merged into the engine default theme at startup.
+- Icons (`scripts/ui/icons.gd`): vector icons for the 12 weapons, Dash, Mark, the guava and the tricycle.
+- HUD (`scripts/ui/hud/`): overhead bars and damage numbers, the scoreboard pill with set pips, the lane minimap. Spec in `docs/GDD.md` "HUD". The skill buttons are art only with an ATK / CC / BLK tag.
+- The title screen shows a live 3D street with three kids.
+- Banners pop in, the camera shakes on hits and wall breaks, buttons click.
 
 ## Audio
-- `scripts/view/audio/sound_bank.gd` (`SoundBank`): synthesised SFX (each weapon has its own cast sound, plus footsteps, heal, stun, poof, KO, respawn, victory/defeat, UI clicks) and the music loop.
-  - SFX: cast, hit, snip, boing, bonk, crunch, thud, point jingles, set fanfare, tricycle horn, down, revive, click, dash.
-  - Music: an 8-bar pentatonic tune, rendered a few thousand samples per frame so phones don't stall.
-- `scripts/view/audio/match_audio.gd` (`MatchAudio`): plays them on MatchSim signals.
-  It works online too, because the server replays events as the same signals.
-  Volume settings come in M6.
+- `scripts/view/audio/sound_bank.gd` (`SoundBank`): synthesised effects (each weapon has its own cast sound; footsteps, heal, stun, poof, KO, respawn, victory and defeat, UI clicks, the tricycle horn) and a looping music track built in small chunks so phones do not stall.
+- `scripts/view/audio/match_audio.gd` (`MatchAudio`) plays them from `MatchSim` signals, so it works online too (the server replays events as the same signals).
 
-## Replacing with hand-made assets later
-- **Models:** each builder returns an `ArrayMesh`. A `.glb` mesh can be swapped in per prop or character without touching gameplay, as long as the kids keep the same height.
-- **Sounds:** a recorded sound only has to be returned for the same id.
+## Asset pipeline (planned, P4 onward)
+- Models are authored with the Blender Python module (`bpy`, pip-installable in the cloud session) and exported as `.glb` into `assets/models/`. The generator scripts live in the repo (`tools/blender/`), so every asset can be regenerated.
+- Each asset: chunky bevelled forms, hand-painted-style textures from a small palette atlas, baked ambient occlusion, vertex colours. Characters get a skeleton and baked animations.
+- Budgets: web build under 50 MB, APK under 150 MB, 60 fps target on a recommended phone.
+- Effects use CPU particles (web-safe) and simple mesh and ring effects.
+- Replacing a procedural prop or character with its `.glb` must not change gameplay: same height and hitbox for the kids, same footprint for props.

@@ -1,4 +1,4 @@
-class_name BayabasTheme
+class_name KalyeahTheme
 extends RefCounted
 ## The game's UI theme, built in code: big rounded "toy" buttons with a dark rim
 ## and a drop shadow, white text with a dark outline, warm Pinoy-street colours.

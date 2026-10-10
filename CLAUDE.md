@@ -1,6 +1,6 @@
 # CLAUDE.md — rules for Claude Code in this repo
 
-Read first: `docs/HANDOFF.md` (what to build, in order), `docs/GDD.md` (rules + numbers), `docs/PROJECT.md` (scope).
+Read first: `docs/ROADMAP.md` (what is done, what is next, how to build), `docs/GDD.md` (rules + numbers), `docs/PROJECT.md` (scope).
 **Android is the primary target** (competition entry); the browser build is optional for players but is the owner's testing channel. The owner works from an **iPhone** in cloud sessions: they can't run the editor. Every change must be checkable on the **GitHub Pages web build (one live link, rebuilt on every merge to `main`)**.
 
 ## Stack (do not change without asking)
@@ -26,23 +26,23 @@ assets/{models,textures,audio,icons,fonts}   server/   tests/{unit,integration}
 ## Workflow — versioning and PRs (mandatory)
 - **Never commit to `main`.** One branch per task: `feat/<scope>-<short>`, `fix/...`, `chore/...`, `docs/...`, `test/...`.
 - **Conventional Commits** (`feat(weapons): add trumpo airborne`). Breaking: `feat!:`. This drives release-please.
-- **Continuous development, meaningful PRs:** one PR per solid chunk of progress (several HANDOFF tasks or a whole milestone), not one PR per tiny task. Use `.github/pull_request_template.md`. In the PR body say what changed and how to check it on a phone on the single live link (`https://earl-gh.github.io/bayabas/`, valid after the owner merges).
+- **Continuous development, meaningful PRs:** one PR per solid chunk of progress (several roadmap tasks or a whole phase), not one PR per tiny task. Use `.github/pull_request_template.md`. In the PR body say what changed and how to check it on a phone on the single live link (`https://earl-gh.github.io/kalyeah/`, valid after the owner merges).
 - **No CI on PRs.** The owner reads the PR and merges. Before opening it, Claude runs the full GUT suite locally and it must pass.
 - Releases: release-please opens a release PR on `main`; merging it tags `vX.Y.Z` and updates `CHANGELOG.md`. Don't edit versions or the changelog by hand. Pre-1.0: `feat` = minor, `fix` = patch.
 - **Ship loop (owner merges, Claude never does):**
   1. Develop a meaningful chunk on a feature branch with tests.
   2. Run the full GUT suite locally (and import the project) until everything passes; re-read the diff and fix anything found.
   3. Open the PR with a clear summary, any design choices that need the owner's call, and exactly what to check on the live link. Then hand over and keep going on the next chunk on a new branch.
-  4. The owner reads, merges, and checks `https://earl-gh.github.io/bayabas/` once the `Pages` run on `main` finishes. Never merge the release-please PR.
+  4. The owner reads, merges, and checks `https://earl-gh.github.io/kalyeah/` once the `Pages` run on `main` finishes. Never merge the release-please PR.
 
 ## Platforms and how the owner tests
 - **Dev channel = web build on the owner's iPhone browser** (the single Pages link, rebuilt on every merge to `main`). Always hand over with that link and what to check.
-- **Android stays releasable:** never add anything that breaks the `Android` export preset or needs desktop-only/thread APIs. An installable debug APK can be built any time from Actions → **Android APK** → Run workflow (artifact `bayabas-debug-apk`). Signed release APK/AAB is M6.
+- **Android stays releasable:** never add anything that breaks the `Android` export preset or needs desktop-only/thread APIs. An installable debug APK can be built any time from Actions → **Android APK** → Run workflow (artifact `kalyeah-debug-apk`). Signed release APK/AAB is M6.
 - Android-only problems (touch, safe areas, performance) can't be seen on the iPhone web build; call them out in the PR instead of assuming they work.
 
 ## Art and orientation (binding)
-- **Portrait (vertical) only**: Android locked to portrait; the web build shows a "rotate your phone" prompt if held in landscape. Bayabas is a vertical MOBA by design (see `docs/PROJECT.md` section 3.8 and `docs/GDD.md` "Vertical layout").
-- Art style: Clash of Clans-like, low-poly flat-shaded 3D with a Filipino street theme. Chunky, bright, saturated, readable at phone size. Inspired by, never copied: no Supercell assets, names or logos. Full spec in `docs/PROJECT.md` section 3.8.
+- **Portrait (vertical) only**: Android locked to portrait; the web build shows a "rotate your phone" prompt if held in landscape. Kalyeah is a vertical MOBA by design (see `docs/PROJECT.md` section 3.8 and `docs/GDD.md` "Vertical layout").
+- Art style: **Clash of Clans design language** on a **League of Legends camera** (56° pitch, 30° vertical FOV): soft, chunky, painted-looking stylised 3D with a Filipino street theme, readable at phone size. Inspired by, never copied: no Supercell or Riot assets, names or logos. Assets are authored in Blender (`bpy` works in the cloud session). Specs: `docs/PROJECT.md` section 3.8, `docs/ART.md`, `docs/ROADMAP.md`.
 
 ## Definition of done (per task)
 - Static-typed, no warnings (treat warnings as errors in project settings).

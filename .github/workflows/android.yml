@@ -1,6 +1,6 @@
 name: Android APK
 # Manual: Actions -> "Android APK" -> Run workflow. Builds a debug APK from the chosen
-# branch and attaches it to the run as the `bayabas-debug-apk` artifact.
+# branch and attaches it to the run as the `kalyeah-debug-apk` artifact.
 on:
   workflow_dispatch:
 jobs:
@@ -53,10 +53,10 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build/android
-          godot --headless --export-debug "Android" build/android/bayabas-debug.apk
-          test -f build/android/bayabas-debug.apk
+          godot --headless --export-debug "Android" build/android/kalyeah-debug.apk
+          test -f build/android/kalyeah-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: bayabas-debug-apk
-          path: build/android/bayabas-debug.apk
+          name: kalyeah-debug-apk
+          path: build/android/kalyeah-debug.apk
           if-no-files-found: error

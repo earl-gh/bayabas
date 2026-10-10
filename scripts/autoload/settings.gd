@@ -1,11 +1,11 @@
 extends Node
 ## User and build settings. The game server address comes from, in order:
 ## the web page's `?server=wss://...` query, the address saved in the lobby, or
-## the project setting `bayabas/network/server_url` (empty until a server is
+## the project setting `kalyeah/network/server_url` (empty until a server is
 ## deployed, see server/README.md).
 
 const SAVE_PATH: String = "user://settings.cfg"
-const PROJECT_KEY: String = "bayabas/network/server_url"
+const PROJECT_KEY: String = "kalyeah/network/server_url"
 
 var server_url: String = ""
 
@@ -14,7 +14,7 @@ var _ui_voice: AudioStreamPlayer
 
 
 func _ready() -> void:
-	BayabasTheme.apply()
+	KalyeahTheme.apply()
 	# every Button in the game clicks (menus, lobby, pick screen)
 	_ui_voice = AudioStreamPlayer.new()
 	_ui_voice.volume_db = -8.0

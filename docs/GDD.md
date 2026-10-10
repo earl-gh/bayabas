@@ -15,7 +15,7 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 ## Characters (cosmetic, randomized)
 - Roster (`data/characters/*.tres`, `CharacterDef`): `junjun` boy, `ligaya` girl, `migo` gay boy, `toni` lesbian girl, `popoy` chubby boy, `inday` dark-skinned girl. Outfits in `docs/PROJECT.md` §3.2.
 - Assigned by the **server** at match start with the match's seeded RNG: shuffle the roster, give one per player, no duplicates (6 characters ≥ max 6 players). Fixed for the whole match, including respawns and set switches.
-- Purely visual: identical hitbox (capsule r=0.4 m), HP, speed, animations timing. Shown in loading screen, scoreboard and kill feed.
+- Purely visual: identical hitbox (circle r=0.4 m), HP, speed, animations timing. Shown in loading screen, scoreboard and kill feed.
 - Team readability: team-colored bandana/armband + ground ring; enemy outline on the local client.
 - Practice mode: random character for the player, dummies use the others. Practice has two training dummies on the enemy team (one stands still, one walks sideways +/-3 m around its post at half speed) and one standing ally dummy, so the revive touch can be tested. Dummies never attack or use skills, have no death delay, and respawn at their spot after 10 s.
 
@@ -79,7 +79,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - What damages a wall column: enemy weapons deal their normal damage to it. A projectile that hits it deals its damage once (a boomerang turns back); ground areas, jacks ticks and bola bounces hit every column inside their circle; cones hit columns in front within range. Non-damaging weapons (trap, shield) don't hurt walls. Own walls never take damage from their own team.
 - Base zone: circle r=2 around the electric post. A living, non-CC'd enemy standing in it for 0.5 s scores.
 - Boundary walls on the long sides (house fronts, fences).
-- Greybox placeholder geometry (base 4 m from each lane end, wall layers 7 m and 12 m from the base, 1 m thick) lives in `data/rules/map_layout.tres`; adjust there, not in code.
+- Lane geometry (base 4 m from each lane end, wall layers 7 m and 12 m from the base, 1 m thick) lives in `data/rules/map_layout.tres`; adjust there, not in code. The look is separate (`docs/ART.md`).
 
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.
@@ -92,6 +92,12 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Offscreen awareness: edge indicators for allies/enemies/ball/tricycle plus a slim lane minimap. Aim previews and skill ranges must remain readable within the visible area (long-range weapons rely on drag-to-aim and edge indicators).
 - Because the visible depth is shorter than the lane, ranges, speeds and the lane length stay as specified; balance is re-checked in M6 with real play on phones.
 
+## HUD
+- **Over each hero:** a segmented health bar (green you, blue ally, red enemy, grey for gray HP in the death delay). **No names.** A status (*Stunned*, *Down*, ...) is shown in *italic* above the bar. Under the bar, one row with two thin bars: **Dash** cooldown on the left, **Mark** cooldown on the right. Damage numbers float up in white or yellow and heals in green.
+- **Skill buttons:** art only (weapon icons, Dash, Mark, guava), the weapon's type as a small tag (ATK, CC or BLK), a cooldown number, a ready flash. Buttons on cooldown are disabled.
+- **Top:** score and set pips, a timer pill (guava and tricycle), the lane minimap on the left edge. There is no health panel in the corner.
+- Status of the italic line, the cooldown bars and the League of Legends camera: planned in `docs/ROADMAP.md` (P2, P3).
+
 ## Scoring (volleyball format)
 - **Point**: reach enemy base. After a point: 3 s freeze, all players reset to their bases at full HP, cooldowns reset. Walls **persist** within a set.
 - **Set**: first to 5 points, win by 2, hard cap 7.
@@ -99,17 +105,17 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Implementation defaults: during the 3 s freeze nothing moves. The reset also clears status effects, weapon objects on the field, the ball (its 15 s spawn timer restarts) and an active tricycle crossing (the next one comes a full interval later). Dead players come back too. After the last point of the match the game stops and shows the result. Numbers in `data/rules/game_rules.tres` (`base_capture_time`, `point_freeze_time`, `set_points_to_win`, `set_win_by`, `set_point_cap`, `match_sets_to_win`).
 
 ## The guava (neutral ball)
-The neutral at the centre of the lane is a **guava** (bayabas; the game's namesake). It works as the rubber ball always did (below), with one addition from the owner:
+The neutral at the centre of the lane is a **guava** (*bayabas* is the Tagalog word for guava). It can be eaten, carried and thrown:
 - **Eating it heals you.** Picking the guava up off the ground heals **half your max HP** (50 of 100, capped at max; `ball_pickup_heal_fraction` in `data/rules/game_rules.tres`). A catch or a pass is not a pickup and doesn't heal. Nobody who is dead or down can pick it up or be healed. You still carry it afterwards and can throw it as before. (If you'd rather it be eaten and gone, say so; that is a one-line rule change.)
 - The heal shows as a green "+50" over the player.
 - Spawns at center every 15 s if none exists.
 - Pick up: walk over it. Holder can throw (skillshot, 12 m, fast). Holder moves at 90% speed.
-- Hit enemy → `KNOCKOUT` 3 s, ball despawns, timer restarts.
+- Hit enemy → `KNOCKOUT` 3 s, the guava despawns, timer restarts.
 - Enemy "catch": an enemy who presses the Catch button within 0.3 s before contact catches it instead (becomes holder). **(D2 confirm)**
-- Hit ally → ally becomes holder.
-- Hit cardboard wall → 60 dmg, ball despawns, timer restarts.
-- Hit boundary or max range → drops on ground, can be picked up.
-- While in flight and not yet hit anything, the **thrower** can recast to blink to the ball. **(D3 confirm: thrower only)**
+- Hit ally → ally becomes holder (no heal).
+- Hit cardboard wall → 60 dmg, the guava despawns, timer restarts.
+- Hit boundary or max range → drops on the ground, can be picked up (and heals again).
+- While in flight and not yet hit anything, the **thrower** can recast to blink to the guava. **(D3 confirm: thrower only)**
 - Controls: one **guava button** (R on keyboard), art only. With the guava in hand (the button glows gold) press, drag to aim and release to throw (auto-aim locked at the press like weapons, cancel zone works); while your own throw flies a press blinks to it; otherwise a press opens the 0.3 s catch window.
 - Implementation defaults: thrown at 20 m/s (`ball_speed`); an enemy paper shield stops it and it drops there; it passes through the thrower's own walls (D11) and only damages enemy walls; the holder drops it when they go down or die; the blink moves the thrower onto the ball and the ball keeps flying. Numbers in `data/rules/game_rules.tres` (`ball_*`).
 
