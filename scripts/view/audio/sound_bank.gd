@@ -20,7 +20,17 @@ static func get_sound(id: StringName) -> AudioStreamWAV:
 
 static func ids() -> Array[StringName]:
 	return [&"cast", &"hit", &"snip", &"boing", &"bonk", &"crunch", &"thud", &"point", &"lose_point",
-		&"set", &"horn", &"down", &"revive", &"click", &"dash"]
+		&"set", &"horn", &"down", &"revive", &"click", &"dash", &"heal", &"stun", &"poof", &"footstep",
+		&"ko", &"respawn", &"victory", &"defeat", &"ui_click", &"ui_back", &"mark", &"tick",
+		&"cast_bato_light", &"cast_bato_heavy", &"cast_gunting_light", &"cast_gunting_heavy",
+		&"cast_papel_trap", &"cast_papel_shield", &"cast_tsinelas_light", &"cast_tsinelas_heavy",
+		&"cast_lata", &"cast_jacks", &"cast_bola", &"cast_trumpo"]
+
+
+## The cast sound for a weapon id (falls back to the generic cast).
+static func cast_id(weapon_id: StringName) -> StringName:
+	var id: StringName = StringName("cast_" + String(weapon_id))
+	return id if ids().has(id) else &"cast"
 
 
 static func _build(id: StringName) -> AudioStreamWAV:
@@ -64,6 +74,76 @@ static func _build(id: StringName) -> AudioStreamWAV:
 				return _square(330.0 - 220.0 * t / d, t) * 0.2 * _env(t, d, 0.01))
 		&"revive":
 			return _arpeggio([392.0, 523.25, 659.25], 0.07, 0.4)
+		&"heal":
+			return _arpeggio([523.25, 659.25, 783.99, 1046.5, 1318.5], 0.07, 0.45)
+		&"stun":
+			return _render(0.35, func(t: float, d: float) -> float:
+				return (sin(TAU * 880.0 * t) * 0.35 + sin(TAU * 1320.0 * t) * 0.2) * exp(-t * 9.0) + sin(TAU * 140.0 * t) * 0.4 * exp(-t * 28.0))
+		&"poof":
+			return _render(0.4, func(t: float, d: float) -> float:
+				return _noise(t * 0.4) * 0.5 * exp(-t * 9.0) + sin(TAU * (500.0 - 900.0 * t) * t) * 0.35 * exp(-t * 12.0))
+		&"footstep":
+			return _render(0.07, func(t: float, d: float) -> float:
+				return (_noise(t) * 0.25 + sin(TAU * 90.0 * t) * 0.35) * exp(-t * 55.0))
+		&"ko":
+			return _render(0.7, func(t: float, d: float) -> float:
+				return _square(260.0 - 200.0 * t / d, t) * 0.22 * _env(t, d, 0.01) + sin(TAU * 70.0 * t) * 0.35 * exp(-t * 6.0))
+		&"respawn":
+			return _arpeggio([392.0, 587.33, 783.99], 0.09, 0.4)
+		&"victory":
+			return _arpeggio([523.25, 659.25, 783.99, 659.25, 783.99, 1046.5, 1318.5, 1568.0], 0.11, 0.55)
+		&"defeat":
+			return _arpeggio([392.0, 349.23, 311.13, 261.63], 0.2, 0.45)
+		&"ui_click":
+			return _render(0.07, func(t: float, d: float) -> float:
+				return (sin(TAU * 740.0 * t) * 0.5 + sin(TAU * 1480.0 * t) * 0.2) * exp(-t * 55.0))
+		&"ui_back":
+			return _render(0.08, func(t: float, d: float) -> float:
+				return sin(TAU * 520.0 * t) * 0.5 * exp(-t * 45.0))
+		&"mark":
+			return _render(0.3, func(t: float, d: float) -> float:
+				return sin(TAU * (300.0 + 1500.0 * t) * t) * 0.4 * _env(t, d, 0.005) + _noise(t) * 0.1 * exp(-t * 14.0))
+		&"tick":
+			return _render(0.05, func(t: float, d: float) -> float:
+				return _square(1000.0, t) * 0.18 * exp(-t * 70.0))
+		&"cast_bato_light":
+			return _render(0.16, func(t: float, d: float) -> float:
+				return _noise(t * 0.5) * 0.4 * _env(t, d, 0.01) * (1.0 - t / d) + sin(TAU * (520.0 - 1500.0 * t) * t) * 0.2 * _env(t, d, 0.004))
+		&"cast_bato_heavy":
+			return _render(0.3, func(t: float, d: float) -> float:
+				return _noise(t * 0.3) * 0.5 * _env(t, d, 0.02) + sin(TAU * (260.0 - 500.0 * t) * t) * 0.35 * _env(t, d, 0.01))
+		&"cast_gunting_light":
+			return _render(0.18, func(t: float, d: float) -> float:
+				var burst: float = 1.0 if fmod(t, 0.09) < 0.04 else 0.3
+				return (_square(2600.0, t) * 0.18 + _noise(t) * 0.35) * burst * exp(-fmod(t, 0.09) * 40.0))
+		&"cast_gunting_heavy":
+			return _render(0.25, func(t: float, d: float) -> float:
+				return (_square(1800.0 - 600.0 * t, t) * 0.2 + _noise(t) * 0.4) * exp(-t * 12.0))
+		&"cast_papel_trap":
+			return _render(0.3, func(t: float, d: float) -> float:
+				return _noise(floor(t * 90.0) / 90.0) * 0.45 * _env(t, d, 0.01) * (0.5 + 0.5 * _square(17.0, t)))
+		&"cast_papel_shield":
+			return _render(0.28, func(t: float, d: float) -> float:
+				return _noise(floor(t * 60.0) / 60.0) * 0.4 * _env(t, d, 0.03) + sin(TAU * 300.0 * t) * 0.08)
+		&"cast_tsinelas_light":
+			return _render(0.22, func(t: float, d: float) -> float:
+				return (_noise(t) * 0.35 + sin(TAU * 180.0 * t) * 0.3) * exp(-fmod(t, 0.07) * 50.0) * _env(t, d, 0.003))
+		&"cast_tsinelas_heavy":
+			return _render(0.3, func(t: float, d: float) -> float:
+				return (_noise(t * 0.6) * 0.45 + sin(TAU * 110.0 * t) * 0.4) * exp(-t * 8.0))
+		&"cast_lata":
+			return _render(0.45, func(t: float, d: float) -> float:
+				return (sin(TAU * 1250.0 * t) * 0.3 + sin(TAU * 1830.0 * t) * 0.22 + sin(TAU * 2700.0 * t) * 0.12) * exp(-t * 11.0))
+		&"cast_jacks":
+			return _render(0.4, func(t: float, d: float) -> float:
+				var ping: float = fmod(t, 0.1)
+				return sin(TAU * (1900.0 + 400.0 * floor(t / 0.1)) * t) * 0.3 * exp(-ping * 40.0) * (1.0 - t / d))
+		&"cast_bola":
+			return _render(0.35, func(t: float, d: float) -> float:
+				return sin(TAU * (180.0 + 260.0 * sin(t * 14.0)) * t) * 0.55 * exp(-t * 5.0))
+		&"cast_trumpo":
+			return _render(0.45, func(t: float, d: float) -> float:
+				return (_square(300.0 + 900.0 * t, t) * 0.14 + _noise(t) * 0.12) * (0.6 + 0.4 * _square(28.0, t)) * _env(t, d, 0.02))
 		&"click":
 			return _render(0.05, func(t: float, d: float) -> float:
 				return _square(1200.0, t) * 0.2 * exp(-t * 80.0))

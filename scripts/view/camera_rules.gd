@@ -6,13 +6,17 @@ extends Resource
 ## the enemy base) and a smooth, slightly lagging follow. Pure math on data from
 ## data/rules/camera_rules.tres.
 ##
-## FOV is horizontal (keep-width) so the full lane width always fits the screen.
+## Close like Mobile Legends Brawl: about `lane_width + lane_margin` metres of
+## width are visible (lane_margin is negative: less than the full lane), and the
+## camera slides sideways with the hero, never showing more than `edge_margin`
+## metres beyond the curb.
 
 @export var pitch_degrees: float = 0.0
 @export var hfov_degrees: float = 0.0
-## Extra visible width (m) beyond the lane so the side walls are not clipped,
-## also covering the small sideways follow.
+## Visible width = lane width + this (m). Negative = closer than the full lane.
 @export var lane_margin: float = 0.0
+## How far past the lane edge (m) the view may reach when the hero is at the curb.
+@export var edge_margin: float = 0.0
 ## Camera target stops this far from each lane end (m), so the view never runs off the map.
 @export var end_clamp: float = 0.0
 ## Metres the camera looks ahead of the hero toward the enemy base (hero sits low on screen).
@@ -43,11 +47,18 @@ func yaw_degrees(flip: bool) -> float:
 
 
 ## Where the camera aims: a bit ahead of the hero toward the enemy base (the view
-## direction), a little of their sideways position, clamped near the lane ends.
+## direction), following them sideways (clamped so the view stays near the lane),
+## and clamped near the lane ends.
 func clamp_target(world_pos: Vector2, layout: MapLayout, flip: bool = false) -> Vector2:
 	var ahead: float = look_ahead if flip else -look_ahead
 	var limit: float = layout.lane_length / 2.0 - end_clamp
-	return Vector2(world_pos.x * side_follow, clampf(world_pos.y + ahead, -limit, limit))
+	var side_limit: float = maxf(0.0, layout.lane_width / 2.0 + edge_margin - visible_width(layout.lane_width) / 2.0)
+	var x: float = clampf(world_pos.x * side_follow, -side_limit, side_limit)
+	return Vector2(x, clampf(world_pos.y + ahead, -limit, limit))
+
+
+func visible_width(lane_width: float) -> float:
+	return lane_width + lane_margin
 
 
 ## Fraction of the remaining distance to cover this frame (frame-rate independent).

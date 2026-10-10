@@ -10,8 +10,16 @@ const PROJECT_KEY: String = "bayabas/network/server_url"
 var server_url: String = ""
 
 
+var _ui_voice: AudioStreamPlayer
+
+
 func _ready() -> void:
 	BayabasTheme.apply()
+	# every Button in the game clicks (menus, lobby, pick screen)
+	_ui_voice = AudioStreamPlayer.new()
+	_ui_voice.volume_db = -8.0
+	add_child(_ui_voice)
+	get_tree().node_added.connect(_on_node_added)
 	server_url = ProjectSettings.get_setting(PROJECT_KEY, "") as String
 	var file: ConfigFile = ConfigFile.new()
 	if file.load(SAVE_PATH) == OK:
@@ -52,3 +60,13 @@ func save_server_url(url: String) -> void:
 	file.load(SAVE_PATH)
 	file.set_value("network", "server_url", server_url)
 	file.save(SAVE_PATH)
+
+
+func _on_node_added(node: Node) -> void:
+	if node is BaseButton:
+		(node as BaseButton).pressed.connect(play_ui, CONNECT_DEFERRED)
+
+
+func play_ui(id: StringName = &"ui_click") -> void:
+	_ui_voice.stream = SoundBank.get_sound(id)
+	_ui_voice.play()

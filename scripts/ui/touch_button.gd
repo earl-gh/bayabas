@@ -13,6 +13,7 @@ const RIM_WIDTH: float = 5.0
 const SHADOW_DROP: float = 5.0
 const FONT_SIZE: int = 26
 const SMALL_FONT_SIZE: int = 18
+const TAG_FONT_SIZE: int = 15
 const TEXT_OUTLINE: int = 5
 const COOLDOWN_FONT_SIZE: int = 34
 const READY_FLASH_TIME: float = 0.45
@@ -28,7 +29,7 @@ const NO_POINTER: int = -1
 const MOUSE_POINTER: int = -2
 
 @export var label_text: String = ""
-## Small second line, e.g. the weapon type (ATK / CC / BLOCK).
+## The weapon type tag (ATK / CC / BLK) shown under the art.
 @export var sub_text: String = ""
 @export var sub_color: Color = Color(1.0, 1.0, 1.0, 0.8)
 ## Icons.draw id ("dash", "bato_light", ...); empty = text only.
@@ -38,6 +39,12 @@ const MOUSE_POINTER: int = -2
 var cooldown_fraction: float = 0.0
 ## Seconds left on the cooldown (drawn as a number).
 var cooldown_seconds: float = 0.0
+## A steady gold glow (e.g. you are holding the guava, throw it now).
+var highlight: bool = false:
+	set(value):
+		if value != highlight:
+			highlight = value
+			queue_redraw()
 ## Brief glow when the skill becomes ready again.
 var _ready_flash: float = 0.0
 
@@ -103,13 +110,16 @@ func _draw() -> void:
 	var radius: float = minf(size.x, size.y) / 2.0
 	draw_circle(center + Vector2(0.0, SHADOW_DROP), radius, SHADOW_COLOR)
 	draw_circle(center, radius, READY_COLOR)
+	if highlight:
+		draw_arc(center, radius + 3.0, 0.0, TAU, ARC_POINTS, READY_GLOW, 7.0)
 	draw_arc(center, radius - RIM_WIDTH / 2.0, 0.0, TAU, ARC_POINTS, RIM_COLOR, RIM_WIDTH)
 	var font: Font = ThemeDB.fallback_font
 	if icon_id != &"":
-		Icons.draw(self, icon_id, center + Vector2(0.0, -radius * 0.18), radius * 0.95)
-		_text(font, label_text, center + Vector2(0.0, radius * 0.5), SMALL_FONT_SIZE, TEXT_COLOR)
-		if not sub_text.is_empty():
-			_text(font, sub_text, center + Vector2(0.0, -radius * 0.68), SMALL_FONT_SIZE - 4, sub_color)
+		# art only; a weapon adds just its type (ATK / CC / BLK) as a small tag
+		var has_tag: bool = not sub_text.is_empty()
+		Icons.draw(self, icon_id, center + Vector2(0.0, -radius * (0.14 if has_tag else 0.0)), radius * (1.15 if has_tag else 1.3))
+		if has_tag:
+			_tag(font, sub_text, center + Vector2(0.0, radius * 0.62), sub_color)
 	else:
 		var line_shift: float = 0.0 if sub_text.is_empty() else -FONT_SIZE * 0.3
 		_text(font, label_text, center + Vector2(0.0, line_shift), FONT_SIZE, TEXT_COLOR)
@@ -124,6 +134,18 @@ func _draw() -> void:
 		var glow: Color = READY_GLOW
 		glow.a = _ready_flash / READY_FLASH_TIME
 		draw_arc(center, radius + 4.0 + 10.0 * (1.0 - glow.a), 0.0, TAU, ARC_POINTS, glow, 6.0)
+
+
+## A small coloured pill with the weapon type in it.
+func _tag(font: Font, text: String, at: Vector2, color: Color) -> void:
+	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, TAG_FONT_SIZE).x + 20.0
+	var pill: StyleBoxFlat = StyleBoxFlat.new()
+	pill.bg_color = Color(0.1, 0.08, 0.14, 0.92)
+	pill.border_color = color
+	pill.set_border_width_all(2)
+	pill.set_corner_radius_all(12)
+	draw_style_box(pill, Rect2(at - Vector2(width / 2.0, 11.0), Vector2(width, 22.0)))
+	_text(font, text, at, TAG_FONT_SIZE, color)
 
 
 ## Centred text with a dark outline (readable over the street).

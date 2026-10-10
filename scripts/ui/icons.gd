@@ -88,8 +88,7 @@ static func draw(canvas: CanvasItem, id: StringName, center: Vector2, size: floa
 			for x: float in [-0.55, 0.0, 0.6]:
 				canvas.draw_circle(center + Vector2(s * x, s * 0.4), s * 0.2, Palette.BLACK)
 		&"ball":
-			canvas.draw_circle(center, s * 0.7, Palette.RUBBER_BALL)
-			canvas.draw_line(center + Vector2(-s * 0.7, 0.0), center + Vector2(s * 0.7, 0.0), Palette.WHITE, 3.0)
+			draw(canvas, &"guava", center, size)
 		_:
 			canvas.draw_circle(center, s * 0.5, Palette.WHITE)
 

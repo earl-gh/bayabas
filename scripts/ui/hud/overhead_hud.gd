@@ -20,6 +20,7 @@ const ENEMY_COLOR: Color = Color(1.0, 0.3, 0.3)
 const GRAY_COLOR: Color = Color(0.78, 0.78, 0.8)
 const EFFECT_COLOR: Color = Color(1.0, 0.86, 0.3)
 const DAMAGE_COLOR: Color = Color(1.0, 0.95, 0.85)
+const HEAL_COLOR: Color = Color(0.55, 1.0, 0.45)
 
 var _sim: MatchSim
 var _camera: Camera3D
@@ -38,18 +39,21 @@ func setup(sim: MatchSim, camera: Camera3D, local_id: int, local_team: int, name
 	_names = names
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	sim.player_damaged.connect(_on_damaged)
+	sim.player_healed.connect(_on_healed)
 
 
-## The words drawn over a player (name and effects), e.g. for tests.
+## The words drawn over a player: their name, or while a status is on them (STUN,
+## DOWN, ...) the status instead of the name.
 func text_for(id: int) -> String:
-	var state: PlayerState = _sim.players[id]
-	var lines: PackedStringArray = PackedStringArray([_names.get(id, "?") as String])
-	if state.death_delay:
-		lines.append("GRAY %d" % ceili(state.gray_hp))
+	var status: String = _status_text(_sim.players[id])
+	return status if not status.is_empty() else (_names.get(id, "?") as String)
+
+
+func _status_text(state: PlayerState) -> String:
 	var effects: PackedStringArray = state.effects.active_names()
-	if not effects.is_empty():
-		lines.append(" ".join(effects))
-	return "\n".join(lines)
+	if state.death_delay:
+		effects.insert(0, "DOWN")
+	return " ".join(effects)
 
 
 func popup_count() -> int:
@@ -70,7 +74,11 @@ func bar_color(state: PlayerState) -> Color:
 
 
 func _on_damaged(id: int, amount: int) -> void:
-	_popups.append({"id": id, "amount": amount, "age": 0.0, "jitter": float((id * 37 + _popups.size() * 13) % 40) - 20.0})
+	_popups.append({"id": id, "amount": amount, "age": 0.0, "heal": false, "jitter": float((id * 37 + _popups.size() * 13) % 40) - 20.0})
+
+
+func _on_healed(id: int, amount: int) -> void:
+	_popups.append({"id": id, "amount": amount, "age": 0.0, "heal": true, "jitter": 0.0})
 
 
 func _head(state: PlayerState) -> Variant:
@@ -101,10 +109,11 @@ func _draw() -> void:
 			continue
 		var age: float = (popup["age"] as float) / POPUP_TIME
 		var pos: Vector2 = (at as Vector2) + Vector2(popup["jitter"] as float, -30.0 - POPUP_RISE * age)
-		var color: Color = DAMAGE_COLOR if state.team == _local_team else Color(1.0, 0.85, 0.3)
+		var healed: bool = popup["heal"] as bool
+		var color: Color = HEAL_COLOR if healed else (DAMAGE_COLOR if state.team == _local_team else Color(1.0, 0.85, 0.3))
 		color.a = 1.0 - age * age
-		var size: int = int(POPUP_FONT * (1.25 - 0.25 * age))
-		_text(font, "-%d" % (popup["amount"] as int), pos, size, color, 6)
+		var size: int = int(POPUP_FONT * (1.25 - 0.25 * age) * (1.2 if healed else 1.0))
+		_text(font, ("+%d" if healed else "-%d") % (popup["amount"] as int), pos, size, color, 6)
 
 
 func _draw_bar(font: Font, state: PlayerState, head: Vector2) -> void:
@@ -123,13 +132,11 @@ func _draw_bar(font: Font, state: PlayerState, head: Vector2) -> void:
 	for i: int in range(1, segments):
 		var x: float = rect.position.x + rect.size.x * float(i) / float(segments)
 		draw_line(Vector2(x, rect.position.y), Vector2(x, rect.end.y), BACK, 1.5)
-	var name_color: Color = bar_color(state).lightened(0.4)
-	_text(font, _names.get(state.id, "") as String, head + Vector2(0.0, -10.0), NAME_FONT, name_color, 5)
-	var effects: PackedStringArray = state.effects.active_names()
-	if state.death_delay:
-		effects.insert(0, "DOWN")
-	if not effects.is_empty():
-		_text(font, " ".join(effects), head + Vector2(0.0, BAR_SIZE.y + 17.0), TAG_FONT, EFFECT_COLOR, 5)
+	var status: String = _status_text(state)
+	if status.is_empty():
+		_text(font, _names.get(state.id, "") as String, head + Vector2(0.0, -10.0), NAME_FONT, bar_color(state).lightened(0.4), 5)
+	else:
+		_text(font, status, head + Vector2(0.0, -10.0), NAME_FONT + 2, EFFECT_COLOR, 6)
 
 
 func _text(font: Font, text: String, center: Vector2, font_size: int, color: Color, outline: int) -> void:

@@ -11,7 +11,7 @@ enum Stage { LOADING, PICKING, PLAYING }
 const RELAYED: Dictionary[String, Array] = {
 	"sim": [
 		"player_died", "player_respawned", "player_death_delay_started", "player_revived",
-		"point_scored", "set_won", "match_won", "point_reset", "weapon_cast", "player_damaged",
+		"point_scored", "set_won", "match_won", "point_reset", "weapon_cast", "player_damaged", "player_healed", "player_dashed", "bookmark_used", "effect_applied",
 	],
 	"weapons": ["cone_struck"],
 	"ball": ["spawned", "picked_up", "thrown", "knocked_out", "caught", "passed", "dropped", "wall_hit", "blinked"],

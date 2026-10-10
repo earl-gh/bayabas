@@ -21,7 +21,6 @@ const RECONNECT_INTERVAL: float = 2.0
 ## Practice-only debug button to test the death delay without an enemy that fights back.
 const DEBUG_DAMAGE: int = 30
 const DELAY_COLOR: Color = Color(0.62, 0.62, 0.66)
-const HP_TEXT_COLOR: Color = Color(1.0, 1.0, 1.0)
 
 @export var rules: GameRules
 @export var layout: MapLayout
@@ -64,7 +63,6 @@ var _reconnect_left: float = -1.0
 @onready var _actors: Node3D = %Actors
 @onready var _fx: WeaponFxView = %WeaponFx
 @onready var _aim_indicator: AimIndicator = %AimIndicator
-@onready var _hp_label: Label = %HpLabel
 @onready var _respawn_label: Label = %RespawnLabel
 @onready var _delay_label: Label = %DelayLabel
 @onready var _dash_button: TouchButton = %DashButton
@@ -80,7 +78,6 @@ var _reconnect_left: float = -1.0
 @onready var _walls: WallsView = %Walls
 @onready var _neutrals: NeutralsView = %Neutrals
 @onready var _scoreboard: Scoreboard = %Scoreboard
-@onready var _player_card: PlayerCard = %PlayerCard
 @onready var _overhead: OverheadHud = %Overhead
 @onready var _minimap: LaneMinimap = %Minimap
 @onready var _top_hud: Control = %TopHud
@@ -101,7 +98,8 @@ func _ready() -> void:
 	for id: int in sim.players:
 		_make_actor_view(sim.players[id])
 	_fx.watch(sim)
-	_audio.watch(sim, local_team)
+	_audio.watch(sim, local_team, local_id)
+	_views[local_id].footstep.connect(func() -> void: _audio.play(&"footstep", 0.15))
 	_walls.watch(sim)
 	_neutrals.watch(sim)
 	_map.set_own_side(own_side())
@@ -121,6 +119,10 @@ func _ready() -> void:
 	_hurt_button.visible = not online
 	_tricycle_button.visible = not online
 	_again_button.pressed.connect(_on_again_pressed)
+	sim.player_damaged.connect(func(id: int, amount: int) -> void: if id == local_id: _camera.shake(minf(0.1 + amount * 0.01, 0.4)))
+	sim.wall_destroyed.connect(func(_index: int) -> void: _camera.shake(0.18))
+	sim.weapon_cast.connect(func(id: int, _weapon: StringName) -> void: _views[id].play_cast())
+	sim.player_damaged.connect(func(id: int, _amount: int) -> void: _views[id].play_hit())
 	sim.point_scored.connect(_on_point_scored)
 	sim.set_won.connect(_on_set_won)
 	sim.match_won.connect(_on_match_won)
@@ -134,7 +136,7 @@ func _ready() -> void:
 	_swap_button.pressed.connect(open_swap)
 	sim.player_died.connect(_on_player_died)
 	sim.player_respawned.connect(_on_player_respawned)
-	_open_pick("Pick 2 weapons", [])
+	_open_pick("CHOOSE 2 WEAPONS", [])
 	_opening_pick = true
 	if online:
 		client.stage_changed.connect(_on_stage_changed)
@@ -250,6 +252,13 @@ func show_banner(text: String) -> void:
 	_banner.text = text
 	_banner.visible = true
 	_banner_left = BANNER_TIME
+	# pop in: starts big and transparent, settles with a little overshoot
+	_banner.pivot_offset = _banner.size / 2.0
+	_banner.scale = Vector2.ONE * 1.5
+	_banner.modulate.a = 0.0
+	var tween: Tween = create_tween().set_parallel(true)
+	tween.tween_property(_banner, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_banner, "modulate:a", 1.0, 0.12)
 
 
 func banner_text() -> String:
@@ -371,7 +380,7 @@ func _on_pick_confirmed(picks: Array[StringName]) -> void:
 		# the server starts play for everyone once all have picked (or time is up)
 		client.pick_weapons(picks[0], picks[1])
 		if client.stage != "play":
-			show_banner("Waiting for the others...")
+			show_banner("Waiting for the other players...")
 			return
 	_opening_pick = false
 	_set_controls_active(true)
@@ -410,7 +419,7 @@ func _open_swap_screen() -> void:
 	var ids: Array[StringName] = []
 	for def: WeaponDef in rules.weapons:
 		ids.append(def.id)
-	_pick_screen.open_swap(WeaponPick.new(ids, 0.0, player.weapons), rules.weapons, "Swap weapons")
+	_pick_screen.open_swap(WeaponPick.new(ids, 0.0, player.weapons), rules.weapons, "CHANGE WEAPONS")
 	_set_controls_active(false)
 
 
@@ -460,19 +469,9 @@ func _sync_actor(state: PlayerState, delta: float) -> void:
 
 
 func _sync_hud(player: PlayerState) -> void:
-	if player.death_delay:
-		_player_card.set_hp(player.gray_hp / rules.death_delay_gray_hp, true)
-	else:
-		_player_card.set_hp(float(player.hp) / float(rules.player_max_hp), false)
-	if player.death_delay:
-		_hp_label.text = "HP 0   GRAY %d" % ceili(player.gray_hp)
-		_hp_label.add_theme_color_override("font_color", DELAY_COLOR)
-	else:
-		_hp_label.text = "HP %d / %d" % [player.hp, rules.player_max_hp]
-		_hp_label.add_theme_color_override("font_color", HP_TEXT_COLOR)
 	_delay_label.visible = player.death_delay
 	_respawn_label.visible = not player.alive
-	_respawn_label.text = "Respawning in %d" % ceili(player.respawn_time_left)
+	_respawn_label.text = "RESPAWN IN %d" % ceili(player.respawn_time_left)
 	_swap_button.visible = not player.alive and not _pick_screen.visible
 	if not player.alive:
 		_pick_screen.show_time(player.respawn_time_left)
@@ -510,8 +509,8 @@ func _sync_ball_button(player: PlayerState) -> void:
 		text = "Blink"
 	if button.label_text != text:
 		button.label_text = text
-		button.sub_text = "BALL"
 		button.queue_redraw()
+	button.highlight = sim.ball.is_holder(local_id)
 	button.set_locked(not player.alive or player.death_delay)
 
 
@@ -558,16 +557,16 @@ func _sync_score(delta: float) -> void:
 	_scoreboard.show_score(score, mine, rules.match_sets_to_win)
 	var info: PackedStringArray = PackedStringArray()
 	if sim.ball.state == RubberBall.State.NONE:
-		info.append("Ball in %d" % ceili(sim.ball.spawn_timer))
+		info.append("Guava in %ds" % ceili(sim.ball.spawn_timer))
 	else:
-		info.append("Ball is out!")
+		info.append("Guava is out!")
 	var arrival: float = sim.tricycle.time_to_arrival(rules)
 	if sim.tricycle.phase == Tricycle.Phase.CROSSING:
-		info.append("Tricycle crossing!")
+		info.append("Tricycle!")
 	else:
-		info.append("Tricycle in %d:%02d" % [floori(arrival) / 60, floori(arrival) % 60])
+		info.append("Tricycle %d:%02d" % [floori(arrival) / 60, floori(arrival) % 60])
 	if sim.phase == MatchSim.Phase.POINT_FREEZE:
-		info.append("Next point in %d" % ceili(sim.freeze_left))
+		info.append("Next round in %d" % ceili(sim.freeze_left))
 	_info_label.text = "  |  ".join(info)
 	_again_button.visible = sim.phase == MatchSim.Phase.MATCH_OVER
 	if sim.phase != MatchSim.Phase.MATCH_OVER and _banner_left > 0.0:
@@ -577,15 +576,15 @@ func _sync_score(delta: float) -> void:
 
 
 func _on_point_scored(team: int, _by_id: int) -> void:
-	show_banner("POINT - YOU!" if team == local_team else "POINT - THEM")
+	show_banner("BASE CAPTURED!" if team == local_team else "YOUR BASE WAS CAPTURED!")
 
 
 func _on_set_won(team: int) -> void:
-	show_banner("SET TO YOU!\nSwitching bases" if team == local_team else "SET TO THEM\nSwitching bases")
+	show_banner("SET WON!\nSwitching sides" if team == local_team else "SET LOST\nSwitching sides")
 
 
 func _on_match_won(team: int) -> void:
-	show_banner("YOU WIN THE MATCH!" if team == local_team else "THEY WIN THE MATCH")
+	show_banner("VICTORY!" if team == local_team else "DEFEAT")
 
 
 func _on_sides_switched() -> void:
@@ -593,17 +592,17 @@ func _on_sides_switched() -> void:
 
 
 func _on_tricycle_warning(_direction: int) -> void:
-	show_banner("BEEP BEEP! Tricycle!")
+	show_banner("TRICYCLE INCOMING!\nGet off the road!")
 
 
 func _on_ball_knockout(id: int) -> void:
 	if id == local_id:
-		show_banner("Knocked out!")
+		show_banner("KNOCKED OUT!")
 
 
 func _on_ball_caught(id: int) -> void:
 	if id == local_id:
-		show_banner("Nice catch!")
+		show_banner("NICE CATCH!")
 
 
 func _on_again_pressed() -> void:
@@ -621,9 +620,6 @@ func _setup_hud() -> void:
 		names[id] = _character_name(sim.players[id])
 	_overhead.setup(sim, _camera, local_id, local_team, names)
 	_minimap.setup(sim, local_id, local_team)
-	var me: CharacterDef = _characters.get(sim.players[local_id].character_id) as CharacterDef
-	var shown: String = me.display_name if me != null else "You"
-	_player_card.show_player(shown, me.tint if me != null else Color.WHITE, Palette.TEAM_OWN)
 	_top_hud.position.y = _safe_top_inset()
 
 
@@ -648,7 +644,7 @@ func scoreboard() -> Scoreboard:
 func _character_name(state: PlayerState) -> String:
 	var character: CharacterDef = _characters.get(state.character_id) as CharacterDef
 	var name_text: String = character.display_name if character != null else "?"
-	return "You (%s)" % name_text if state.id == local_id else name_text
+	return name_text
 
 
 func _make_actor_view(state: PlayerState) -> void:

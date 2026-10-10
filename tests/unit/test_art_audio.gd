@@ -101,3 +101,89 @@ func test_the_ui_theme_is_applied_everywhere() -> void:
 	var box: StyleBoxFlat = button.get_theme_stylebox("normal") as StyleBoxFlat
 	assert_not_null(box, "every button gets the chunky style")
 	assert_eq(box.bg_color, BayabasTheme.BUTTON)
+
+
+func test_the_rig_runs_throws_flinches_and_falls() -> void:
+	var kid: KidModel = _kid(2)
+	var state: PlayerState = PlayerState.new()
+	for i: int in 10:
+		kid.animate(0.05, 5.0, state)
+	assert_eq(kid.pose, "run")
+	var knee: Node3D = kid.find_child("Knee0", true, false) as Node3D
+	var bent: bool = false
+	for i: int in 30:
+		kid.animate(0.03, 5.0, state)
+		if knee.rotation.x < -0.3:
+			bent = true
+	assert_true(bent, "knees bend while running")
+	kid.play_cast()
+	kid.animate(0.1, 0.0, state)
+	assert_eq(kid.pose, "cast")
+	state.effects.apply(StatusEffects.Type.KNOCKOUT, 3.0)
+	kid.animate(0.6, 0.0, state)
+	assert_eq(kid.pose, "ko")
+	var body: Node3D = kid.find_child("Body", true, false) as Node3D
+	assert_gt(body.rotation.x, 1.0, "lying down")
+
+
+func test_every_weapon_has_its_own_cast_sound() -> void:
+	for i: int in RULES.weapons.size():
+		var id: StringName = RULES.weapons[i].id
+		assert_ne(SoundBank.cast_id(id), &"cast", "%s has a specific cast sound" % id)
+		assert_gt(SoundBank.get_sound(SoundBank.cast_id(id)).data.size(), 200)
+	assert_eq(SoundBank.cast_id(&"mystery"), &"cast", "unknown weapons fall back")
+
+
+func test_match_audio_has_sounds_for_casts_heals_effects_and_the_result() -> void:
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var audio: MatchAudio = autofree(MatchAudio.new()) as MatchAudio
+	add_child(audio)
+	audio.watch(sim, 0, 1)
+	sim.weapon_cast.emit(1, &"lata")
+	sim.player_healed.emit(1, 50)
+	sim.effect_applied.emit(2, StatusEffects.Type.STUN)
+	sim.effect_applied.emit(2, StatusEffects.Type.POLYMORPH)
+	sim.player_dashed.emit(1)
+	sim.bookmark_used.emit(1)
+	sim.player_respawned.emit(1)
+	sim.player_respawned.emit(2)
+	sim.match_won.emit(0)
+	sim.match_won.emit(1)
+	assert_eq(audio.played, [&"cast_lata", &"heal", &"stun", &"poof", &"dash", &"mark", &"respawn", &"victory", &"defeat"] as Array[StringName])
+
+
+func test_running_makes_footstep_signals() -> void:
+	var kid: KidModel = _kid(0)
+	var state: PlayerState = PlayerState.new()
+	watch_signals(kid)
+	for i: int in 60:
+		kid.animate(0.03, 5.0, state)
+	# 1.8 s at 5 m/s = 9 m; two footfalls per 1.6 m stride
+	assert_between(get_signal_emit_count(kid, "footstep"), 10, 12)
+
+
+func test_camera_shake_kicks_then_settles() -> void:
+	var camera: FollowCamera = autofree(FollowCamera.new()) as FollowCamera
+	camera.rules = load("res://data/rules/camera_rules.tres") as CameraRules
+	camera.layout = LAYOUT
+	add_child(camera)
+	camera.shake(0.3)
+	camera._process(0.016)
+	assert_ne(camera.h_offset, 0.0)
+	for i: int in 60:
+		camera._process(0.05)
+	assert_eq(camera.h_offset, 0.0)
+
+
+func test_the_cardboard_wall_is_flat_sheets_not_stacked_boxes() -> void:
+	var mesh: ArrayMesh = Props.cardboard_wall(Vector3(5.0, 2.0, 1.0))
+	var box: AABB = mesh.get_aabb()
+	assert_lt(box.size.z, 0.9, "thin: single sheets leaning on sticks, not 1 m thick boxes")
+	assert_almost_eq(box.size.y, 2.0, 0.6, "one sheet tall, not two stacked rows")
+	assert_lt(mesh.surface_get_array_len(0), 6000)
+
+
+func test_the_guava_prop_exists_and_the_ball_art_is_the_guava() -> void:
+	var mesh: ArrayMesh = Props.guava(0.35)
+	assert_gt(mesh.surface_get_array_len(0), 100)
+	assert_between(mesh.get_aabb().size.y, 0.6, 1.2)
