@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/view/practice_match.gd" id="1_practice"]
 [ext_resource type="PackedScene" path="res://scenes/map/street_map.tscn" id="2_map"]
@@ -6,18 +6,13 @@
 [ext_resource type="Resource" path="res://data/rules/map_layout.tres" id="4_layout"]
 [ext_resource type="Resource" path="res://data/rules/camera_rules.tres" id="5_camera_rules"]
 [ext_resource type="Script" path="res://scripts/view/follow_camera.gd" id="6_follow"]
-[ext_resource type="Script" path="res://scripts/ui/virtual_joystick.gd" id="7_stick"]
-[ext_resource type="Script" path="res://scripts/ui/touch_button.gd" id="8_button"]
-[ext_resource type="Script" path="res://scripts/ui/aim_button.gd" id="9_aim"]
 [ext_resource type="Script" path="res://scripts/ui/weapon_pick_screen.gd" id="10_pick"]
 [ext_resource type="Script" path="res://scripts/view/weapon_fx_view.gd" id="11_fx"]
 [ext_resource type="Script" path="res://scripts/view/aim_indicator.gd" id="12_aim_indicator"]
 [ext_resource type="Script" path="res://scripts/view/walls_view.gd" id="13_walls"]
 [ext_resource type="Script" path="res://scripts/view/neutrals_view.gd" id="14_neutrals"]
 [ext_resource type="Script" path="res://scripts/view/audio/match_audio.gd" id="15_audio"]
-[ext_resource type="Script" path="res://scripts/ui/hud/overhead_hud.gd" id="16_overhead"]
-[ext_resource type="Script" path="res://scripts/ui/hud/scoreboard.gd" id="17_score"]
-[ext_resource type="Script" path="res://scripts/ui/hud/lane_minimap.gd" id="19_minimap"]
+[ext_resource type="Script" path="res://scripts/ui/hud/match_hud.gd" id="16_hud"]
 
 [node name="Practice" type="Node3D"]
 script = ExtResource("1_practice")
@@ -61,7 +56,7 @@ layout = ExtResource("4_layout")
 
 [node name="Controls" type="CanvasLayer" parent="."]
 
-[node name="Overhead" type="Control" parent="Controls"]
+[node name="Hud" type="Control" parent="Controls"]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -70,306 +65,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("16_overhead")
-
-[node name="TopHud" type="Control" parent="Controls"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 520.0
-grow_horizontal = 2
-mouse_filter = 2
-
-[node name="Scoreboard" type="Control" parent="Controls/TopHud"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -112.0
-offset_top = 52.0
-offset_right = 112.0
-offset_bottom = 136.0
-grow_horizontal = 2
-mouse_filter = 2
-script = ExtResource("17_score")
-
-
-[node name="InfoLabel" type="Label" parent="Controls/TopHud"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -150.0
-offset_top = 142.0
-offset_right = 150.0
-offset_bottom = 176.0
-grow_horizontal = 2
-theme_type_variation = &"HudPill"
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Minimap" type="Control" parent="Controls/TopHud"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 0
-offset_left = 12.0
-offset_top = 56.0
-offset_right = 58.0
-offset_bottom = 396.0
-mouse_filter = 2
-script = ExtResource("19_minimap")
-
-[node name="Joystick" type="Control" parent="Controls"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = -1
-anchor_top = 0.45
-anchor_right = 0.5
-anchor_bottom = 1.0
-mouse_filter = 2
-script = ExtResource("7_stick")
-
-[node name="RespawnLabel" type="Label" parent="Controls"]
-unique_name_in_owner = true
-theme_type_variation = &"HudPill"
-visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -40.0
-offset_right = 260.0
-offset_bottom = 40.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_font_sizes/font_size = 48
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="SwapButton" type="Button" parent="Controls"]
-unique_name_in_owner = true
-visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = 60.0
-offset_right = 160.0
-offset_bottom = 148.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_font_sizes/font_size = 30
-text = "CHANGE WEAPONS"
-
-[node name="DelayLabel" type="Label" parent="Controls"]
-unique_name_in_owner = true
-theme_type_variation = &"HudPill"
-visible = false
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 70.0
-offset_top = 236.0
-offset_right = -70.0
-offset_bottom = 330.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 28
-text = "YOU'RE DOWN!
-Touch a teammate or your base post to get back up"
-horizontal_alignment = 1
-
-[node name="CancelZone" type="Control" parent="Controls"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -170.0
-offset_top = -540.0
-offset_right = -60.0
-offset_bottom = -430.0
-grow_horizontal = 0
-grow_vertical = 0
-mouse_filter = 2
-visible = false
-
-[node name="CancelBack" type="ColorRect" parent="Controls/CancelZone"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(0.85, 0.15, 0.15, 0.55)
-
-[node name="CancelLabel" type="Label" parent="Controls/CancelZone"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 24
-text = "Cancel"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="WeaponButton1" type="Control" parent="Controls"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -194.0
-offset_top = -194.0
-offset_right = -44.0
-offset_bottom = -44.0
-grow_horizontal = 0
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("9_aim")
-
-[node name="WeaponButton2" type="Control" parent="Controls"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -360.0
-offset_top = -150.0
-offset_right = -230.0
-offset_bottom = -20.0
-grow_horizontal = 0
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("9_aim")
-
-[node name="BallButton" type="Control" parent="Controls"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -310.0
-offset_top = -480.0
-offset_right = -206.0
-offset_bottom = -376.0
-grow_horizontal = 0
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("9_aim")
-label_text = "Catch"
-
-[node name="DashButton" type="Control" parent="Controls"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -170.0
-offset_top = -370.0
-offset_right = -58.0
-offset_bottom = -258.0
-grow_horizontal = 0
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("8_button")
-label_text = "Dash"
-
-[node name="BookmarkButton" type="Control" parent="Controls"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -330.0
-offset_top = -320.0
-offset_right = -218.0
-offset_bottom = -208.0
-grow_horizontal = 0
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("8_button")
-label_text = "Mark"
-
-[node name="HurtButton" type="Button" parent="Controls/TopHud"]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -172.0
-offset_top = 116.0
-offset_right = -12.0
-offset_bottom = 162.0
-grow_horizontal = 0
-theme_override_font_sizes/font_size = 16
-text = "-30 HP (test)"
-
-
-[node name="Banner" type="Label" parent="Controls"]
-unique_name_in_owner = true
-visible = false
-anchors_preset = 10
-anchor_top = 0.3
-anchor_right = 1.0
-anchor_bottom = 0.3
-offset_top = -60.0
-offset_bottom = 60.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 0.86, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0.1, 0.05, 0.1, 1)
-theme_override_constants/outline_size = 12
-theme_override_font_sizes/font_size = 44
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TricycleButton" type="Button" parent="Controls/TopHud"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -172.0
-offset_top = 168.0
-offset_right = -12.0
-offset_bottom = 214.0
-grow_horizontal = 0
-theme_override_font_sizes/font_size = 16
-text = "Tricycle (test)"
-
-[node name="AgainButton" type="Button" parent="Controls"]
-unique_name_in_owner = true
-visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -30.0
-offset_right = 160.0
-offset_bottom = 60.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_font_sizes/font_size = 32
-text = "Play again"
+script = ExtResource("16_hud")
 
 [node name="PickScreen" type="Control" parent="Controls"]
 unique_name_in_owner = true
@@ -381,4 +77,3 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("10_pick")
-

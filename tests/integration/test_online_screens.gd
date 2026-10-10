@@ -113,7 +113,7 @@ func test_online_match_screen_picks_then_plays_against_the_server() -> void:
 	(views[1].get_node("%PickScreen") as WeaponPickScreen).tap(&"bola")
 	(views[1].get_node("%PickScreen") as WeaponPickScreen).press_ready()
 	assert_true(_until(func() -> bool: return not views[0].is_picking() and not views[1].is_picking()), "both playing")
-	assert_false((views[0].get_node("%HurtButton") as Button).visible, "no practice buttons online")
+	assert_false(views[0].hud.hurt_button.visible, "no practice buttons online")
 	var server_sim: MatchSim = server.matches.values()[0].sim
 	var me: int = views[0].local_id
 	assert_eq(server_sim.players[me].weapons, [&"bato_light", &"lata"] as Array[StringName])

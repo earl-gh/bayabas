@@ -24,7 +24,7 @@ func _pick_screen(practice: PracticeMatch) -> WeaponPickScreen:
 
 
 func _weapon_button(practice: PracticeMatch, slot: int) -> AimButton:
-	return practice.get_node("%%WeaponButton%d" % (slot + 1)) as AimButton
+	return practice.hud.weapon_buttons[slot]
 
 
 ## Puts one enemy dummy straight ahead of the local player and the other far away.
@@ -98,11 +98,11 @@ func test_zero_hp_starts_the_death_delay_with_gray_hp_and_locked_skills() -> voi
 	practice.sim.players[PracticeMatch.LOCAL_ID].position = Vector2(0.0, 0.0)
 	practice.hurt_local(100)
 	assert_eq(practice.sim.players[PracticeMatch.LOCAL_ID].gray_hp, 50.0)
-	assert_true((practice.get_node("%DelayLabel") as Label).visible)
-	assert_false((practice.get_node("%RespawnLabel") as Label).visible)
+	assert_true(practice.hud.delay_label.visible)
+	assert_false(practice.hud.respawn_label.visible)
 	assert_true((practice.get_node("%Actors").get_child(0) as Node3D).visible, "still on their feet")
-	assert_true((practice.get_node("%DashButton") as TouchButton).locked)
-	assert_true((practice.get_node("%BookmarkButton") as TouchButton).locked)
+	assert_true(practice.hud.dash_button.locked)
+	assert_true(practice.hud.bookmark_button.locked)
 
 
 func test_skill_presses_do_nothing_in_the_death_delay() -> void:
@@ -124,8 +124,8 @@ func test_touching_the_base_post_gets_you_up_again() -> void:
 	practice.hurt_local(100)
 	practice.advance(DT)
 	assert_eq(practice.sim.players[PracticeMatch.LOCAL_ID].hp, 50)
-	assert_false((practice.get_node("%DelayLabel") as Label).visible)
-	assert_false((practice.get_node("%DashButton") as TouchButton).locked)
+	assert_false(practice.hud.delay_label.visible)
+	assert_false(practice.hud.dash_button.locked)
 
 
 func test_touching_the_ally_dummy_gets_you_up_again() -> void:
@@ -142,7 +142,7 @@ func test_touching_the_ally_dummy_gets_you_up_again() -> void:
 func test_real_death_hides_the_player_and_shows_the_respawn_timer_then_recovers() -> void:
 	var practice: PracticeMatch = _practice()
 	var capsule: Node3D = practice.get_node("%Actors").get_child(0) as Node3D
-	var respawn: Label = practice.get_node("%RespawnLabel") as Label
+	var respawn: Label = practice.hud.respawn_label
 	assert_false(respawn.visible)
 	practice.sim.kill(PracticeMatch.LOCAL_ID)
 	practice.advance(0.0)
@@ -176,7 +176,7 @@ func test_practice_has_two_enemy_dummies_and_one_ally() -> void:
 
 func test_dash_button_starts_a_dash_and_shows_its_cooldown() -> void:
 	var practice: PracticeMatch = _practice()
-	var dash: TouchButton = practice.get_node("%DashButton") as TouchButton
+	var dash: TouchButton = practice.hud.dash_button
 	assert_eq(dash.cooldown_fraction, 0.0)
 	practice.press_skill(PlayerInput.BTN_DASH)
 	practice.advance(DT)
@@ -207,8 +207,8 @@ func test_a_pressed_skill_is_sent_once() -> void:
 
 func test_skill_buttons_are_disabled_while_on_cooldown() -> void:
 	var practice: PracticeMatch = _practice()
-	var dash: TouchButton = practice.get_node("%DashButton") as TouchButton
-	var mark: TouchButton = practice.get_node("%BookmarkButton") as TouchButton
+	var dash: TouchButton = practice.hud.dash_button
+	var mark: TouchButton = practice.hud.bookmark_button
 	_equip(practice, &"bato_light", &"papel_shield")
 	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
@@ -462,7 +462,7 @@ func test_while_dead_weapons_can_be_swapped_again_and_again() -> void:
 func test_done_closes_and_the_swap_button_reopens_while_dead() -> void:
 	var practice: PracticeMatch = _practice()
 	var screen: WeaponPickScreen = _pick_screen(practice)
-	var swap: Button = practice.get_node("%SwapButton") as Button
+	var swap: Button = practice.hud.swap_button
 	practice.sim.kill(PracticeMatch.LOCAL_ID)
 	practice.advance(DT)
 	assert_false(swap.visible, "hidden under the open swap screen")
@@ -513,7 +513,7 @@ func test_scoring_shows_a_banner_and_updates_the_scoreboard() -> void:
 	_score_point(practice)
 	assert_string_starts_with(practice.scoreboard().summary(), "YOU 1 - 0 THEM")
 	assert_eq(practice.banner_text(), "BASE CAPTURED!")
-	assert_string_contains((practice.get_node("%InfoLabel") as Label).text, "Next round in")
+	assert_string_contains(practice.hud.info_label.text, "Next round in")
 	_finish_freeze(practice)
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	assert_eq(player.position, player.spawn_position, "back at base")
@@ -540,7 +540,7 @@ func test_new_set_turns_the_view_around_and_recolors_the_bases() -> void:
 
 func test_match_over_shows_play_again() -> void:
 	var practice: PracticeMatch = _practice()
-	var again: Button = practice.get_node("%AgainButton") as Button
+	var again: Button = practice.hud.again_button
 	for i: int in 10:
 		_score_point(practice)
 		_finish_freeze(practice)
@@ -551,7 +551,7 @@ func test_match_over_shows_play_again() -> void:
 
 func test_ball_button_throws_the_ball_at_a_dummy() -> void:
 	var practice: PracticeMatch = _practice()
-	var ball_button: AimButton = practice.get_node("%BallButton") as AimButton
+	var ball_button: AimButton = practice.hud.ball_button
 	var enemy: PlayerState = _enemy_ahead(practice, 5.0)
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	practice.sim.ball.spawn_timer = 0.0
@@ -574,7 +574,7 @@ func test_ball_button_throws_the_ball_at_a_dummy() -> void:
 
 func test_tricycle_test_button_brings_it_now() -> void:
 	var practice: PracticeMatch = _practice()
-	(practice.get_node("%TricycleButton") as Button).pressed.emit()
+	practice.hud.tricycle_button.pressed.emit()
 	practice.advance(DT)
 	assert_eq(practice.banner_text(), "TRICYCLE INCOMING!\nGet off the road!")
 	for i: int in 70:
@@ -602,7 +602,7 @@ func test_overhead_bars_use_ml_colours() -> void:
 
 func test_minimap_puts_our_base_at_the_bottom_even_after_the_switch() -> void:
 	var practice: PracticeMatch = _practice()
-	var minimap: LaneMinimap = practice.get_node("%Minimap") as LaneMinimap
+	var minimap: LaneMinimap = practice.hud.minimap
 	var own_base: Vector2 = minimap.to_map(LAYOUT.base_center(practice.own_side()))
 	var their_base: Vector2 = minimap.to_map(LAYOUT.base_center(-practice.own_side()))
 	assert_gt(own_base.y, their_base.y)
@@ -618,7 +618,7 @@ func test_skill_buttons_show_cooldown_seconds() -> void:
 	var practice: PracticeMatch = _practice()
 	practice.press_skill(PlayerInput.BTN_DASH)
 	practice.advance(DT)
-	var dash: TouchButton = practice.get_node("%DashButton") as TouchButton
+	var dash: TouchButton = practice.hud.dash_button
 	assert_eq(ceili(dash.cooldown_seconds), 8)
 
 
@@ -645,10 +645,10 @@ func test_skill_buttons_are_art_with_only_the_type_tag() -> void:
 	assert_eq(block.icon_id, &"papel_shield")
 	assert_eq(block.sub_text, "BLK")
 	assert_eq(_weapon_button(practice, 1).sub_text, "ATK")
-	var guava: AimButton = practice.get_node("%BallButton") as AimButton
+	var guava: AimButton = practice.hud.ball_button
 	assert_eq(guava.icon_id, &"ball")
 	assert_eq(guava.sub_text, "", "no text on the guava, Dash or Mark buttons")
-	assert_eq((practice.get_node("%DashButton") as TouchButton).sub_text, "")
+	assert_eq(practice.hud.dash_button.sub_text, "")
 
 
 func test_eating_the_guava_heals_and_pops_a_green_number() -> void:
