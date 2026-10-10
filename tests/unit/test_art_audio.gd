@@ -81,7 +81,7 @@ func test_match_audio_follows_sim_events() -> void:
 	sim.point_scored.emit(0, 1)
 	sim.point_scored.emit(1, 2)
 	sim.tricycle.warning_started.emit(1)
-	sim.ball.knocked_out.emit(3)
+	sim.ball.hit_enemy.emit(3)
 	assert_eq(audio.played, [&"point", &"lose_point", &"horn", &"bonk"] as Array[StringName])
 
 

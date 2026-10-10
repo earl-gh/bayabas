@@ -14,7 +14,7 @@ const RELAYED: Dictionary[String, Array] = {
 		"point_scored", "set_won", "match_won", "point_reset", "weapon_cast", "player_damaged", "player_healed", "player_dashed", "bookmark_used", "effect_applied",
 	],
 	"weapons": ["cone_struck"],
-	"ball": ["spawned", "picked_up", "thrown", "knocked_out", "caught", "passed", "dropped", "wall_hit", "blinked"],
+	"ball": ["spawned", "picked_up", "thrown", "hit_enemy", "bitten", "eaten", "caught", "passed", "dropped", "wall_hit", "blinked"],
 	"tricycle": ["warning_started", "crossing_started", "crossing_ended", "pushed"],
 }
 

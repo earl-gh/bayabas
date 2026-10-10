@@ -37,7 +37,7 @@ static func capture(sim: MatchSim, acks: Dictionary[int, int]) -> Dictionary:
 		"players": players, "projectiles": projectiles, "zones": zones, "shields": shields,
 		"walls": walls, "side0": sim.side_for_team(0), "phase": sim.phase, "freeze": sim.freeze_left,
 		"score": {"p": sim.score.points.duplicate(), "s": sim.score.sets.duplicate(), "n": sim.score.set_number, "w": sim.score.winner},
-		"ball": {"s": ball.state, "pos": ball.position, "h": ball.holder_id, "th": ball.thrower_id, "team": ball.team, "bl": ball.can_blink, "tm": ball.spawn_timer},
+		"ball": {"s": ball.state, "pos": ball.position, "h": ball.holder_id, "th": ball.thrower_id, "team": ball.team, "bl": ball.can_blink, "bt": ball.bites, "tm": ball.spawn_timer},
 		"tri": {"ph": tricycle.phase, "t": tricycle.time_left, "dir": tricycle.direction, "pos": tricycle.position},
 	}
 
@@ -93,6 +93,7 @@ static func apply(sim: MatchSim, data: Dictionary, local_id: int) -> void:
 		sim.ball.thrower_id = ball["th"] as int
 		sim.ball.team = ball["team"] as int
 		sim.ball.can_blink = ball["bl"] as bool
+		sim.ball.bites = ball.get("bt", 0) as int
 		sim.ball.spawn_timer = ball["tm"] as float
 	var tri: Dictionary = data.get("tri", {}) as Dictionary
 	if not tri.is_empty():

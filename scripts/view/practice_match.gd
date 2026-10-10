@@ -249,7 +249,7 @@ func _connect_sim() -> void:
 	sim.match_won.connect(_on_match_won)
 	sim.sides_switched.connect(_on_sides_switched)
 	sim.tricycle.warning_started.connect(_on_tricycle_warning)
-	sim.ball.knocked_out.connect(_on_ball_knockout)
+	sim.ball.hit_enemy.connect(_on_ball_hit)
 	sim.ball.caught.connect(_on_ball_caught)
 	sim.player_died.connect(_on_player_died)
 	sim.player_respawned.connect(_on_player_respawned)
@@ -476,9 +476,9 @@ func _on_tricycle_warning(_direction: int) -> void:
 	show_banner("TRICYCLE INCOMING!\nGet off the road!")
 
 
-func _on_ball_knockout(id: int) -> void:
+func _on_ball_hit(id: int) -> void:
 	if id == local_id:
-		show_banner("KNOCKED OUT!")
+		show_banner("GUAVA HIT!")
 
 
 func _on_ball_caught(id: int) -> void:

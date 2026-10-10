@@ -1,11 +1,10 @@
 """Composes the round skill buttons from the painted icons (run make_assets.py first).
 
 Run: python3 tools/art/make_buttons.py
-Output: assets/icons/btn_<id>.png (256 px). Each button is a gold rim around a face
-coloured by the skill's type (attack red, block blue, crowd control violet, heal
-green, the pin navy), with the icon enlarged and cropped inside the face,
-an inner shadow so the face sits deep in the rim, and a glossy highlight on top.
-The weapon types are read from data/weapons/*.tres.
+Run slice_skill_art.py first. Output: assets/icons/btn_<id>.png (256 px). Each button
+is the cardboard disc with the whole painted skill icon on its flat face. The icon's own
+glow shows the type (attack red, crowd control violet, block blue, heal green). The weapon
+types are read from data/weapons/*.tres.
 """
 import os
 import re
@@ -61,50 +60,37 @@ def radial(top, bottom):
     return Image.fromarray((c0 * (1 - t) + c1 * t).astype(np.uint8), "RGBA")
 
 
-def compose(icon_name, face_colors, scale=1.18, nudge=(0, 6)):
+ART = os.path.join(ICONS, "art")
+DISC = os.path.join(ROOT, "assets", "ui", "skill_disc.png")
+FACE_RATIO = 0.44  # radius of the flat cardboard face, as a fraction of the disc width
+
+
+def compose(icon_path, scale=0.92, nudge=(0, 0)):
+    """The cardboard disc with the whole painted icon sitting inside its flat face (not cropped)."""
     img = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-    # drop shadow under the whole button
-    shadow = disc(RIM_RADIUS, 4).point(lambda v: v * 120 // 255)
-    img.paste(Image.new("RGBA", (N, N), (10, 6, 12, 255)), (0, 6 * SS), shadow)
-    # gold rim: outer ink, bevelled gold, darker inner lip
-    img.paste(Image.new("RGBA", (N, N), (40, 24, 18, 255)), (0, 0), disc(RIM_RADIUS + 3))
-    img.paste(radial((255, 238, 150), (176, 110, 26)), (0, 0), disc(RIM_RADIUS))
-    img.paste(radial((150, 96, 30), (255, 214, 110)), (0, 0), disc(FACE_RADIUS + 9))
-    face = disc(FACE_RADIUS)
-    img.paste(radial(*face_colors), (0, 0), face)
-    # the icon, enlarged and cropped to the face
-    icon = Image.open(os.path.join(ICONS, icon_name + ".png")).convert("RGBA")
-    side = int(FACE_RADIUS * 2 * scale * SS)
-    icon = icon.resize((side, side), Image.LANCZOS)
-    layer = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-    layer.alpha_composite(icon, ((N - side) // 2 + nudge[0] * SS, (N - side) // 2 + nudge[1] * SS))
-    alpha = ImageChops.multiply(layer.split()[3], face)
-    layer.putalpha(alpha)
-    img.alpha_composite(layer)
-    # inner shadow: the face sits deep inside the rim
-    ring = ImageChops.subtract(face, disc(FACE_RADIUS - 16, 6))
-    ring = ImageChops.multiply(ring, face).point(lambda v: v * 150 // 255)
-    img.paste(Image.new("RGBA", (N, N), (8, 4, 16, 255)), (0, 0), ring)
-    # glossy highlight across the top of the face
-    gloss = Image.new("L", (N, N), 0)
-    c = N / 2
-    ImageDraw.Draw(gloss).ellipse([c - 82 * SS, c - 98 * SS, c + 82 * SS, c - 10 * SS], fill=255)
-    gloss = ImageChops.multiply(gloss.filter(ImageFilter.GaussianBlur(5 * SS)), face).point(lambda v: v * 70 // 255)
-    img.paste(Image.new("RGBA", (N, N), (255, 255, 255, 255)), (0, 0), gloss)
-    # specular glint on the rim
-    glint = Image.new("L", (N, N), 0)
-    ImageDraw.Draw(glint).arc([c - 118 * SS, c - 118 * SS, c + 118 * SS, c + 118 * SS], 200, 260, fill=255, width=5 * SS)
-    img.paste(Image.new("RGBA", (N, N), (255, 255, 240, 255)), (0, 0), glint.filter(ImageFilter.GaussianBlur(SS)))
+    disc = Image.open(DISC).convert("RGBA")
+    side = int(N * 0.97)
+    disc = disc.resize((side, int(side * disc.height / disc.width)), Image.LANCZOS)
+    ox, oy = (N - disc.width) // 2, (N - disc.height) // 2 + 2 * SS
+    shadow = Image.new("RGBA", (N, N), (0, 0, 0, 0))
+    shadow.paste(Image.new("RGBA", disc.size, (10, 6, 12, 255)), (ox, oy + 5 * SS), disc.split()[3].filter(ImageFilter.GaussianBlur(3 * SS)).point(lambda v: v * 120 // 255))
+    img.alpha_composite(shadow)
+    img.alpha_composite(disc, (ox, oy))
+    cx, cy = ox + disc.width / 2, oy + disc.height / 2
+    icon = Image.open(icon_path).convert("RGBA")
+    isz = int(disc.width * FACE_RATIO * 2 * scale)
+    icon = icon.resize((isz, isz), Image.LANCZOS)
+    img.alpha_composite(icon, (int(cx - isz / 2 + nudge[0] * SS), int(cy - isz / 2 + nudge[1] * SS)))
     return img.resize((SIZE, SIZE), Image.LANCZOS)
 
 
 def main():
     for wid, kind in weapon_kinds().items():
-        compose(wid, KIND_FACES[kind]).save(os.path.join(ICONS, "btn_%s.png" % wid), optimize=True)
+        compose(os.path.join(ART, wid + ".png")).save(os.path.join(ICONS, "btn_%s.png" % wid), optimize=True)
         print("btn_" + wid, ["ATK", "CC", "BLK"][kind])
-    for name, icon in (("ball", "guava"), ("guava", "guava")):
-        compose(icon, HEAL_FACE).save(os.path.join(ICONS, "btn_%s.png" % name), optimize=True)
-    compose("pin", MOVE_FACE, scale=1.1, nudge=(0, 4)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)
+    for name in ("heal", "guava", "guava_bitten", "dash", "pin_return"):
+        compose(os.path.join(ART, name + ".png")).save(os.path.join(ICONS, "btn_%s.png" % name), optimize=True)
+    compose(os.path.join(ICONS, "pin.png"), scale=0.74, nudge=(0, 2)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)
     print("buttons done")
 
 
