@@ -54,6 +54,7 @@ var _last_step: int = 0
 var _anim: String = "idle"
 var _dir_index: int = 0
 var _flipped: bool = false
+var _stride_flip: bool = false  # the run frame has one foot forward: mirroring it each step swaps the foot
 var _tracked_position: Vector2 = Vector2.INF
 var _since_move: float = 0.0
 var _ground_speed: float = 0.0
@@ -147,6 +148,7 @@ func animate(delta: float, speed: float, state: PlayerState) -> void:
 	var bob: float = 0.0
 	var squash: Vector2 = Vector2.ONE
 	var anim: String = "idle"
+	_stride_flip = false
 	if knocked_out:
 		pose = "ko"
 		anim = "ko_stagger" if _ko_time < KO_FALL_TIME else "ko_lying"
@@ -177,6 +179,7 @@ func animate(delta: float, speed: float, state: PlayerState) -> void:
 	elif _move_blend > 0.5:
 		pose = "run"
 		anim = "run"
+		_stride_flip = int(floor(_phase * 2.0)) % 2 == 1
 		var t: float = _phase * TAU
 		bob = absf(sin(t)) * 0.09
 		squash = Vector2(1.0 - absf(sin(t)) * 0.03, 1.0 + absf(sin(t)) * 0.04)
@@ -213,7 +216,8 @@ func _show_frame(anim: String, bob: float) -> void:
 	var size: Vector2 = texture.get_size()
 	_sprite.texture = texture
 	_sprite.pixel_size = CELL_HEIGHT / size.y
-	_sprite.flip_h = _flipped
+	# the side view would face backwards if mirrored, so only the other views swap feet
+	_sprite.flip_h = _flipped != (_stride_flip and index != 2)
 	# the feet (bottom of the drawn pixels) sit on the origin
 	var feet: float = frame["feet"] as float
 	_sprite.offset = Vector2(0.0, feet - size.y * 0.5)
