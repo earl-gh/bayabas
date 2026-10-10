@@ -29,10 +29,20 @@ func _holding(at: Vector2 = Vector2(0.0, 2.0)) -> MatchSim:
 	return sim
 
 
+## A throw: the button held past the tap time (or dragged), then released.
 func _throw(sim: MatchSim, id: int, aim: Vector2) -> void:
-	sim.set_input(id, PlayerInput.create(Vector2.ZERO, aim, PlayerInput.BTN_BALL, sim.tick))
-	sim.step(DT)
+	for i: int in 9:
+		sim.set_input(id, PlayerInput.create(Vector2.ZERO, aim, PlayerInput.BTN_BALL, sim.tick))
+		sim.step(DT)
 	sim.set_input(id, PlayerInput.create(Vector2.ZERO, aim, 0, sim.tick))
+	sim.step(DT)
+
+
+## A tap: pressed and released at once, no drag.
+func _tap(sim: MatchSim, id: int) -> void:
+	sim.set_input(id, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, PlayerInput.BTN_BALL, sim.tick))
+	sim.step(DT)
+	sim.set_input(id, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, 0, sim.tick))
 	sim.step(DT)
 
 
@@ -40,7 +50,10 @@ func test_ball_numbers_come_from_data() -> void:
 	assert_eq(RULES.ball_spawn_interval, 15.0)
 	assert_eq(RULES.ball_range, 12.0)
 	assert_eq(RULES.ball_holder_speed_scale, 0.9)
-	assert_eq(RULES.ball_knockout_time, 3.0)
+	assert_eq(RULES.ball_bite_heal_fraction, 0.25)
+	assert_eq(RULES.ball_bites, 2)
+	assert_eq(RULES.ball_hit_damage_fraction, 0.25)
+	assert_eq(RULES.ball_bitten_damage_fraction, 0.125)
 	assert_eq(RULES.ball_wall_damage, 60)
 	assert_eq(RULES.ball_catch_window, 0.3)
 
@@ -65,13 +78,13 @@ func test_walk_over_it_to_pick_it_up_and_carry_it_slower() -> void:
 	assert_eq(sim.ball.position, me.position)
 
 
-func test_hit_enemy_is_knocked_out_and_the_ball_despawns() -> void:
+func test_a_whole_guava_hits_for_a_quarter_of_max_hp_and_despawns() -> void:
 	var sim: MatchSim = _holding()
 	var enemy: PlayerState = sim.add_dummy(2, 1, Vector2(0.0, -4.0), DummyBrain.standing())
 	_throw(sim, 1, Vector2(0.0, -1.0))
 	_wait(sim, 0.5)
-	assert_true(enemy.effects.has(StatusEffects.Type.KNOCKOUT))
-	assert_false(enemy.can_act())
+	assert_eq(enemy.hp, 75)
+	assert_false(enemy.effects.has(StatusEffects.Type.KNOCKOUT), "damage only")
 	assert_eq(sim.ball.state, S.NONE)
 	assert_almost_eq(sim.ball.spawn_timer, 15.0, 0.6, "the timer restarts")
 
@@ -81,7 +94,7 @@ func test_auto_aim_targets_the_nearest_enemy_at_the_press() -> void:
 	var enemy: PlayerState = sim.add_dummy(2, 1, Vector2(5.0, -3.0), DummyBrain.standing())
 	_throw(sim, 1, Vector2.ZERO)
 	_wait(sim, 0.6)
-	assert_true(enemy.effects.has(StatusEffects.Type.KNOCKOUT))
+	assert_eq(enemy.hp, 75)
 
 
 func test_an_enemy_pressing_catch_just_before_contact_catches_it() -> void:
@@ -100,10 +113,10 @@ func test_an_enemy_pressing_catch_just_before_contact_catches_it() -> void:
 	sim.set_input(2, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, 0, sim.tick))
 	_wait(sim, 0.4)
 	assert_true(sim.ball.is_holder(2), "caught")
-	assert_false(enemy.effects.has(StatusEffects.Type.KNOCKOUT))
+	assert_eq(enemy.hp, 100, "caught, not hit")
 
 
-func test_pressing_catch_too_early_is_a_knockout() -> void:
+func test_pressing_catch_too_early_is_a_hit() -> void:
 	var sim: MatchSim = _holding()
 	var enemy: PlayerState = sim.add_player(2, 1)
 	enemy.position = Vector2(0.0, -10.0)
@@ -112,7 +125,7 @@ func test_pressing_catch_too_early_is_a_knockout() -> void:
 	sim.set_input(2, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, 0, sim.tick))
 	_throw(sim, 1, Vector2(0.0, -1.0))
 	_wait(sim, 0.8)
-	assert_true(enemy.effects.has(StatusEffects.Type.KNOCKOUT))
+	assert_eq(enemy.hp, 75)
 
 
 func test_hitting_an_ally_passes_the_ball() -> void:
@@ -187,30 +200,85 @@ func test_a_point_removes_the_ball() -> void:
 	assert_eq(sim.ball.state, S.NONE)
 
 
-# ---- the guava heals ---------------------------------------------------------------
+# ---- the guava is bitten and thrown ---------------------------------------------------
 
-func test_picking_the_guava_up_heals_half_your_max_hp() -> void:
+func test_walking_over_the_guava_does_not_heal() -> void:
 	var sim: MatchSim = _sim()
 	var me: PlayerState = sim.add_player(1, 0)
 	me.position = Vector2.ZERO
 	me.hp = 30
 	sim.ball.spawn_timer = 0.0
-	watch_signals(sim)
 	sim.step(DT)
 	sim.step(DT)
 	assert_true(sim.ball.is_holder(1))
-	assert_eq(me.hp, 80, "30 + half of 100")
-	assert_signal_emitted_with_parameters(sim, "player_healed", [1, 50])
+	assert_eq(me.hp, 30, "picking it up is not eating it")
+
+
+func test_a_tap_bites_a_quarter_then_the_second_bite_eats_it_up() -> void:
+	var sim: MatchSim = _holding()
+	var me: PlayerState = sim.players[1]
+	me.hp = 40
+	watch_signals(sim)
+	watch_signals(sim.ball)
+	_tap(sim, 1)
+	assert_eq(me.hp, 65)
+	assert_eq(sim.ball.bites, 1)
+	assert_true(sim.ball.is_holder(1), "still in hand")
+	assert_signal_emitted_with_parameters(sim, "player_healed", [1, 25])
+	assert_signal_emitted(sim.ball, "bitten")
+	_tap(sim, 1)
+	assert_eq(me.hp, 90)
+	assert_eq(sim.ball.state, S.NONE, "eaten up")
+	assert_signal_emitted(sim.ball, "eaten")
+	assert_almost_eq(sim.ball.spawn_timer, 15.0, 0.3, "the next one is on its way")
+
+
+func test_a_bitten_guava_hits_for_an_eighth() -> void:
+	var sim: MatchSim = _holding()
+	var enemy: PlayerState = sim.add_dummy(2, 1, Vector2(0.0, -4.0), DummyBrain.standing())
+	_tap(sim, 1)
+	assert_eq(sim.ball.bites, 1)
+	_throw(sim, 1, Vector2(0.0, -1.0))
+	_wait(sim, 0.5)
+	assert_eq(enemy.hp, 100 - 13, "12.5 rounds to 13")
+	assert_eq(sim.ball.state, S.NONE)
+
+
+func test_dragging_throws_instead_of_biting() -> void:
+	var sim: MatchSim = _holding()
+	var me: PlayerState = sim.players[1]
+	me.hp = 40
+	sim.set_input(1, PlayerInput.create(Vector2.ZERO, Vector2(0.0, -1.0), PlayerInput.BTN_BALL, sim.tick))
+	sim.step(DT)
+	sim.set_input(1, PlayerInput.create(Vector2.ZERO, Vector2(0.0, -1.0), 0, sim.tick))
+	sim.step(DT)
+	assert_eq(sim.ball.state, S.FLYING)
+	assert_eq(me.hp, 40, "no bite")
+
+
+func test_a_long_press_without_a_drag_throws_at_the_auto_aim() -> void:
+	var sim: MatchSim = _holding()
+	sim.add_dummy(2, 1, Vector2(0.0, -4.0), DummyBrain.standing())
+	_throw(sim, 1, Vector2.ZERO)
+	assert_eq(sim.ball.state, S.FLYING)
+
+
+func test_the_bites_survive_a_pass_and_a_drop() -> void:
+	var sim: MatchSim = _holding()
+	sim.add_dummy(3, 0, Vector2(0.0, -4.0), DummyBrain.standing())
+	_tap(sim, 1)
+	_throw(sim, 1, Vector2(0.0, -1.0))
+	_wait(sim, 0.5)
+	assert_true(sim.ball.is_holder(3))
+	assert_eq(sim.ball.bites, 1, "still bitten")
 
 
 func test_the_heal_stops_at_max_hp_and_skips_the_downed() -> void:
 	var sim: MatchSim = _sim()
 	var me: PlayerState = sim.add_player(1, 0)
 	me.position = Vector2.ZERO
-	me.hp = 70
-	sim.ball.spawn_timer = 0.0
-	_wait(sim, 0.2)
-	assert_eq(me.hp, 100, "capped")
+	me.hp = 90
+	assert_eq(sim.heal(1, 25), 10, "capped at max")
 	assert_eq(sim.heal(1, 10), 0, "already full")
 	me.hp = 40
 	sim.damage(1, 40)

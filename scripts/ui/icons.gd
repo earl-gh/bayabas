@@ -105,8 +105,10 @@ static func draw(canvas: CanvasItem, id: StringName, center: Vector2, size: floa
 			canvas.draw_line(center + Vector2(s * 0.2, -s * 0.1), center + Vector2(s * 0.75, -s * 0.3), Palette.JEEP_CHROME, 3.0)
 			for x: float in [-0.55, 0.0, 0.6]:
 				canvas.draw_circle(center + Vector2(s * x, s * 0.4), s * 0.2, Palette.BLACK)
-		&"ball":
+		&"ball", &"guava_bitten":
 			draw(canvas, &"guava", center, size)
+		&"pin_return":
+			draw(canvas, &"pin", center, size)
 		_:
 			canvas.draw_circle(center, s * 0.5, Palette.WHITE)
 

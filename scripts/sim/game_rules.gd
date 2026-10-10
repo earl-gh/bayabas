@@ -67,12 +67,18 @@ extends Resource
 ## The holder walks at this fraction of normal speed.
 @export var ball_holder_speed_scale: float = 0.0
 ## KNOCKOUT duration on an enemy hit by the ball.
-@export var ball_knockout_time: float = 0.0
 @export var ball_wall_damage: int = 0
 ## An enemy who pressed the ball button this recently before contact catches it (D2).
 @export var ball_catch_window: float = 0.0
-## Picking the guava up off the ground heals this fraction of max HP (0.5 = half).
-@export var ball_pickup_heal_fraction: float = 0.0
+## Tapping the held guava bites it: each bite heals this fraction of max HP.
+@export var ball_bite_heal_fraction: float = 0.0
+## A guava is eaten up after this many bites.
+@export var ball_bites: int = 0
+## A press released within this many seconds without dragging is a tap (a bite), not a throw.
+@export var ball_tap_time: float = 0.0
+## A thrown guava hurts an enemy for this fraction of max HP (whole) or the second one (bitten).
+@export var ball_hit_damage_fraction: float = 0.0
+@export var ball_bitten_damage_fraction: float = 0.0
 ## Tricycle: first crossing and the time between crossings.
 @export var tricycle_first_time: float = 0.0
 @export var tricycle_interval: float = 0.0

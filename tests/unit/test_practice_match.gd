@@ -552,10 +552,12 @@ func test_ball_button_throws_the_ball_at_a_dummy() -> void:
 	var neutrals: NeutralsView = practice.get_node("%Neutrals") as NeutralsView
 	assert_true(neutrals.ball_visible())
 	practice.aim_started(PracticeMatch.BALL_SLOT)
+	for i: int in 9:
+		practice.advance(DT)
 	practice.aim_released(Vector2.ZERO, false, PracticeMatch.BALL_SLOT)
 	for i: int in 15:
 		practice.advance(DT)
-	assert_true(enemy.effects.has(StatusEffects.Type.KNOCKOUT))
+	assert_eq(enemy.hp, 75, "a whole guava takes a quarter of max HP")
 	assert_eq(ball_button.label_text, "Catch")
 
 
@@ -656,13 +658,13 @@ func test_skill_buttons_are_art_with_only_the_type_tag() -> void:
 	assert_eq(block.sub_text, "BLK")
 	assert_eq(_weapon_button(practice, 1).sub_text, "ATK")
 	var guava: AimButton = practice.hud.ball_button
-	assert_eq(guava.icon_id, &"ball")
+	assert_eq(guava.icon_id, &"guava")
 	assert_eq(guava.sub_text, "", "no text on the guava or the pin")
 	assert_eq(practice.hud.bookmark_button.sub_text, "")
 	assert_eq(practice.hud.bookmark_button.icon_id, &"pin")
 
 
-func test_eating_the_guava_heals_and_pops_a_green_number() -> void:
+func test_biting_the_guava_heals_and_pops_a_green_number() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	player.position = Vector2.ZERO
@@ -670,7 +672,10 @@ func test_eating_the_guava_heals_and_pops_a_green_number() -> void:
 	practice.sim.ball.spawn_timer = 0.0
 	practice.advance(DT)
 	practice.advance(DT)
-	assert_eq(player.hp, 70)
+	assert_eq(player.hp, 20, "walking over it does not heal")
+	practice.sim.ball.bite(practice.sim, player)
+	practice.advance(DT)
+	assert_eq(player.hp, 45, "a bite heals a quarter")
 	assert_eq(practice.overhead().popup_count(), 1)
 
 

@@ -117,6 +117,7 @@ func sync_player(sim: MatchSim, rules: GameRules, player: PlayerState, local_id:
 	# the pin: ready, or out on the pin (then the same button brings you back early)
 	bookmark_button.set_locked(player.death_delay or not (player.bookmark_ready() or player.mark_active))
 	bookmark_button.highlight = player.mark_active
+	_set_icon(bookmark_button, &"dash" if player.dash_time_left > 0.0 else (&"pin_return" if player.mark_active else &"pin"))
 	bookmark_button.set_cooldown(player.bookmark_cooldown_left, rules.bookmark_cooldown)
 	var weapons_off: bool = not player.alive or player.death_delay or not player.effects.can_cast()
 	_sync_guava_button(sim, player, local_id)
@@ -159,7 +160,13 @@ func sync_score(sim: MatchSim, rules: GameRules, local_team: int, delta: float) 
 			banner.visible = false
 
 
-## The guava button is art only; it glows gold while you hold the guava.
+func _set_icon(button: TouchButton, icon: StringName) -> void:
+	if button.icon_id != icon:
+		button.icon_id = icon
+		button.queue_redraw()
+
+
+## The guava button is art only (whole or bitten guava); it glows gold while you hold the guava.
 func _sync_guava_button(sim: MatchSim, player: PlayerState, local_id: int) -> void:
 	var text: String = "Catch"
 	if sim.ball.is_holder(local_id):
@@ -170,6 +177,7 @@ func _sync_guava_button(sim: MatchSim, player: PlayerState, local_id: int) -> vo
 		ball_button.label_text = text
 		ball_button.queue_redraw()
 	ball_button.highlight = sim.ball.is_holder(local_id)
+	_set_icon(ball_button, &"guava_bitten" if sim.ball.is_holder(local_id) and sim.ball.bites > 0 else &"guava")
 	ball_button.set_locked(not player.alive or player.death_delay)
 
 
@@ -190,7 +198,7 @@ func _build() -> void:
 	var weapon_one: AimButton = _aim_button()
 	var weapon_two: AimButton = _aim_button()
 	ball_button = _aim_button()
-	ball_button.icon_id = &"ball"
+	ball_button.icon_id = &"guava"
 	ball_button.label_text = "Catch"
 	weapon_buttons = [weapon_one, weapon_two]
 	aim_buttons = [weapon_one, weapon_two, ball_button]

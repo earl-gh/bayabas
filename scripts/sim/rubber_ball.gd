@@ -9,7 +9,9 @@ extends RefCounted
 signal spawned
 signal picked_up(id: int)
 signal thrown(id: int)
-signal knocked_out(id: int)
+signal hit_enemy(id: int)
+signal bitten(id: int)
+signal eaten(id: int)
 signal caught(id: int)
 signal passed(id: int)
 signal dropped
@@ -28,6 +30,8 @@ var thrower_id: int = -1
 var team: int = -1
 var direction: Vector2 = Vector2.ZERO
 var travelled: float = 0.0
+## Bites taken out of this guava (0 = whole).
+var bites: int = 0
 ## The thrower may blink to it while it flies and has not hit anything yet (D3).
 var can_blink: bool = false
 ## Counts down while there is no ball.
@@ -44,11 +48,26 @@ func reset(rules: GameRules) -> void:
 	holder_id = -1
 	thrower_id = -1
 	can_blink = false
+	bites = 0
 	spawn_timer = rules.ball_spawn_interval
 
 
 func is_holder(id: int) -> bool:
 	return state == State.HELD and holder_id == id
+
+
+## The holder takes a bite: heals a quarter of max HP; the last bite eats the guava up.
+func bite(sim: MatchSim, eater: PlayerState) -> void:
+	if not is_holder(eater.id):
+		return
+	bites += 1
+	sim.heal(eater.id, roundi(sim.rules.player_max_hp * sim.rules.ball_bite_heal_fraction))
+	if bites >= sim.rules.ball_bites:
+		var id: int = eater.id
+		reset(sim.rules)
+		eaten.emit(id)
+	else:
+		bitten.emit(eater.id)
 
 
 func throw(caster: PlayerState, aim_direction: Vector2) -> void:
@@ -86,8 +105,6 @@ func step(sim: MatchSim, dt: float) -> void:
 				var player: PlayerState = sim.players[id]
 				if _can_hold(player) and player.position.distance_to(position) <= player.radius + sim.rules.ball_radius:
 					_hold(player)
-					# the guava: eating it off the ground heals half your max HP
-					sim.heal(id, roundi(sim.rules.player_max_hp * sim.rules.ball_pickup_heal_fraction))
 					picked_up.emit(id)
 					return
 		State.HELD:
@@ -144,9 +161,10 @@ func _check_players(sim: MatchSim) -> bool:
 			_hold(player)
 			caught.emit(id)
 		else:
-			sim.apply_effect(id, StatusEffects.Type.KNOCKOUT, sim.rules.ball_knockout_time, 0.0)
+			var fraction: float = sim.rules.ball_hit_damage_fraction if bites == 0 else sim.rules.ball_bitten_damage_fraction
+			sim.damage(id, roundi(sim.rules.player_max_hp * fraction))
 			reset(sim.rules)
-			knocked_out.emit(id)
+			hit_enemy.emit(id)
 		return true
 	return false
 

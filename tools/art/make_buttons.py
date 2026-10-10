@@ -88,8 +88,8 @@ def main():
     for wid, kind in weapon_kinds().items():
         compose(os.path.join(ART, wid + ".png")).save(os.path.join(ICONS, "btn_%s.png" % wid), optimize=True)
         print("btn_" + wid, ["ATK", "CC", "BLK"][kind])
-    compose(os.path.join(ART, "heal.png")).save(os.path.join(ICONS, "btn_guava.png"), optimize=True)
-    compose(os.path.join(ICONS, "guava.png"), scale=0.74).save(os.path.join(ICONS, "btn_ball.png"), optimize=True)
+    for name in ("heal", "guava", "guava_bitten", "dash", "pin_return"):
+        compose(os.path.join(ART, name + ".png")).save(os.path.join(ICONS, "btn_%s.png" % name), optimize=True)
     compose(os.path.join(ICONS, "pin.png"), scale=0.74, nudge=(0, 2)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)
     print("buttons done")
 

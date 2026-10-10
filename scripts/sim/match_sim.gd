@@ -643,8 +643,9 @@ func on_teleported(state: PlayerState) -> void:
 	state.dash_time_left = 0.0
 
 
-## Ball button: press (while holding the ball) starts aiming, release throws (cast on
-## release, auto-aim locked at the press, cancel zone works). A fresh press while
+## Ball button: a quick tap while holding the guava bites it (heals); press and drag, or
+## hold, to aim, and release throws (cast on release, auto-aim locked at the press, cancel
+## zone works). A fresh press while
 ## your own throw is flying blinks to it. Every fresh press opens the catch window.
 func _handle_ball_button(state: PlayerState, input: PlayerInput, previous: int, dt: float) -> void:
 	var held: bool = input.is_pressed(PlayerInput.BTN_BALL)
@@ -660,10 +661,14 @@ func _handle_ball_button(state: PlayerState, input: PlayerInput, previous: int, 
 		elif held and state.ball_aim_hold >= 0.0:
 			state.ball_aim_hold += dt
 		elif not held and was_held and state.ball_aim_hold >= 0.0:
+			var tapped: bool = state.ball_aim_hold < rules.ball_tap_time and input.aim.length() < rules.aim_deadzone
 			state.ball_aim_hold = -1.0
 			if not input.is_pressed(PlayerInput.BTN_AIM_CANCEL) and state.can_act():
-				var aim: Vector2 = input.aim if input.aim.length() >= rules.aim_deadzone else state.ball_aim_lock
-				ball.throw(state, aim)
+				if tapped:
+					ball.bite(self, state)
+				else:
+					var aim: Vector2 = input.aim if input.aim.length() >= rules.aim_deadzone else state.ball_aim_lock
+					ball.throw(state, aim)
 		return
 	state.ball_aim_hold = -1.0
 	if held and not was_held and ball.state == RubberBall.State.FLYING and state.can_act():

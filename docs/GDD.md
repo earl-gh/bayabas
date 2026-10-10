@@ -41,7 +41,7 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 Dash and Bookmark blink stop at walls that block you, i.e. the enemy's walls and the lane edges (your own team's walls are passable). Death cancels active dash/stumble/bookmark effects; cooldowns keep running through death and respawn.
 
 ## Weapons
-Status effects: `STUN` (no move/cast), `SLOW(x%)`, `AIRBORNE` (stun + vertical anim, no knockback), `POLYMORPH` (can: no cast, 50% speed), `BOUNCE` (short airborne), `KNOCKOUT` (ball; downed, no actions).
+Status effects: `STUN` (no move/cast), `SLOW(x%)`, `AIRBORNE` (stun + vertical anim, no knockback), `POLYMORPH` (can: no cast, 50% speed), `BOUNCE` (short airborne), `KNOCKOUT` (downed, no actions; no longer caused by the guava).
 Statuses never stack: only one is active at a time and a new status of a different kind overwrites the current one. The same status re-applied keeps the longer time (SLOW keeps the stronger slow).
 
 | ID | Type | Shape | Range | Damage | Effect | CD |
@@ -97,7 +97,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - **Over each hero:** a segmented health bar (green you, blue ally, red enemy, grey for gray HP in the death delay). **No names.** A status (*Stunned*, *Down*, ...) is shown in *italic* above the bar. Under the bar, one thin bar: the **pin** cooldown. **No damage numbers** (none on heroes or walls); heals pop a green +N.
 - **Skill buttons:** art only (weapon icons, the pin, guava), the weapon's type as a small tag (ATK, CC or BLK), a cooldown number, a ready flash. Buttons on cooldown are disabled.
 - **Top:** a square minimap (gold frame) at the top left showing the lane slanted from your base (bottom left) to the enemy base (top right), with a small settings button beside it, top aligned; the guava and tricycle countdowns in the centre; score and set pips at the top right. The settings button opens a see-through menu: Controls (left or right hand), the practice test buttons, Resume, Exit match. There is no health panel in the corner.
-- **Controls (one thumb):** the joystick sits where most MOBAs put the basic attack (bottom right for the right hand) and the four skills form an arc around it: weapon 1, weapon 2, the pin, the guava. The left-hand setting mirrors everything to the bottom left and is saved on the device. Skill buttons are coloured by type: attack red, block blue, crowd control violet, heal green (the pin navy).
+- **Controls (one thumb):** the joystick sits where most MOBAs put the basic attack (bottom right for the right hand) and the four skills form an arc around it: weapon 1, weapon 2, the pin, the guava. The left-hand setting mirrors everything to the bottom left and is saved on the device. Each skill button is a cardboard disc with the painted icon whole on it; the icon's own glow shows the type (attack red, crowd control violet, block blue, heal green). The pin button shows the pin, the blue dash arrow during the blink and the pin-with-return-arrow while the kid is out on the pin; the guava button shows the whole or the bitten guava.
 - The pin bar shows your own and everyone else's pin (it fills as it recharges; it turns gold and drains while the kid is out on the pin). The minimap is a square, cropped to its frame, with the lane slanted from your base (bottom left) to the enemy base (top right).
 
 ## Scoring (volleyball format)
@@ -108,15 +108,16 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 
 ## The guava (neutral ball)
 The neutral at the centre of the lane is a **guava** (*bayabas* is the Tagalog word for guava). It can be eaten, carried and thrown:
-- **Eating it heals you.** Picking the guava up off the ground heals **half your max HP** (50 of 100, capped at max; `ball_pickup_heal_fraction` in `data/rules/game_rules.tres`). A catch or a pass is not a pickup and doesn't heal. Nobody who is dead or down can pick it up or be healed. You still carry it afterwards and can throw it as before. (If you'd rather it be eaten and gone, say so; that is a one-line rule change.)
-- The heal shows as a green "+50" over the player.
+- **Bite it to heal.** Walking over the guava picks it up and heals nothing. With it in hand, **tap** the guava button to take a bite: each bite heals **a quarter of max HP** (25 of 100, capped at max; `ball_bite_heal_fraction`). The second bite (`ball_bites`) eats it up, and the next guava comes after the usual 15 s. A tap is a press released within 0.25 s (`ball_tap_time`) without dragging. A catch, a pass or a pickup never heals. Nobody who is dead or down can be healed.
+- **Throw it to hurt.** **Press and drag** (the skill indicator shows) or hold the button longer than a tap, then release. A **whole** guava hits an enemy for a **quarter of max HP** (25, `ball_hit_damage_fraction`); a **bitten** one for **an eighth** (12.5, rounded to 13, `ball_bitten_damage_fraction`). There is no knockout any more. The button shows the whole or the bitten guava.
+- Each bite shows a green "+25" over the player.
 - Spawns at center every 15 s if none exists.
 - Pick up: walk over it. Holder can throw (skillshot, 12 m, fast). Holder moves at 90% speed.
-- Hit enemy → `KNOCKOUT` 3 s, the guava despawns, timer restarts.
+- Hit enemy → damage (above), the guava despawns, timer restarts.
 - Enemy "catch": an enemy who presses the Catch button within 0.3 s before contact catches it instead (becomes holder). **(D2 confirm)**
-- Hit ally → ally becomes holder (no heal).
+- Hit ally → ally becomes holder (no heal); the bites stay.
 - Hit cardboard wall → 60 dmg, the guava despawns, timer restarts.
-- Hit boundary or max range → drops on the ground, can be picked up (and heals again).
+- Hit boundary or max range → drops on the ground, can be picked up .
 - While in flight and not yet hit anything, the **thrower** can recast to blink to the guava. **(D3 confirm: thrower only)**
 - Controls: one **guava button** (R on keyboard), art only. With the guava in hand (the button glows gold) press, drag to aim and release to throw (auto-aim locked at the press like weapons, cancel zone works); while your own throw flies a press blinks to it; otherwise a press opens the 0.3 s catch window.
 - Implementation defaults: thrown at 20 m/s (`ball_speed`); an enemy paper shield stops it and it drops there; it passes through the thrower's own walls (D11) and only damages enemy walls; the holder drops it when they go down or die; the blink moves the thrower onto the ball and the ball keeps flying. Numbers in `data/rules/game_rules.tres` (`ball_*`).
