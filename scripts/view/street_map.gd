@@ -26,6 +26,10 @@ const GROUND_TILE: float = 8.0
 const PAVER_TILE: float = 2.4
 const SIDEWALK_TOP: float = 0.2
 const CROSS_STREET_TINT: Color = Color(0.82, 0.82, 0.86)
+## Paving around the whole map, so the street never ends in sky.
+const OUTER_MARGIN: float = 40.0
+const OUTER_DROP: float = -0.12
+const OUTER_TINT: Color = Color(0.62, 0.58, 0.54)
 const DECAL_LIFT: float = 0.009
 const CHALK_PIKO_SIZE: Vector2 = Vector2(2.2, 4.4)
 const CHALK_PRESO_SIZE: Vector2 = Vector2(4.2, 2.8)
@@ -249,6 +253,10 @@ func _add_ground_textures() -> void:
 	var cross: MeshInstance3D = StreetArt.ground("asphalt", Vector2(reach * 2.0, CROSS_STREET_WIDTH), GROUND_TILE, CROSS_STREET_TINT)
 	cross.position = Vector3(0.0, GROUND_LIFT * 0.5, 0.0)
 	_geometry.add_child(cross)
+	# the neighbourhood goes on past the lane: paving all around, no sky below the horizon
+	var yard: MeshInstance3D = StreetArt.ground("pavers", Vector2(reach * 2.0 + OUTER_MARGIN, layout.lane_length + OUTER_MARGIN * 2.0), PAVER_TILE, OUTER_TINT)
+	yard.position = Vector3(0.0, OUTER_DROP, 0.0)
+	_geometry.add_child(yard)
 	var length: float = half_l - CROSS_STREET_WIDTH / 2.0
 	for side: float in [-1.0, 1.0]:
 		for segment: float in [-1.0, 1.0]:

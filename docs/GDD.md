@@ -86,7 +86,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.
 - Camera (data, tunable in `data/rules/camera_rules.tres`), **copied from League of Legends** (owner):
-  - **Tuned to the owner's gameplay reference: 60° pitch, 30° vertical field of view**, a far camera with a flat perspective. The distance is derived so about **11 m of the 16 m lane width** is visible at the hero on any phone shape (about 36 m away, 32 m up on a 720x1280 screen). All four numbers live in `data/rules/camera_rules.tres`.
+  - **Tuned to the owner's gameplay reference: 60° pitch, 30° vertical field of view**, a far camera with a flat perspective. The distance is derived so about **14 m of the 16 m lane width** is visible at the hero on any phone shape (about 46 m away, 40 m up on a 720x1280 screen). All four numbers live in `data/rules/camera_rules.tres`.
   - It follows you sideways, never showing more than 1 m past the curb, looks 2.5 m ahead toward the enemy base, eases after the hero (7/s) and stops 5 m before each lane end.
   - The lane minimap shows the rest of the width.
   - Team-relative: both teams see their own base at the bottom (the view flips for the other team).
