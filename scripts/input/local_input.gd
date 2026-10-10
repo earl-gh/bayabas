@@ -43,7 +43,15 @@ static func combine(a: Vector2, b: Vector2) -> Vector2:
 	return (a + b).limit_length(1.0)
 
 
-## Screen-relative stick to world movement. The other team's camera is rotated
-## 180 degrees, so their stick is rotated back.
-static func to_world(stick: Vector2, flip: bool) -> Vector2:
-	return -stick if flip else stick
+## Screen-relative stick to world movement: screen up is where the camera looks.
+## The camera is turned `yaw_degrees` (behind-right view), and the other team's view
+## is turned another 180 degrees, so the stick is turned the same way.
+static func to_world(stick: Vector2, flip: bool, yaw_degrees: float = 0.0) -> Vector2:
+	var yaw: float = deg_to_rad(yaw_degrees + (180.0 if flip else 0.0))
+	return Vector2(stick.x * cos(yaw) + stick.y * sin(yaw), -stick.x * sin(yaw) + stick.y * cos(yaw))
+
+
+## The inverse of `to_world`: the screen direction that moves along `world`.
+static func to_screen(world: Vector2, flip: bool, yaw_degrees: float = 0.0) -> Vector2:
+	var yaw: float = deg_to_rad(yaw_degrees + (180.0 if flip else 0.0))
+	return Vector2(world.x * cos(yaw) - world.y * sin(yaw), world.x * sin(yaw) + world.y * cos(yaw))

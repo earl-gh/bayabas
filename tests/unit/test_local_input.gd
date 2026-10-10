@@ -125,3 +125,15 @@ func test_the_menu_switches_handedness() -> void:
 	hud.menu.right_button.pressed.emit()
 	assert_false(hud.left_handed)
 	Settings.set_left_handed(was_left)
+
+
+func test_the_stick_follows_the_turned_camera() -> void:
+	# camera behind-right (45 degrees): screen up heads forward-left in the world
+	var up: Vector2 = LocalInput.to_world(Vector2(0.0, -1.0), false, 45.0)
+	assert_almost_eq(up.x, -0.7071, 0.001)
+	assert_almost_eq(up.y, -0.7071, 0.001)
+	for stick: Vector2 in [Vector2(0.3, -0.8), Vector2(-1.0, 0.0), Vector2(0.6, 0.6)]:
+		for flip: bool in [false, true]:
+			var back: Vector2 = LocalInput.to_screen(LocalInput.to_world(stick, flip, 45.0), flip, 45.0)
+			assert_almost_eq(back.x, stick.x, 0.0001)
+			assert_almost_eq(back.y, stick.y, 0.0001)

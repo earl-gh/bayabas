@@ -7,6 +7,10 @@ extends Resource
 ## metres of lane are on screen at the hero, whatever the phone's aspect ratio.
 ## Pure math on data from data/rules/camera_rules.tres.
 
+## The camera sits behind and to the right of the hero (a bird's-eye view from the
+## back right): it is turned this many degrees around the hero, so the street runs
+## diagonally up the screen from bottom left to top right.
+@export var yaw_offset_degrees: float = 0.0
 ## Pitch from horizontal, in degrees (League of Legends: 56).
 @export var pitch_degrees: float = 0.0
 ## VERTICAL field of view, in degrees (League of Legends: 30).
@@ -36,17 +40,18 @@ func distance(aspect: float) -> float:
 
 
 ## Camera position relative to the target. Own side (+Z, no flip) looks toward -Z,
-## so the camera sits behind on the +Z side; the other team is mirrored.
+## so the camera sits behind on the +Z side (and `yaw_offset_degrees` to the right);
+## the other team is mirrored.
 func camera_offset(camera_distance: float, flip: bool) -> Vector3:
 	var pitch: float = deg_to_rad(pitch_degrees)
 	var back: float = camera_distance * cos(pitch)
-	if flip:
-		back = -back
-	return Vector3(0.0, camera_distance * sin(pitch), back)
+	var yaw: float = deg_to_rad(yaw_degrees(flip))
+	return Vector3(back * sin(yaw), camera_distance * sin(pitch), back * cos(yaw))
 
 
+## The camera's turn around the vertical axis (0 = looking straight down -Z).
 func yaw_degrees(flip: bool) -> float:
-	return 180.0 if flip else 0.0
+	return yaw_offset_degrees + (180.0 if flip else 0.0)
 
 
 ## Where the camera aims: a little ahead of the hero toward the enemy base,
