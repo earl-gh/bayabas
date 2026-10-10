@@ -8,6 +8,8 @@ extends RefCounted
 const SLOTS: int = 2
 
 var time_left: float = 0.0
+## The pick time it started with (for countdown displays).
+var time_total: float = 0.0
 var picks: Array[StringName] = []
 var done: bool = false
 
@@ -18,6 +20,7 @@ var _available: Array[StringName] = []
 func _init(available: Array[StringName], time: float, current: Array[StringName] = []) -> void:
 	_available = available.duplicate()
 	time_left = time
+	time_total = time
 	for id: StringName in current:
 		if _available.has(id) and not picks.has(id) and picks.size() < SLOTS:
 			picks.append(id)

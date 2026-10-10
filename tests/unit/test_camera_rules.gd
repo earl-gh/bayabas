@@ -11,7 +11,7 @@ func test_the_angle_and_lens_match_the_owners_reference() -> void:
 
 
 func test_other_camera_numbers_come_from_data() -> void:
-	assert_eq(CAMERA.visible_width, 11.0)
+	assert_eq(CAMERA.visible_width, 14.0)
 	assert_eq(CAMERA.end_clamp, 5.0)
 	assert_eq(CAMERA.look_ahead, 2.5)
 
@@ -21,12 +21,12 @@ func test_distance_shows_the_visible_width_on_any_phone() -> void:
 		var distance: float = CAMERA.distance(aspect)
 		var width: float = 2.0 * distance * tan(deg_to_rad(CAMERA.vfov_degrees / 2.0)) * aspect
 		assert_almost_eq(width, CAMERA.visible_width, 0.001, "aspect %.2f" % aspect)
-	assert_almost_eq(CAMERA.distance(PHONE), 36.49, 0.05)
+	assert_almost_eq(CAMERA.distance(PHONE), 46.44, 0.05)
 
 
 func test_the_camera_is_far_and_high() -> void:
 	var offset: Vector3 = CAMERA.camera_offset(CAMERA.distance(PHONE), false)
-	assert_almost_eq(offset.y, 31.6, 0.1, "about 32 m up")
+	assert_almost_eq(offset.y, 40.22, 0.1, "about 40 m up")
 	assert_almost_eq(offset.length(), CAMERA.distance(PHONE), 0.001)
 
 
