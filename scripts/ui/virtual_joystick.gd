@@ -19,6 +19,8 @@ const HINT_COLOR: Color = Color(1.0, 1.0, 1.0, 0.1)
 const ARROW_COLOR: Color = Color(1.0, 1.0, 1.0, 0.6)
 
 var value: Vector2 = Vector2.ZERO
+## Resting spot of the stick inside the zone (0..1 of its size).
+var rest_fraction: Vector2 = Vector2(0.42, 0.72)
 
 var _pointer: int = NO_POINTER
 var _origin: Vector2 = Vector2.ZERO
@@ -62,7 +64,7 @@ func _input(event: InputEvent) -> void:
 
 ## Where the stick rests when nobody touches it (MOBA style: always visible).
 func rest_position() -> Vector2:
-	return Vector2(size.x * 0.42, size.y * 0.72)
+	return size * rest_fraction
 
 
 func _draw() -> void:

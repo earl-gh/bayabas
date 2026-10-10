@@ -89,3 +89,39 @@ func test_the_settings_menu_pauses_the_controls() -> void:
 	assert_false(hud.controls_active(), "no casting through the menu")
 	hud.toggle_menu()
 	assert_true(hud.controls_active())
+
+
+func test_one_thumb_controls_sit_in_the_corner_and_mirror_for_the_left_hand() -> void:
+	var was_left: bool = Settings.left_handed
+	var screen_root: Control = autofree(Control.new()) as Control
+	screen_root.size = Vector2(720.0, 1280.0)
+	add_child(screen_root)
+	var hud: MatchHud = MatchHud.new()
+	screen_root.add_child(hud)
+	hud.layout_controls(false)
+	var stick: Vector2 = hud.joystick.get_rect().get_center()
+	var screen: Vector2 = hud.get_rect().size
+	assert_gt(stick.x, screen.x * 0.7, "right hand: joystick where the basic attack usually is")
+	assert_gt(stick.y, screen.y * 0.8)
+	for button: Control in [hud.weapon_buttons[0], hud.weapon_buttons[1], hud.dash_button, hud.bookmark_button]:
+		var distance: float = button.get_rect().get_center().distance_to(stick)
+		assert_almost_eq(distance, MatchHud.ARC_RADIUS, 1.0, "in an arc around the joystick")
+		assert_lt(button.get_rect().get_center().x, stick.x + 1.0, "on the inner side")
+	hud.layout_controls(true)
+	var mirrored: Vector2 = hud.joystick.get_rect().get_center()
+	assert_almost_eq(mirrored.x, screen.x - stick.x, 1.0, "left hand: mirrored")
+	assert_gt(hud.weapon_buttons[0].get_rect().get_center().x, mirrored.x, "skills arc to the right")
+	Settings.left_handed = was_left
+
+
+func test_the_menu_switches_handedness() -> void:
+	var was_left: bool = Settings.left_handed
+	var hud: MatchHud = autofree(MatchHud.new()) as MatchHud
+	add_child(hud)
+	hud.toggle_menu()
+	hud.menu.left_button.pressed.emit()
+	assert_true(Settings.left_handed)
+	assert_true(hud.left_handed, "the HUD follows the setting")
+	hud.menu.right_button.pressed.emit()
+	assert_false(hud.left_handed)
+	Settings.set_left_handed(was_left)
