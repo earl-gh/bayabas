@@ -8,6 +8,10 @@ const SAVE_PATH: String = "user://settings.cfg"
 const PROJECT_KEY: String = "kalyeah/network/server_url"
 
 var server_url: String = ""
+## Controls on the left side of the screen (joystick bottom left) instead of the right.
+var left_handed: bool = false
+
+signal handedness_changed(left: bool)
 
 
 var _ui_voice: AudioStreamPlayer
@@ -26,6 +30,7 @@ func _ready() -> void:
 		var saved: String = file.get_value("network", "server_url", "") as String
 		if not saved.is_empty():
 			server_url = saved
+		left_handed = file.get_value("controls", "left_handed", false) as bool
 	if OS.has_feature("web"):
 		var search: Variant = JavaScriptBridge.eval("window.location.search", true)
 		var from_query: String = url_from_query(search as String if search is String else "")
@@ -60,6 +65,17 @@ func save_server_url(url: String) -> void:
 	file.load(SAVE_PATH)
 	file.set_value("network", "server_url", server_url)
 	file.save(SAVE_PATH)
+
+
+func set_left_handed(on: bool) -> void:
+	if on == left_handed:
+		return
+	left_handed = on
+	var file: ConfigFile = ConfigFile.new()
+	file.load(SAVE_PATH)
+	file.set_value("controls", "left_handed", on)
+	file.save(SAVE_PATH)
+	handedness_changed.emit(on)
 
 
 func _on_node_added(node: Node) -> void:
