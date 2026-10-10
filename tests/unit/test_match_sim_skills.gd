@@ -169,10 +169,10 @@ func test_dash_cooldown_is_eight_seconds() -> void:
 func test_dash_stops_at_enemy_walls() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
-	p.position = Vector2(0.0, -9.0)
+	p.position = Vector2(0.0, _enemy_face() + 1.5)
 	_tick(sim, 1, Vector2(0.0, -1.0), PlayerInput.BTN_DASH)
 	_run(sim, 1, Vector2(0.0, -1.0), 8)
-	assert_almost_eq(p.position.y, -13.5 + p.radius, 0.05)
+	assert_almost_eq(p.position.y, _enemy_face() + p.radius, 0.05)
 
 
 func test_dash_goes_through_the_own_teams_walls() -> void:
@@ -284,9 +284,9 @@ func test_holding_bookmark_through_its_cooldown_does_not_precast() -> void:
 func test_bookmark_blink_stops_at_enemy_walls() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
-	p.position = Vector2(0.0, -11.0)
+	p.position = Vector2(0.0, _enemy_face() + 2.5)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_almost_eq(p.position.y, -13.5 + p.radius, 0.05)
+	assert_almost_eq(p.position.y, _enemy_face() + p.radius, 0.05)
 
 
 func test_bookmark_blink_goes_through_the_own_teams_walls() -> void:
@@ -295,3 +295,11 @@ func test_bookmark_blink_goes_through_the_own_teams_walls() -> void:
 	p.position = Vector2(0.0, 21.0)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
 	assert_almost_eq(p.position.y, 17.0, 0.05)
+
+
+## Near face of the enemy wall layer nearest mid.
+func _enemy_face() -> float:
+	for spec: MapLayout.WallSpec in (load("res://data/rules/map_layout.tres") as MapLayout).wall_columns():
+		if spec.side == MapLayout.SIDE_ENEMY and spec.layer == 1:
+			return spec.rect.end.y
+	return 0.0

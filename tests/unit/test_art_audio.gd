@@ -221,3 +221,19 @@ func test_the_guava_prop_exists_and_the_ball_art_is_the_guava() -> void:
 	var mesh: ArrayMesh = Props.guava(0.35)
 	assert_gt(mesh.surface_get_array_len(0), 100)
 	assert_between(mesh.get_aabb().size.y, 0.6, 1.2)
+
+
+func test_every_skill_has_painted_art() -> void:
+	for i: int in RULES.weapons.size():
+		var def: WeaponDef = RULES.weapons[i]
+		assert_not_null(Icons.art(def.id), String(def.id))
+	for id: StringName in [&"guava", &"dash", &"bookmark", &"gear", &"button_face"]:
+		assert_not_null(Icons.art(id), String(id))
+
+
+func test_cardboard_walls_carry_kids_doodles() -> void:
+	var holder: Node3D = autofree(Node3D.new()) as Node3D
+	var material: StandardMaterial3D = StreetArt.add_wall_doodles(holder, 5.0, 2.0, 1)
+	assert_eq(holder.get_child_count(), 2, "both faces")
+	assert_not_null(material.albedo_texture)
+	assert_eq(material.transparency, BaseMaterial3D.TRANSPARENCY_ALPHA)
