@@ -11,24 +11,14 @@ func _kid(index: int) -> KidModel:
 	return kid
 
 
-func _height(node: Node3D) -> float:
-	var top: float = 0.0
-	for child: Node in node.find_children("*", "MeshInstance3D", true, false):
-		var mesh: MeshInstance3D = child as MeshInstance3D
-		if not mesh.visible or not mesh.is_visible_in_tree() or mesh.name == "TeamRing":
-			continue
-		var box: AABB = mesh.global_transform * mesh.get_aabb()
-		top = maxf(top, box.end.y)
-	return top
-
-
-func test_all_six_kids_share_one_silhouette_height() -> void:
-	var heights: Array[float] = []
+func test_every_kid_is_a_sprite_of_the_same_size() -> void:
+	var sizes: Array[Vector2] = []
 	for i: int in RULES.characters.size():
-		heights.append(_height(_kid(i)))
-	for height: float in heights:
-		assert_almost_eq(height, heights[0], 0.2, "same body, hair and caps only add a little")
-		assert_between(height, 1.8, 2.5)
+		var sprite: Sprite3D = _kid(i).find_child("Sprite", true, false) as Sprite3D
+		assert_not_null(sprite.texture, RULES.characters[i].display_name)
+		sizes.append(sprite.texture.get_size() * sprite.pixel_size)
+	for size: Vector2 in sizes:
+		assert_almost_eq(size.y, KidModel.CELL_HEIGHT, 0.01, "one cell height for every kid")
 
 
 func test_each_kid_has_their_own_outfit() -> void:
@@ -103,27 +93,71 @@ func test_the_ui_theme_is_applied_everywhere() -> void:
 	assert_eq(box.bg_color, KalyeahTheme.BUTTON)
 
 
-func test_the_rig_runs_throws_flinches_and_falls() -> void:
+func _animation_after(kid: KidModel, state: PlayerState, speed: float = 0.0) -> String:
+	kid.animate(0.05, speed, state)
+	return kid.current_animation()
+
+
+func test_each_state_shows_its_own_sprite() -> void:
 	var kid: KidModel = _kid(2)
 	var state: PlayerState = PlayerState.new()
 	for i: int in 10:
 		kid.animate(0.05, 5.0, state)
 	assert_eq(kid.pose, "run")
-	var knee: Node3D = kid.find_child("Knee0", true, false) as Node3D
-	var bent: bool = false
-	for i: int in 30:
-		kid.animate(0.03, 5.0, state)
-		if knee.rotation.x < -0.3:
-			bent = true
-	assert_true(bent, "knees bend while running")
+	assert_eq(kid.current_animation(), "run")
 	kid.play_cast()
-	kid.animate(0.1, 0.0, state)
-	assert_eq(kid.pose, "cast")
+	assert_eq(_animation_after(kid, state), "cast")
+	state = PlayerState.new()
+	state.effects.apply(StatusEffects.Type.STUN, 2.0)
+	assert_eq(_animation_after(kid, state), "stun", "stars")
+	state = PlayerState.new()
+	state.effects.apply(StatusEffects.Type.AIRBORNE, 2.0)
+	assert_eq(_animation_after(kid, state), "stun", "every status uses the stars")
+	state = PlayerState.new()
+	state.death_delay = true
+	assert_eq(_animation_after(kid, state), "ko_stagger", "delayed death is the stagger pose")
+	state = PlayerState.new()
+	state.stumble_time_left = 0.5
+	assert_eq(_animation_after(kid, state), "down", "the dash stumble is face down")
+	assert_eq(kid.pose, "stumble")
+
+
+func test_a_knockout_falls_then_lies() -> void:
+	var kid: KidModel = _kid(1)
+	var state: PlayerState = PlayerState.new()
 	state.effects.apply(StatusEffects.Type.KNOCKOUT, 3.0)
-	kid.animate(0.6, 0.0, state)
+	assert_eq(_animation_after(kid, state), "ko_stagger")
+	kid.animate(KidModel.KO_FALL_TIME, 0.0, state)
+	assert_eq(kid.current_animation(), "ko_lying")
 	assert_eq(kid.pose, "ko")
-	var body: Node3D = kid.find_child("Body", true, false) as Node3D
-	assert_gt(body.rotation.x, 1.0, "lying down")
+	state.effects.clear()
+	assert_eq(_animation_after(kid, state), "idle", "gets back up")
+
+
+func test_the_sprite_turns_with_the_facing_and_mirrors() -> void:
+	var kid: KidModel = _kid(0)
+	var camera: Camera3D = autofree(Camera3D.new()) as Camera3D
+	add_child(camera)
+	camera.position = Vector3(0.0, 10.0, 10.0)
+	camera.look_at(Vector3.ZERO)
+	camera.current = true
+	var sprite: Sprite3D = kid.find_child("Sprite", true, false) as Sprite3D
+	var state: PlayerState = PlayerState.new()
+	kid.face(Vector2(0.0, 1.0))
+	kid.animate(0.05, 0.0, state)
+	assert_false(sprite.flip_h)
+	assert_true(sprite.texture.resource_path.ends_with("idle_toward.png"), "faces the camera")
+	kid.face(Vector2(1.0, 0.0))
+	kid.animate(0.05, 0.0, state)
+	assert_true(sprite.texture.resource_path.ends_with("idle_right.png"))
+	assert_false(sprite.flip_h)
+	kid.face(Vector2(-1.0, 0.0))
+	kid.animate(0.05, 0.0, state)
+	assert_true(sprite.texture.resource_path.ends_with("idle_right.png"), "the left side is the right side mirrored")
+	assert_true(sprite.flip_h)
+	kid.face(Vector2(0.0, -1.0))
+	kid.animate(0.05, 0.0, state)
+	assert_true(sprite.texture.resource_path.ends_with("idle_away.png"))
 
 
 func test_every_weapon_has_its_own_cast_sound() -> void:

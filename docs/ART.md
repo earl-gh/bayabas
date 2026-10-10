@@ -14,7 +14,7 @@ The current art is a first pass built **in code**: procedural meshes, vector ico
 - Lighting: one sun with soft shadows, 2x MSAA, saturation grading, a light distance haze.
 
 ### Characters (current)
-- `scripts/view/art/kid_model.gd` (`KidModel`): the six kids on **one jointed rig** (hips, spine, neck, thighs, knees, shoulders, elbows) with procedural animation: run cycle, idle, throw, hit flinch, dash, stumble, stun, airborne tumble, knockout, down, and the can when polymorphed. Footstep signals drive footstep sounds.
+- `scripts/view/art/kid_model.gd` (`KidModel`): the kids are **pre-rendered sprites** (like Clash of Clans): one pose per state in 5 directions (toward, toward-right, right, away-right, away; the left side is mirrored) from `assets/sprites/<kid>/<pose>_<dir>.png`, cut from generated sheets by `tools/sprites/slice_sheets.py` (magenta keyed out). Poses: idle, run, cast, stun (stars; used for every hard status), down (face down: the stumble after a dash), ko_stagger (delayed death and the start of a knockout), ko_lying (after a knockout fall). Motion is added in code (run bounce, breathing, hit tint, dash stretch). Kids without their own sheets use Junjun's. No team colour on the kid: the health bar tells teams apart.
 - All six share one height and proportion; the hitbox is always `GameRules.player_radius`. Outfits, hair and skin tones (varied across the roster) come from `CharacterDef` (`data/characters/*.tres`). A team bandana, armband and ground ring show the team.
 - Written with respect (PROJECT 3.2): identity through clothes and style only.
 

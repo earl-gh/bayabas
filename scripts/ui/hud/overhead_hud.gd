@@ -10,7 +10,7 @@ extends Control
 const BAR_SIZE: Vector2 = Vector2(92.0, 13.0)
 const COOLDOWN_HEIGHT: float = 5.0
 const COOLDOWN_GAP: float = 4.0
-const HEAD_HEIGHT: float = 2.55
+const HEAD_HEIGHT: float = 3.9
 const SEGMENT_HP: int = 20
 const POPUP_TIME: float = 0.9
 const POPUP_RISE: float = 56.0
