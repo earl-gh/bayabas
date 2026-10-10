@@ -1,7 +1,8 @@
 class_name MatchHud
 extends Control
 ## The whole in-match HUD, built in code (no scene text to patch): overhead bars,
-## top row (scoreboard, timers, minimap), joystick, art-only skill buttons, the
+## top row (minimap and settings button on the left, score and timers on the right),
+## the settings menu (resume, test buttons, exit), joystick, art-only skill buttons, the
 ## cancel zone, status labels, banner and test buttons. The match screen feeds it
 ## sim state through `sync_player()` and `sync_score()`.
 
@@ -9,9 +10,16 @@ signal swap_pressed
 signal again_pressed
 signal hurt_pressed
 signal tricycle_pressed
+signal exit_pressed
 
 const BANNER_TIME: float = 2.0
-const TOP_ROW_Y: float = 52.0
+const TOP_ROW_Y: float = 40.0
+const MARGIN: float = 14.0
+const MINIMAP_SIZE: Vector2 = Vector2(92.0, 280.0)
+const GEAR_SIZE: float = 64.0
+const SCORE_SIZE: Vector2 = Vector2(224.0, 84.0)
+const INFO_WIDTH: float = 300.0
+const MENU_COLOR: Color = Color(0.1, 0.12, 0.26, 0.96)
 const DOWN_TEXT: String = "YOU'RE DOWN!\nTouch a teammate or your base post to get back up"
 
 var overhead: OverheadHud
@@ -33,6 +41,8 @@ var swap_button: Button
 var hurt_button: Button
 var tricycle_button: Button
 var again_button: Button
+var settings_button: TextureButton
+var menu: PanelContainer
 var banner: Label
 
 var _banner_left: float = 0.0
@@ -193,6 +203,8 @@ func _build() -> void:
 	again_button = _button("Play again", 32, Vector4(0.5, 0.5, 0.5, 0.5), Vector4(-160, -30, 160, 60))
 	again_button.pressed.connect(again_pressed.emit)
 	again_button.visible = false
+	# last, so it draws over the skill buttons
+	_build_menu()
 
 
 func _build_top_row() -> void:
@@ -200,26 +212,81 @@ func _build_top_row() -> void:
 	_place(top, Vector4(0, 0, 1, 0), Vector4(0, 0, 0, 520))
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(top)
+	# left: minimap, then the settings button beside it (top aligned)
+	minimap = LaneMinimap.new()
+	_place(minimap, Vector4(0, 0, 0, 0), Vector4(MARGIN, TOP_ROW_Y, MARGIN + MINIMAP_SIZE.x, TOP_ROW_Y + MINIMAP_SIZE.y))
+	minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(minimap)
+	settings_button = TextureButton.new()
+	settings_button.texture_normal = Icons.art(&"gear")
+	settings_button.ignore_texture_size = true
+	settings_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	var gear_x: float = MARGIN * 1.6 + MINIMAP_SIZE.x
+	_place(settings_button, Vector4(0, 0, 0, 0), Vector4(gear_x, TOP_ROW_Y, gear_x + GEAR_SIZE, TOP_ROW_Y + GEAR_SIZE))
+	settings_button.pressed.connect(toggle_menu)
+	top.add_child(settings_button)
+	# right: score, with the guava and tricycle timers under it
 	scoreboard = Scoreboard.new()
-	_place(scoreboard, Vector4(0.5, 0, 0.5, 0), Vector4(-112, TOP_ROW_Y, 112, 136))
+	_place(scoreboard, Vector4(1, 0, 1, 0), Vector4(-MARGIN - SCORE_SIZE.x, TOP_ROW_Y, -MARGIN, TOP_ROW_Y + SCORE_SIZE.y))
 	scoreboard.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_child(scoreboard)
 	info_label = Label.new()
-	_place(info_label, Vector4(0.5, 0, 0.5, 0), Vector4(-150, 142, 150, 176))
+	var info_y: float = TOP_ROW_Y + SCORE_SIZE.y + 6.0
+	_place(info_label, Vector4(1, 0, 1, 0), Vector4(-MARGIN - INFO_WIDTH, info_y, -MARGIN, info_y + 34.0))
 	info_label.theme_type_variation = &"HudPill"
 	info_label.add_theme_font_size_override("font_size", 16)
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	info_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_child(info_label)
-	minimap = LaneMinimap.new()
-	_place(minimap, Vector4(0, 0, 0, 0), Vector4(12, 56, 58, 396))
-	minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_child(minimap)
-	hurt_button = _button("-30 HP (test)", 16, Vector4(1, 0, 1, 0), Vector4(-172, 116, -12, 162), top)
+
+
+## The settings menu: resume, the practice test buttons, exit the match.
+func _build_menu() -> void:
+	menu = PanelContainer.new()
+	_place(menu, Vector4(0.5, 0.5, 0.5, 0.5), Vector4(-200, -200, 200, 200))
+	menu.visible = false
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = MENU_COLOR
+	style.border_color = Scoreboard.RIM
+	style.set_border_width_all(5)
+	style.set_corner_radius_all(24)
+	style.set_content_margin_all(26)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.5)
+	style.shadow_size = 12
+	menu.add_theme_stylebox_override("panel", style)
+	add_child(menu)
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	menu.add_child(column)
+	var title: Label = Label.new()
+	title.text = "Menu"
+	title.add_theme_font_size_override("font_size", 34)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(title)
+	var resume: Button = _menu_button("Resume", column)
+	resume.pressed.connect(toggle_menu)
+	hurt_button = _menu_button("-30 HP (test)", column)
 	hurt_button.pressed.connect(hurt_pressed.emit)
-	tricycle_button = _button("Tricycle (test)", 16, Vector4(1, 0, 1, 0), Vector4(-172, 168, -12, 214), top)
+	tricycle_button = _menu_button("Tricycle (test)", column)
 	tricycle_button.pressed.connect(tricycle_pressed.emit)
+	var leave: Button = _menu_button("Exit match", column)
+	leave.pressed.connect(exit_pressed.emit)
+
+
+func _menu_button(text: String, parent: Control) -> Button:
+	var button: Button = Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(0, 56)
+	button.add_theme_font_size_override("font_size", 24)
+	parent.add_child(button)
+	return button
+
+
+## Open or close the settings menu; the controls ignore touches while it is open.
+func toggle_menu() -> void:
+	menu.visible = not menu.visible
+	set_controls_active(not menu.visible)
 
 
 func _build_cancel_zone() -> Control:
