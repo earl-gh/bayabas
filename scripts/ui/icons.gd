@@ -81,6 +81,12 @@ static func draw(canvas: CanvasItem, id: StringName, center: Vector2, size: floa
 				center + Vector2(s * 0.05, -s * 0.62), center + Vector2(s * 0.6, -s * 1.0), center + Vector2(s * 0.3, -s * 0.55),
 			]), Palette.LEAF_DARK)
 			canvas.draw_line(center + Vector2(0.0, -s * 0.62), center + Vector2(-s * 0.08, -s * 0.85), Palette.WOOD, 4.0)
+		&"tricycle":
+			canvas.draw_rect(Rect2(center + Vector2(-s * 0.8, -s * 0.5), Vector2(s * 1.0, s * 0.7)), Palette.JEEP_RED)
+			canvas.draw_rect(Rect2(center + Vector2(-s * 0.85, -s * 0.62), Vector2(s * 1.1, s * 0.14)), Palette.JEEP_BLUE)
+			canvas.draw_line(center + Vector2(s * 0.2, -s * 0.1), center + Vector2(s * 0.75, -s * 0.3), Palette.JEEP_CHROME, 3.0)
+			for x: float in [-0.55, 0.0, 0.6]:
+				canvas.draw_circle(center + Vector2(s * x, s * 0.4), s * 0.2, Palette.BLACK)
 		&"ball":
 			canvas.draw_circle(center, s * 0.7, Palette.RUBBER_BALL)
 			canvas.draw_line(center + Vector2(-s * 0.7, 0.0), center + Vector2(s * 0.7, 0.0), Palette.WHITE, 3.0)

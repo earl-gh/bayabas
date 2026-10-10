@@ -13,9 +13,11 @@ const TORSO_HEIGHT: float = 0.5
 const HEAD_RADIUS: float = 0.27
 const WALK_SWING: float = 0.7
 const STEP_RATE: float = 2.6
-const GHOST_COLOR: Color = Color(0.7, 0.7, 0.74)
+const GHOST_COLOR: Color = Color(0.45, 0.45, 0.5)
 ## Chunky, toy-like proportions on screen. Visual only: the hitbox is GameRules.
 const VISUAL_SCALE: float = 1.3
+## Cartoon outline thickness (m, before VISUAL_SCALE).
+const OUTLINE: float = 0.022
 
 var character: CharacterDef
 var team_color: Color = Color.WHITE
@@ -226,6 +228,7 @@ func _build(ring_radius: float) -> void:
 	_can.visible = false
 	add_child(_can)
 	_meshes.append(_can)
+	LowPoly.add_outline(_can, OUTLINE)
 	var ring_mesh: TorusMesh = TorusMesh.new()
 	ring_mesh.inner_radius = ring_radius
 	ring_mesh.outer_radius = ring_radius + 0.14
@@ -247,4 +250,5 @@ func _add_mesh(parent: Node3D, kit: LowPoly) -> MeshInstance3D:
 	node.mesh = kit.commit()
 	parent.add_child(node)
 	_meshes.append(node)
+	LowPoly.add_outline(node, OUTLINE)
 	return node

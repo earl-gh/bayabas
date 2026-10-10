@@ -14,6 +14,184 @@ static func cached(key: String, build: Callable) -> ArrayMesh:
 	return _cache[key]
 
 
+## A two-storey house with a balcony, grilled windows and a water tank on the roof.
+static func house_tall(variant: int) -> ArrayMesh:
+	return cached("house_tall%d" % variant, func() -> ArrayMesh:
+		var walls: Array[Color] = [Palette.WALL_PEACH, Palette.WALL_SKY, Palette.WALL_MINT, Palette.WALL_PINK]
+		var wall: Color = walls[variant % walls.size()]
+		var upper: Color = wall.lightened(0.12)
+		var width: float = 5.6
+		var depth: float = 4.4
+		var kit: LowPoly = LowPoly.new()
+		# concrete ground floor, painted wooden upper floor
+		kit.box(Vector3(0.0, 1.5, 0.0), Vector3(depth, 3.0, width), Palette.CONCRETE, Palette.CONCRETE)
+		kit.box(Vector3(0.1, 4.3, 0.0), Vector3(depth + 0.2, 2.6, width + 0.2), upper)
+		kit.box(Vector3(depth / 2.0 + 0.02, 1.0, -1.2), Vector3(0.08, 2.0, 1.0), Palette.DOOR)
+		kit.box(Vector3(depth / 2.0 + 0.02, 1.7, 1.2), Vector3(0.08, 1.0, 1.6), Palette.WINDOW)
+		for i: int in 5:
+			kit.box(Vector3(depth / 2.0 + 0.07, 1.7, 0.5 + float(i) * 0.35), Vector3(0.04, 1.0, 0.04), Palette.WHITE)
+		# balcony with railing and plants
+		kit.box(Vector3(depth / 2.0 + 0.7, 3.05, 0.0), Vector3(1.4, 0.15, width * 0.8), Palette.CONCRETE)
+		for i: int in 9:
+			kit.box(Vector3(depth / 2.0 + 1.35, 3.45, -width * 0.38 + float(i) * width * 0.095), Vector3(0.05, 0.7, 0.05), Palette.WIRE)
+		kit.box(Vector3(depth / 2.0 + 1.35, 3.8, 0.0), Vector3(0.08, 0.06, width * 0.8), Palette.WIRE)
+		for z: float in [-1.6, 1.6]:
+			kit.cylinder(Vector3(depth / 2.0 + 0.9, 3.12, z), 0.18, 0.14, 0.3, 6, Palette.POT)
+			kit.sphere(Vector3(depth / 2.0 + 0.9, 3.6, z), 0.28, Palette.LEAF)
+		kit.box(Vector3(depth / 2.0 + 0.14, 4.4, 0.0), Vector3(0.08, 1.2, 2.4), Palette.WINDOW)
+		kit.box(Vector3(depth / 2.0 + 0.19, 4.4, 0.0), Vector3(0.04, 1.3, 0.08), Palette.WHITE)
+		kit.set_transform(Transform3D(Basis(Vector3.UP, PI / 2.0), Vector3.ZERO))
+		kit.gable(Vector3(0.0, 5.6, 0.0), width + 0.2, depth + 0.2, 1.4, Palette.ROOF_TIN if variant % 2 == 0 else Palette.ROOF_RED, 0.4)
+		kit.reset_transform()
+		# blue water tank on a stand at the back
+		for x: float in [-0.5, 0.5]:
+			for z: float in [-0.5, 0.5]:
+				kit.box(Vector3(-depth / 2.0 + 0.6 + x, 6.6, 1.5 + z), Vector3(0.08, 1.2, 0.08), Palette.WIRE)
+		kit.cylinder(Vector3(-depth / 2.0 + 0.6, 7.2, 1.5), 0.65, 0.65, 1.1, 8, Palette.JEEP_BLUE, Palette.JEEP_BLUE.lightened(0.2))
+		return kit.commit())
+
+
+## A fiesta tarpaulin banner (fictional, no real names), facing +X.
+static func tarpaulin(variant: int) -> ArrayMesh:
+	return cached("tarp%d" % variant, func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		var colors: Array[Color] = [Palette.SARI_YELLOW, Palette.WALL_SKY, Palette.WALL_PINK]
+		var base: Color = colors[variant % colors.size()]
+		kit.box(Vector3.ZERO, Vector3(0.04, 1.0, 2.2), Palette.WHITE)
+		kit.box(Vector3(0.03, 0.25, 0.0), Vector3(0.02, 0.4, 2.0), base)
+		kit.box(Vector3(0.03, -0.22, -0.55), Vector3(0.02, 0.35, 0.7), Palette.JEEP_RED)
+		kit.box(Vector3(0.03, -0.22, 0.45), Vector3(0.02, 0.12, 0.9), Palette.BLACK)
+		kit.box(Vector3(0.03, -0.36, 0.45), Vector3(0.02, 0.08, 0.7), Palette.BLACK)
+		return kit.commit())
+
+
+## Banderitas: fiesta bunting strung across the street (x from -span/2 to span/2).
+static func banderitas(span: float, seed_value: int) -> ArrayMesh:
+	return cached("bunting%.1f_%d" % [span, seed_value], func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		var colors: Array[Color] = [Palette.JEEP_RED, Palette.SARI_YELLOW, Palette.JEEP_BLUE, Palette.WHITE, Palette.LEAF, Palette.WALL_PINK]
+		var count: int = int(span / 0.55)
+		var sag: float = 0.6
+		for i: int in count:
+			var u: float = (float(i) + 0.5) / float(count)
+			var x: float = -span / 2.0 + span * u
+			var y: float = -sag * 4.0 * u * (1.0 - u)
+			var color: Color = colors[(i + seed_value) % colors.size()]
+			var center: Vector3 = Vector3(x, y, 0.0)
+			kit.tri(center + Vector3(-0.2, 0.0, 0.0), center + Vector3(0.2, 0.0, 0.0), center + Vector3(0.0, -0.42, 0.0), color, center + Vector3(0.0, -0.15, 0.08))
+			kit.tri(center + Vector3(-0.2, 0.0, 0.0), center + Vector3(0.2, 0.0, 0.0), center + Vector3(0.0, -0.42, 0.0), color.darkened(0.15), center + Vector3(0.0, -0.15, -0.08))
+			kit.box(center + Vector3(0.0, 0.01, 0.0), Vector3(0.55, 0.025, 0.025), Palette.WIRE)
+		return kit.commit())
+
+
+## Wooden utility pole with a crossarm (wires are drawn between poles).
+static func power_pole() -> ArrayMesh:
+	return cached("pole", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.cylinder(Vector3.ZERO, 0.17, 0.13, 7.0, 6, Palette.WOOD)
+		kit.box(Vector3(0.0, 6.6, 0.0), Vector3(0.12, 0.12, 1.6), Palette.WOOD.darkened(0.15))
+		kit.cylinder(Vector3(0.0, 5.6, 0.25), 0.22, 0.22, 0.6, 6, Palette.POST_GREY)
+		return kit.commit())
+
+
+## A straight wire segment between two points (thin box along the segment).
+static func wire(from: Vector3, to: Vector3) -> ArrayMesh:
+	var kit: LowPoly = LowPoly.new()
+	var mid: Vector3 = (from + to) / 2.0
+	var length: float = from.distance_to(to)
+	var forward: Vector3 = (to - from).normalized()
+	var side: Vector3 = forward.cross(Vector3.UP).normalized()
+	var up: Vector3 = side.cross(forward)
+	kit.set_transform(Transform3D(Basis(side, up, forward), mid))
+	kit.box(Vector3.ZERO, Vector3(0.04, 0.04, length), Palette.WIRE)
+	return kit.commit()
+
+
+## Chalk piko (hopscotch) drawn on the asphalt, long axis along Z.
+static func hopscotch() -> ArrayMesh:
+	return cached("piko", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		var chalk: Color = Color(0.97, 0.97, 0.92)
+		var squares: Array[Vector2] = [Vector2(0, 0), Vector2(0, 1), Vector2(-0.5, 2), Vector2(0.5, 2), Vector2(0, 3), Vector2(-0.5, 4), Vector2(0.5, 4), Vector2(0, 5)]
+		for cell: Vector2 in squares:
+			var c: Vector3 = Vector3(cell.x * 1.0, 0.012, -cell.y * 0.9)
+			for edge: int in 4:
+				var horizontal: bool = edge < 2
+				var offset: Vector3 = Vector3(0.0, 0.0, 0.42 if edge == 0 else -0.42) if horizontal else Vector3(0.47 if edge == 2 else -0.47, 0.0, 0.0)
+				var size: Vector3 = Vector3(0.94, 0.01, 0.06) if horizontal else Vector3(0.06, 0.01, 0.84)
+				kit.box(c + offset, size, chalk)
+		kit.box(Vector3(0.0, 0.012, -5.35), Vector3(0.3, 0.01, 0.3), Palette.SARI_YELLOW)
+		return kit.commit())
+
+
+static func manhole() -> ArrayMesh:
+	return cached("manhole", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.cylinder(Vector3(0.0, 0.0, 0.0), 0.55, 0.55, 0.02, 10, Palette.ASPHALT_DARK.darkened(0.3), Palette.ASPHALT_DARK.darkened(0.25))
+		for i: int in 3:
+			kit.box(Vector3(0.0, 0.025, -0.25 + float(i) * 0.25), Vector3(0.7, 0.01, 0.05), Palette.ASPHALT_DARK.darkened(0.45))
+		return kit.commit())
+
+
+## A bench + stools in front of the store (tambayan).
+static func bench() -> ArrayMesh:
+	return cached("bench", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.box(Vector3(0.0, 0.45, 0.0), Vector3(0.45, 0.08, 2.0), Palette.WOOD)
+		for z: float in [-0.85, 0.85]:
+			kit.box(Vector3(0.0, 0.22, z), Vector3(0.38, 0.44, 0.08), Palette.WOOD.darkened(0.2))
+		for z: float in [-1.6, 1.5]:
+			kit.cylinder(Vector3(0.4, 0.0, z), 0.18, 0.15, 0.4, 6, Palette.JEEP_RED)
+		return kit.commit())
+
+
+## A blue plastic drum (water / trash).
+static func drum() -> ArrayMesh:
+	return cached("drum", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.cylinder(Vector3.ZERO, 0.38, 0.38, 0.9, 8, Palette.JEEP_BLUE, Palette.JEEP_BLUE.lightened(0.15))
+		kit.cylinder(Vector3(0.0, 0.35, 0.0), 0.4, 0.4, 0.08, 8, Palette.JEEP_BLUE.darkened(0.2))
+		return kit.commit())
+
+
+static func banana_plant() -> ArrayMesh:
+	return cached("banana", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.cylinder(Vector3.ZERO, 0.2, 0.15, 2.2, 6, Color(0.55, 0.62, 0.3))
+		for i: int in 6:
+			var angle: float = TAU * float(i) / 6.0
+			var dir: Vector3 = Vector3(cos(angle), 0.0, sin(angle))
+			var root: Vector3 = Vector3(0.0, 2.2, 0.0)
+			var tip: Vector3 = root + dir * 1.5 + Vector3(0.0, 0.2 - float(i % 2) * 0.5, 0.0)
+			var side: Vector3 = dir.cross(Vector3.UP) * 0.35
+			kit.quad(root, root + side + dir * 0.5, tip, root - side + dir * 0.5, Palette.LEAF if i % 2 == 0 else Palette.LEAF_DARK, root + Vector3(0.0, -0.5, 0.0))
+		return kit.commit())
+
+
+static func mango_tree() -> ArrayMesh:
+	return cached("mango", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.cylinder(Vector3.ZERO, 0.3, 0.22, 2.4, 6, Palette.WOOD)
+		kit.sphere(Vector3(0.0, 3.4, 0.0), 1.6, Palette.LEAF_DARK, 7, 4)
+		kit.sphere(Vector3(0.8, 3.0, 0.5), 1.1, Palette.LEAF, 6, 3)
+		kit.sphere(Vector3(-0.7, 3.2, -0.4), 1.0, Palette.LEAF, 6, 3)
+		for i: int in 5:
+			var angle: float = TAU * float(i) / 5.0
+			kit.sphere(Vector3(cos(angle) * 1.3, 2.7, sin(angle) * 1.3), 0.13, Palette.SARI_YELLOW, 5, 3)
+		return kit.commit())
+
+
+## The concrete base pad around a post: painted rings, team colour applied separately.
+static func base_pad(radius: float) -> ArrayMesh:
+	return cached("pad%.1f" % radius, func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.cylinder(Vector3(0.0, -0.02, 0.0), radius + 0.35, radius + 0.25, 0.1, 16, Palette.CURB, Palette.CONCRETE)
+		for i: int in 8:
+			var angle: float = TAU * float(i) / 8.0
+			kit.box(Vector3(cos(angle), 0.0, sin(angle)) * (radius + 0.05) + Vector3(0.0, 0.1, 0.0), Vector3(0.35, 0.06, 0.35), Palette.SARI_YELLOW)
+		return kit.commit())
+
+
 ## A house front, facing +X (the lane is on its +X side). Footprint w (along Z) x d.
 static func house(variant: int) -> ArrayMesh:
 	return cached("house%d" % variant, func() -> ArrayMesh:

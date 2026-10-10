@@ -57,11 +57,13 @@ func test_stick_moves_the_player_and_the_camera_follows() -> void:
 	var capsule: Node3D = practice.get_node("%Actors").get_child(0) as Node3D
 	assert_almost_eq(capsule.position.x, player.position.x, 0.0001)
 	assert_almost_eq(capsule.position.z, player.position.y, 0.0001)
-	var camera: Camera3D = practice.get_node("%FollowCamera") as Camera3D
-	var target: Vector2 = CAMERA.clamp_target(player.position, LAYOUT)
-	var offset: Vector3 = CAMERA.camera_offset(CAMERA.distance(LAYOUT.lane_width), false)
-	assert_almost_eq(camera.position.z, target.y + offset.z, 0.01)
-	assert_almost_eq(camera.position.y, offset.y, 0.01)
+	var camera: FollowCamera = practice.get_node("%FollowCamera") as FollowCamera
+	var lag: float = camera.position.z - camera.desired_position(player.position, false).z
+	assert_between(lag, 0.0, 2.5, "eases after the hero, a little behind")
+	practice.set_stick(Vector2.ZERO)
+	for i: int in 60:
+		practice.advance(DT)
+	assert_almost_eq(camera.position.distance_to(camera.desired_position(player.position, false)), 0.0, 0.05, "then settles on them")
 
 
 func test_releasing_the_stick_stops_the_player() -> void:
@@ -419,9 +421,9 @@ func test_every_player_gets_a_different_character_and_a_name_tag() -> void:
 		assert_ne(character, &"")
 		assert_false(seen.has(character))
 		seen[character] = true
-	var tags: Array[Node] = practice.get_node("%Actors").find_children("*", "Label3D", true, false)
-	assert_eq(tags.size(), 4)
-	assert_string_starts_with((tags[0] as Label3D).text, "You (")
+	for id: int in practice.sim.players:
+		assert_ne(practice.overhead().text_for(id), "?", "everyone has a name over their head")
+	assert_string_starts_with(practice.overhead().text_for(PracticeMatch.LOCAL_ID), "You (")
 
 
 func test_status_effects_show_on_name_tags() -> void:
@@ -429,8 +431,7 @@ func test_status_effects_show_on_name_tags() -> void:
 	practice.sim.apply_effect(PracticeMatch.ENEMY_STAND_ID, StatusEffects.Type.POLYMORPH, 2.0, 0.0)
 	practice.advance(DT)
 	var enemy_view: Node3D = practice.get_node("%Actors").get_child(1) as Node3D
-	var tag: Label3D = enemy_view.find_children("*", "Label3D", true, false)[0] as Label3D
-	assert_string_contains(tag.text, "POLYMORPH")
+	assert_string_contains(practice.overhead().text_for(PracticeMatch.ENEMY_STAND_ID), "POLYMORPH")
 	assert_true((enemy_view as KidModel).is_can(), "turned into a can")
 
 
@@ -504,10 +505,9 @@ func test_walls_are_drawn_from_the_sim_and_disappear_when_broken() -> void:
 
 func test_scoring_shows_a_banner_and_updates_the_scoreboard() -> void:
 	var practice: PracticeMatch = _practice()
-	var score: Label = practice.get_node("%ScoreLabel") as Label
-	assert_string_starts_with(score.text, "YOU 0 - 0 THEM")
+	assert_string_starts_with(practice.scoreboard().summary(), "YOU 0 - 0 THEM")
 	_score_point(practice)
-	assert_string_starts_with(score.text, "YOU 1 - 0 THEM")
+	assert_string_starts_with(practice.scoreboard().summary(), "YOU 1 - 0 THEM")
 	assert_eq(practice.banner_text(), "POINT - YOU!")
 	assert_string_contains((practice.get_node("%InfoLabel") as Label).text, "Next point in")
 	_finish_freeze(practice)
@@ -576,3 +576,43 @@ func test_tricycle_test_button_brings_it_now() -> void:
 	for i: int in 70:
 		practice.advance(DT)
 	assert_true((practice.get_node("%Neutrals") as NeutralsView).tricycle_visible())
+
+
+
+func test_damage_numbers_pop_up_and_fade() -> void:
+	var practice: PracticeMatch = _practice()
+	practice.sim.damage(PracticeMatch.ENEMY_STAND_ID, 14)
+	assert_eq(practice.overhead().popup_count(), 1)
+	for i: int in 40:
+		practice.advance(DT)
+	assert_eq(practice.overhead().popup_count(), 0, "gone after under a second")
+
+
+func test_overhead_bars_use_ml_colours() -> void:
+	var practice: PracticeMatch = _practice()
+	var hud: OverheadHud = practice.overhead()
+	assert_eq(hud.bar_color(practice.sim.players[PracticeMatch.LOCAL_ID]), OverheadHud.SELF_COLOR)
+	assert_eq(hud.bar_color(practice.sim.players[PracticeMatch.ALLY_ID]), OverheadHud.ALLY_COLOR)
+	assert_eq(hud.bar_color(practice.sim.players[PracticeMatch.ENEMY_STAND_ID]), OverheadHud.ENEMY_COLOR)
+
+
+func test_minimap_puts_our_base_at_the_bottom_even_after_the_switch() -> void:
+	var practice: PracticeMatch = _practice()
+	var minimap: LaneMinimap = practice.get_node("%Minimap") as LaneMinimap
+	var own_base: Vector2 = minimap.to_map(LAYOUT.base_center(practice.own_side()))
+	var their_base: Vector2 = minimap.to_map(LAYOUT.base_center(-practice.own_side()))
+	assert_gt(own_base.y, their_base.y)
+	for i: int in 5:
+		_score_point(practice)
+		_finish_freeze(practice)
+	own_base = minimap.to_map(LAYOUT.base_center(practice.own_side()))
+	their_base = minimap.to_map(LAYOUT.base_center(-practice.own_side()))
+	assert_gt(own_base.y, their_base.y, "still at the bottom")
+
+
+func test_skill_buttons_show_cooldown_seconds() -> void:
+	var practice: PracticeMatch = _practice()
+	practice.press_skill(PlayerInput.BTN_DASH)
+	practice.advance(DT)
+	var dash: TouchButton = practice.get_node("%DashButton") as TouchButton
+	assert_eq(ceili(dash.cooldown_seconds), 8)

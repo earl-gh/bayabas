@@ -40,6 +40,13 @@ static func build() -> Theme:
 	theme.set_constant("outline_size", "Button", 8)
 	theme.set_color("font_outline_color", "Label", TEXT_OUTLINE)
 	theme.set_constant("outline_size", "Label", 6)
+	# HudPill: a dark rounded pill behind small HUD labels
+	var pill: StyleBoxFlat = StyleBoxFlat.new()
+	pill.bg_color = Color(0.1, 0.08, 0.14, 0.8)
+	pill.set_corner_radius_all(16)
+	pill.set_content_margin_all(6)
+	theme.set_type_variation("HudPill", "Label")
+	theme.set_stylebox("normal", "HudPill", pill)
 	var field: StyleBoxFlat = StyleBoxFlat.new()
 	field.bg_color = FIELD
 	field.set_corner_radius_all(14)

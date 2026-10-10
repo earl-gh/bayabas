@@ -17,6 +17,9 @@ const HOUSE_SPACING: float = 6.5
 const END_WALL_HEIGHT: float = 2.4
 const DASH_LENGTH: float = 2.0
 const DASH_GAP: float = 2.0
+const SHADOW_DISTANCE: float = 45.0
+const BUNTING_HEIGHT: float = 5.2
+const POLE_SPACING: float = 11.0
 
 @export var layout: MapLayout
 ## Off when a match scene supplies its own (follow) camera.
@@ -36,9 +39,15 @@ func _ready() -> void:
 	_build_map()
 	if show_overview_camera:
 		_setup_camera()
-	_sun.rotation_degrees = Vector3(-55.0, 35.0, 0.0)
-	_sun.light_color = Color(1.0, 0.95, 0.85)
-	_sun.light_energy = 1.1
+	_sun.rotation_degrees = Vector3(-58.0, 32.0, 0.0)
+	_sun.light_color = Color(1.0, 0.94, 0.82)
+	_sun.light_energy = 1.0
+	# real shadows give the toy-town depth; one cheap orthogonal map
+	_sun.shadow_enabled = true
+	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	_sun.directional_shadow_max_distance = SHADOW_DISTANCE
+	_sun.shadow_opacity = 0.55
+	_sun.shadow_blur = 1.5
 	_back_button.pressed.connect(_on_back_pressed)
 
 
@@ -49,7 +58,11 @@ static func make_environment() -> Environment:
 	env.background_color = SKY_COLOR
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(1.0, 0.95, 0.88)
-	env.ambient_light_energy = 0.65
+	env.ambient_light_energy = 0.55
+	# punchy, saturated toy-town colours
+	env.adjustment_enabled = true
+	env.adjustment_saturation = 1.18
+	env.adjustment_contrast = 1.06
 	return env
 
 
@@ -78,6 +91,7 @@ func _build_map() -> void:
 	for side: int in [MapLayout.SIDE_OWN, MapLayout.SIDE_ENEMY]:
 		var center: Vector2 = layout.base_center(side)
 		var color: Color = OWN_COLOR if side == MapLayout.SIDE_OWN else ENEMY_COLOR
+		_add(Props.base_pad(layout.base_radius), Vector3(center.x, 0.0, center.y))
 		var ring: StandardMaterial3D = _add_disc(Vector3(center.x, RING_HEIGHT / 2.0, center.y), layout.base_radius, color)
 		var post: MeshInstance3D = _add(Props.electric_post(), Vector3(center.x, 0.0, center.y))
 		# a team-coloured band on the post so you can tell bases apart from afar
@@ -96,6 +110,48 @@ func _build_map() -> void:
 	for z: float in [-half_l * 0.85, -4.5, 4.5, half_l * 0.5]:
 		_add(Props.potted_plant(), Vector3(half_w + 0.75, 0.0, z))
 		_add(Props.potted_plant(), Vector3(-half_w - 0.75, 0.0, -z))
+	_add_details()
+
+
+## Life on the street: bunting overhead, power lines, chalk piko, manholes,
+## puddles, the tambayan bench, drums, trees and tarpaulins.
+func _add_details() -> void:
+	var half_w: float = layout.lane_width / 2.0
+	var half_l: float = layout.lane_length / 2.0
+	var span: float = layout.lane_width + 2.0 * (layout.boundary_thickness + SIDEWALK_WIDTH)
+	var bunting_index: int = 0
+	for z: float in [-half_l * 0.55, -half_l * 0.18, half_l * 0.18, half_l * 0.55]:
+		_add(Props.banderitas(span, bunting_index), Vector3(0.0, BUNTING_HEIGHT, z))
+		bunting_index += 1
+	# power poles along the right sidewalk with wires between them
+	var pole_x: float = half_w + layout.boundary_thickness + SIDEWALK_WIDTH - 0.4
+	var previous: Vector3 = Vector3.ZERO
+	var z: float = -half_l + 2.0
+	var first: bool = true
+	while z <= half_l - 1.0:
+		if absf(z) > CROSS_STREET_WIDTH / 2.0 + 0.5:
+			_add(Props.power_pole(), Vector3(pole_x, 0.0, z))
+			var top: Vector3 = Vector3(pole_x, 6.65, z)
+			if not first:
+				for dz: float in [-0.6, 0.6]:
+					_add(Props.wire(previous + Vector3(0.0, 0.0, dz), top + Vector3(0.0, 0.0, dz)), Vector3.ZERO)
+			previous = top
+			first = false
+		z += POLE_SPACING
+	# chalk piko near both bases, manholes on the asphalt
+	_add(Props.hopscotch(), Vector3(-half_w + 2.2, 0.0, half_l - 9.0))
+	_add(Props.hopscotch(), Vector3(half_w - 2.2, 0.0, -half_l + 14.0), PI)
+	for spot: Vector3 in [Vector3(3.5, 0.0, 6.0), Vector3(-4.0, 0.0, -9.5), Vector3(1.5, 0.0, -20.0)]:
+		_add(Props.manhole(), spot)
+	# tambayan in front of the sari-sari store, drums, trees behind the houses
+	var store_z: float = -half_l * 0.45
+	_add(Props.bench(), Vector3(-half_w - layout.boundary_thickness - 0.9, 0.0, store_z))
+	for spot: Vector3 in [Vector3(half_w + 2.0, 0.0, 9.0), Vector3(-half_w - 2.2, 0.0, 16.0), Vector3(half_w + 2.2, 0.0, -24.0)]:
+		_add(Props.drum(), spot)
+	var tree_x: float = half_w + layout.boundary_thickness + SIDEWALK_WIDTH + 6.5
+	for tz: float in [-24.0, -10.0, 12.0, 25.0]:
+		_add(Props.mango_tree(), Vector3(-tree_x - 1.0, 0.0, tz))
+		_add(Props.banana_plant(), Vector3(tree_x, 0.0, tz + 4.0))
 
 
 ## Asphalt lane + cross street, lane paint, crosswalks.
@@ -159,7 +215,12 @@ func _add_houses() -> void:
 			var near_cross: bool = absf(z) < CROSS_STREET_WIDTH / 2.0 + 2.6
 			var near_store: bool = side < 0.0 and absf(z - (-half_l * 0.45)) < 3.0
 			if not near_cross and not near_store:
-				_add(Props.house(variant), Vector3(side * x_offset, 0.0, z), 0.0 if side < 0.0 else PI)
+				var yaw: float = 0.0 if side < 0.0 else PI
+				var mesh: ArrayMesh = Props.house_tall(variant) if variant % 3 == 1 else Props.house(variant)
+				_add(mesh, Vector3(side * x_offset, 0.0, z), yaw)
+				if variant % 4 == 2:
+					var front: float = side * (x_offset - 2.1)
+					_add(Props.tarpaulin(variant), Vector3(front, 2.6, z + 1.4), yaw)
 			variant += 1
 			z += HOUSE_SPACING
 
