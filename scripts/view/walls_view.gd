@@ -12,6 +12,7 @@ const BROKEN_SCALE: float = 0.75
 var _sim: MatchSim
 var _boxes: Array[MeshInstance3D] = []
 var _materials: Array[StandardMaterial3D] = []
+var _doodles: Array[StandardMaterial3D] = []
 
 
 func watch(sim: MatchSim) -> void:
@@ -20,6 +21,7 @@ func watch(sim: MatchSim) -> void:
 		child.queue_free()
 	_boxes.clear()
 	_materials.clear()
+	_doodles.clear()
 	for wall: MapLayout.WallSpec in sim.walls:
 		# cardboard boxes; damage darkens them through a tint that multiplies the palette
 		var material: StandardMaterial3D = LowPoly.material().duplicate() as StandardMaterial3D
@@ -31,6 +33,7 @@ func watch(sim: MatchSim) -> void:
 		add_child(box)
 		_boxes.append(box)
 		_materials.append(material)
+		_doodles.append(StreetArt.add_wall_doodles(box, wall.rect.size.x, WALL_HEIGHT, _boxes.size() - 1))
 	sim.wall_damaged.connect(_refresh)
 	sim.walls_rebuilt.connect(refresh_all)
 	refresh_all()
@@ -54,4 +57,5 @@ func _refresh(index: int) -> void:
 	_boxes[index].visible = wall.hp > 0
 	var health: float = clampf(float(wall.hp) / float(_sim.layout.wall_hp), 0.0, 1.0)
 	_materials[index].albedo_color = BROKEN_COLOR.lerp(FRESH_COLOR, health)
+	_doodles[index].albedo_color = BROKEN_COLOR.lerp(FRESH_COLOR, health)
 	_boxes[index].scale.y = lerpf(BROKEN_SCALE, 1.0, health)

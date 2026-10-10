@@ -20,6 +20,19 @@ const DASH_GAP: float = 2.0
 const SHADOW_DISTANCE: float = 75.0
 const BUNTING_HEIGHT: float = 6.4
 const POLE_SPACING: float = 11.0
+## Painted ground sits just above the coloured road and sidewalk boxes.
+const GROUND_LIFT: float = 0.004
+const GROUND_TILE: float = 8.0
+const PAVER_TILE: float = 2.4
+const SIDEWALK_TOP: float = 0.2
+const CROSS_STREET_TINT: Color = Color(0.82, 0.82, 0.86)
+const DECAL_LIFT: float = 0.009
+const CHALK_PIKO_SIZE: Vector2 = Vector2(2.2, 4.4)
+const CHALK_PRESO_SIZE: Vector2 = Vector2(4.2, 2.8)
+const ROAD_TEXT_SIZE: Vector2 = Vector2(7.0, 1.75)
+const ROAD_TEXT_GAP: float = 3.2
+const POSTER_HEIGHT: float = 1.1
+const SARI_SIGN_HEIGHT: float = 1.15
 
 @export var layout: MapLayout
 ## Off when a match scene supplies its own (follow) camera.
@@ -28,6 +41,8 @@ const POLE_SPACING: float = 11.0
 @export var build_walls: bool = true
 
 var _base_materials: Dictionary[int, Array] = {}
+## Road paint and chalk, turned to read the right way up for the viewer's side.
+var _readable: Array[MeshInstance3D] = []
 
 @onready var _geometry: Node3D = %Geometry
 @onready var _camera: Camera3D = %Camera
@@ -77,6 +92,8 @@ func set_own_side(own_side: int) -> void:
 	for side: int in _base_materials:
 		for material: StandardMaterial3D in _base_materials[side]:
 			material.albedo_color = OWN_COLOR if side == own_side else ENEMY_COLOR
+	for decal: MeshInstance3D in _readable:
+		decal.rotation.y = 0.0 if own_side == MapLayout.SIDE_OWN else PI
 
 
 func base_color(side: int) -> Color:
@@ -89,10 +106,14 @@ func _build_map() -> void:
 	var half_l: float = layout.lane_length / 2.0
 	_add(_road(), Vector3.ZERO)
 	_add(_sides(), Vector3.ZERO)
+	_add_ground_textures()
 	if build_walls:
+		var variant: int = 0
 		for spec: MapLayout.WallSpec in layout.wall_columns():
 			var center: Vector2 = spec.rect.get_center()
-			_add(Props.cardboard_wall(Vector3(spec.rect.size.x, 2.0, spec.rect.size.y)), Vector3(center.x, 0.0, center.y))
+			var wall: MeshInstance3D = _add(Props.cardboard_wall(Vector3(spec.rect.size.x, 2.0, spec.rect.size.y)), Vector3(center.x, 0.0, center.y))
+			StreetArt.add_wall_doodles(wall, spec.rect.size.x, 2.0, variant)
+			variant += 1
 	for side: int in [MapLayout.SIDE_OWN, MapLayout.SIDE_ENEMY]:
 		var center: Vector2 = layout.base_center(side)
 		var color: Color = OWN_COLOR if side == MapLayout.SIDE_OWN else ENEMY_COLOR
@@ -102,9 +123,11 @@ func _build_map() -> void:
 		# a team-coloured band on the post so you can tell bases apart from afar
 		var band: StandardMaterial3D = _add_band(post, color)
 		_base_materials[side] = [ring, band]
+		_add_sign("poster_0" if side == MapLayout.SIDE_OWN else "poster_1", POSTER_HEIGHT, Vector3(center.x + 0.45, 1.3, center.y))
 	# street dressing outside the lane
 	var store_z: float = -half_l * 0.45
 	_add(Props.sari_sari(), Vector3(-half_w - SIDEWALK_WIDTH - 1.8, 0.0, store_z))
+	_add_sign("sari_sign", SARI_SIGN_HEIGHT, Vector3(-half_w - SIDEWALK_WIDTH - 0.6, 3.3, store_z))
 	_add(Props.basketball_ring(), Vector3(half_w + 0.9, 0.0, half_l * 0.35), PI)
 	_add(Props.jeepney(), Vector3(half_w + CROSS_STREET_WIDTH * 0.25 + 1.2, 0.0, -CROSS_STREET_WIDTH * 1.2))
 	_add(Props.stop_sign(), Vector3(-half_w - 0.8, 0.0, CROSS_STREET_WIDTH * 0.7))
@@ -133,9 +156,12 @@ func _add_details() -> void:
 	var previous: Vector3 = Vector3.ZERO
 	var z: float = -half_l + 2.0
 	var first: bool = true
+	var poster: int = 0
 	while z <= half_l - 1.0:
 		if absf(z) > CROSS_STREET_WIDTH / 2.0 + 0.5:
 			_add(Props.power_pole(), Vector3(pole_x, 0.0, z))
+			_add_sign("poster_%d" % (poster % 3), POSTER_HEIGHT, Vector3(pole_x - 0.3, 1.4, z))
+			poster += 1
 			var top: Vector3 = Vector3(pole_x, 6.65, z)
 			if not first:
 				for dz: float in [-0.6, 0.6]:
@@ -143,9 +169,12 @@ func _add_details() -> void:
 			previous = top
 			first = false
 		z += POLE_SPACING
-	# chalk piko near both bases, manholes on the asphalt
-	_add(Props.hopscotch(), Vector3(-half_w + 2.2, 0.0, half_l - 9.0))
-	_add(Props.hopscotch(), Vector3(half_w - 2.2, 0.0, -half_l + 14.0), PI)
+	# kids' chalk on the road: piko and tumbang preso marks near both bases,
+	# and the barangay's DAHAN-DAHAN (slow down) before the crossing
+	for side: float in [1.0, -1.0]:
+		_add_decal("chalk_piko", CHALK_PIKO_SIZE, Vector3(-side * (half_w - 2.0), 0.0, side * (half_l - 8.0)))
+		_add_decal("chalk_preso", CHALK_PRESO_SIZE, Vector3(side * (half_w - 4.2), 0.0, side * (half_l - 11.5)))
+		_add_decal("road_dahan", ROAD_TEXT_SIZE, Vector3(0.0, 0.0, side * (CROSS_STREET_WIDTH / 2.0 + ROAD_TEXT_GAP)))
 	for spot: Vector3 in [Vector3(3.5, 0.0, 6.0), Vector3(-4.0, 0.0, -9.5), Vector3(1.5, 0.0, -20.0)]:
 		_add(Props.manhole(), spot)
 	# tambayan in front of the sari-sari store, drums, trees behind the houses
@@ -207,6 +236,38 @@ func _sides() -> ArrayMesh:
 	var mesh: ArrayMesh = kit.commit()
 	_add_houses()
 	return mesh
+
+
+## Painted asphalt over the lane and the cross street, pavers on the sidewalks.
+func _add_ground_textures() -> void:
+	var half_w: float = layout.lane_width / 2.0
+	var half_l: float = layout.lane_length / 2.0
+	var lane: MeshInstance3D = StreetArt.ground("asphalt", Vector2(layout.lane_width, layout.lane_length), GROUND_TILE)
+	lane.position = Vector3(0.0, GROUND_LIFT, 0.0)
+	_geometry.add_child(lane)
+	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
+	var cross: MeshInstance3D = StreetArt.ground("asphalt", Vector2(reach * 2.0, CROSS_STREET_WIDTH), GROUND_TILE, CROSS_STREET_TINT)
+	cross.position = Vector3(0.0, GROUND_LIFT * 0.5, 0.0)
+	_geometry.add_child(cross)
+	var length: float = half_l - CROSS_STREET_WIDTH / 2.0
+	for side: float in [-1.0, 1.0]:
+		for segment: float in [-1.0, 1.0]:
+			var walk: MeshInstance3D = StreetArt.ground("pavers", Vector2(SIDEWALK_WIDTH, length), PAVER_TILE)
+			walk.position = Vector3(side * (half_w + layout.boundary_thickness + SIDEWALK_WIDTH / 2.0), SIDEWALK_TOP + GROUND_LIFT, segment * (CROSS_STREET_WIDTH / 2.0 + length / 2.0))
+			_geometry.add_child(walk)
+
+
+func _add_decal(texture_name: String, size: Vector2, at: Vector3) -> void:
+	var decal: MeshInstance3D = StreetArt.decal(texture_name, size)
+	decal.position = at + Vector3(0.0, DECAL_LIFT, 0.0)
+	_geometry.add_child(decal)
+	_readable.append(decal)
+
+
+func _add_sign(texture_name: String, height: float, at: Vector3) -> void:
+	var sign: Sprite3D = StreetArt.billboard(texture_name, height)
+	sign.position = at
+	_geometry.add_child(sign)
 
 
 func _add_houses() -> void:
@@ -275,6 +336,11 @@ func _setup_camera() -> void:
 	_camera.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
 	_camera.position = Vector3(0.0, layout.overview_height, 0.0)
 	_camera.environment = make_environment()
+
+
+## The map's own Exit button (map preview); a match uses its settings menu instead.
+func show_back_button(visible_now: bool) -> void:
+	_back_button.visible = visible_now
 
 
 func _on_back_pressed() -> void:
