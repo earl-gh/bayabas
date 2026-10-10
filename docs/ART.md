@@ -30,6 +30,12 @@ The current art is a first pass built **in code**: procedural meshes, vector ico
 - `scripts/view/art/street_art.gd` (`StreetArt`) puts them in the world: textured ground planes, doodles on both faces of every wall (darkened with the wall's damage), billboard signs and posters, ground decals that turn to read the right way up for the viewer's side.
 - Rerun: `python3 tools/art/make_assets.py` (all) or `python3 tools/art/make_assets.py guava dash` (only those icons). Textures used in 3D are imported with mipmaps.
 
+## Cinematic daylight and depth (after the sanga Tokhang intro frames)
+- Lighting (`StreetMap.make_environment` and `_light_scene`): a warm key sun from the side at 46° (long, crisp shadows across the diagonal street), a cool sky-blue fill light from the other side, a cool ambient so shadows stay blue rather than black, a soft bloom on the brightest highlights, a warm distance haze and a punchier grade. All numbers are constants at the top of `street_map.gd`.
+- Film finish (`scripts/view/cinematic.gd`, `shaders/cinematic.gdshader`), drawn under the HUD: a shallow depth of field (the far top of the picture and the very bottom go soft, the hero's band stays sharp), warm highlights / cool shadows, a vignette and fine moving grain; plus warm dust motes drifting in the sunlight around the hero.
+- Painted 9-slice frames (`tools/art/make_frames.py`, `assets/ui/`): bevelled gold-framed navy panels with an inner shadow and a top gloss, glossy bevelled buttons with a darker lip (orange, green, red, blue, grey, gold; pressed variants without the lip), dark rimmed pills. `KalyeahTheme.painted_button / painted_panel / painted_pill` use them for every button, the menu, the knocked-out card, the pick screen plates and the HUD pills.
+- Wall damage (`walls_view.gd`, `OverheadHud`): flash, wobble, flying cardboard chips, a damage number, a health bar over damaged columns, and rips / holes / tape (`assets/textures/cardboard_tears.png`) fading in as a column weakens.
+
 ## Audio
 - `scripts/view/audio/sound_bank.gd` (`SoundBank`): synthesised effects (each weapon has its own cast sound; footsteps, heal, stun, poof, KO, respawn, victory and defeat, UI clicks, the tricycle horn) and a looping music track built in small chunks so phones do not stall.
 - `scripts/view/audio/match_audio.gd` (`MatchAudio`) plays them from `MatchSim` signals, so it works online too (the server replays events as the same signals).

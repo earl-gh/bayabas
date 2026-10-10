@@ -25,8 +25,6 @@ const PICKED_COLOR: Color = Color(1.0, 0.82, 0.25)
 const CARD_COLOR: Color = Color(0.13, 0.16, 0.32, 0.95)
 const INK: Color = Color(0.1, 0.06, 0.06)
 const GOLD: Color = Color(1.0, 0.8, 0.32)
-const READY_COLOR: Color = Color(0.3, 0.72, 0.32)
-const WAIT_COLOR: Color = Color(0.32, 0.34, 0.42)
 const KIND_COLORS: Dictionary[WeaponDef.Kind, Color] = {
 	WeaponDef.Kind.ATTACK: Color(1.0, 0.42, 0.34),
 	WeaponDef.Kind.CROWD_CONTROL: Color(0.74, 0.52, 1.0),
@@ -213,7 +211,7 @@ func _header() -> Control:
 	_title.add_theme_color_override("font_color", Color.WHITE)
 	_title.add_theme_color_override("font_outline_color", INK)
 	_title.add_theme_constant_override("outline_size", 10)
-	_title.add_theme_stylebox_override("normal", _plate(PICKED_COLOR.darkened(0.05)))
+	_title.add_theme_stylebox_override("normal", KalyeahTheme.painted_button("gold"))
 	row.add_child(_title)
 	_ring = CountdownRing.new()
 	_ring.custom_minimum_size = Vector2(84.0, 84.0)
@@ -339,22 +337,8 @@ func _card(fill: Color, border: Color, width: int) -> StyleBoxFlat:
 	return style
 
 
-func _plate(fill: Color) -> StyleBoxFlat:
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = INK
-	style.set_border_width_all(4)
-	style.border_width_bottom = 8
-	style.set_corner_radius_all(24)
-	return style
-
-
 func _style_ready(on: bool) -> void:
-	var fill: Color = READY_COLOR if on else WAIT_COLOR
-	_ready_button.add_theme_stylebox_override("normal", _plate(fill))
-	_ready_button.add_theme_stylebox_override("hover", _plate(fill.lightened(0.08)))
-	_ready_button.add_theme_stylebox_override("pressed", _plate(fill.darkened(0.12)))
-	_ready_button.add_theme_stylebox_override("disabled", _plate(fill))
+	KalyeahTheme.style_button(_ready_button, "green" if on else "grey")
 
 
 ## Closes the pick now, filling any empty slot at random.
