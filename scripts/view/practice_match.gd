@@ -216,6 +216,7 @@ func _setup_online() -> void:
 
 ## Overhead display and minimap get the sim; the top HUD clears the notch.
 func _setup_hud() -> void:
+	input.camera_yaw = _camera.rules.yaw_offset_degrees
 	hud.overhead.setup(sim, _camera, local_id, local_team)
 	hud.minimap.setup(sim, local_id, local_team)
 	hud.set_top_inset(_safe_top_inset())
@@ -270,7 +271,7 @@ func _flip() -> bool:
 
 
 func _screen_to_world(screen_aim: Vector2) -> Vector2:
-	return LocalInput.to_world(screen_aim, _flip())
+	return LocalInput.to_world(screen_aim, _flip(), input.camera_yaw)
 
 
 ## Mouse position on the ground, relative to the player, scaled by the weapon range.

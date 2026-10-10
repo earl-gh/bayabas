@@ -13,6 +13,8 @@ const AIM_BITS: Array[int] = [PlayerInput.BTN_WEAPON_1, PlayerInput.BTN_WEAPON_2
 const SLOTS: int = 3
 
 var stick: Vector2 = Vector2.ZERO
+## The camera's turn (CameraRules.yaw_offset_degrees): screen directions follow it.
+var camera_yaw: float = 0.0
 var pending_buttons: int = 0
 ## Per aimed slot: finger down, release waiting to be sent, Q/E/R aiming.
 var touch_held: Array[bool] = [false, false, false]
@@ -67,7 +69,7 @@ func clear() -> void:
 ## defends the -Z base; `mouse_aim` is called as `mouse_aim.call(slot)` for Q/E/R.
 func build(flip: bool, mouse_aim: Callable, tick: int) -> PlayerInput:
 	var combined: Vector2 = LocalInput.combine(stick, LocalInput.keyboard_vector())
-	var world_move: Vector2 = LocalInput.to_world(combined, flip)
+	var world_move: Vector2 = LocalInput.to_world(combined, flip, camera_yaw)
 	var buttons: int = pending_buttons | LocalInput.keyboard_buttons()
 	pending_buttons = 0
 	var aim: Vector2 = Vector2.ZERO

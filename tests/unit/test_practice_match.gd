@@ -43,13 +43,13 @@ func test_local_player_starts_at_own_base_seen_from_behind() -> void:
 	assert_eq(player.position, LAYOUT.base_center(MapLayout.SIDE_OWN))
 	var camera: Camera3D = practice.get_node("%FollowCamera") as Camera3D
 	assert_gt(camera.position.z, player.position.y - 0.001, "camera is behind the player (+Z side)")
-	assert_almost_eq(camera.rotation_degrees.y, 0.0, 0.001)
+	assert_almost_eq(camera.rotation_degrees.y, CAMERA.yaw_offset_degrees, 0.001, "behind and to the right")
 
 
 func test_stick_moves_the_player_and_the_camera_follows() -> void:
 	var practice: PracticeMatch = _practice()
 	var start_z: float = practice.sim.players[PracticeMatch.LOCAL_ID].position.y
-	practice.set_stick(Vector2(0.0, -1.0))
+	practice.set_stick(_toward_enemy(practice))
 	for i: int in 30:
 		practice.advance(DT)
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
@@ -321,7 +321,7 @@ func test_drag_aim_points_the_cast_up_the_screen() -> void:
 	var enemy: PlayerState = _enemy_ahead(practice, 2.5)
 	practice.aim_started(0)
 	practice.advance(DT)
-	practice.aim_released(Vector2(0.0, -1.0), false, 0)
+	practice.aim_released(_toward_enemy(practice), false, 0)
 	for i: int in 30:
 		practice.advance(DT)
 	assert_eq(enemy.hp, 76, "screen up is toward the enemy base")
@@ -526,10 +526,10 @@ func test_new_set_turns_the_view_around_and_recolors_the_bases() -> void:
 	assert_eq(practice.own_side(), MapLayout.SIDE_ENEMY, "we defend the -Z base now")
 	assert_eq(map.base_color(MapLayout.SIDE_ENEMY), StreetMap.OWN_COLOR, "our base is blue wherever it is")
 	var camera: Camera3D = practice.get_node("%FollowCamera") as Camera3D
-	assert_almost_eq(absf(camera.rotation_degrees.y), 180.0, 0.01, "own base still at the bottom of the screen")
+	assert_almost_eq(wrapf(camera.rotation_degrees.y - CAMERA.yaw_degrees(true), -180.0, 180.0), 0.0, 0.01, "own base still at the bottom of the screen")
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	var start_z: float = player.position.y
-	practice.set_stick(Vector2(0.0, -1.0))
+	practice.set_stick(_toward_enemy(practice))
 	for i: int in 15:
 		practice.advance(DT)
 	assert_gt(player.position.y, start_z, "stick up still walks toward the enemy base (+Z now)")
@@ -687,3 +687,9 @@ func test_eating_the_guava_heals_and_pops_a_green_number() -> void:
 	practice.advance(DT)
 	assert_eq(player.hp, 70)
 	assert_eq(practice.overhead().popup_count(), 1)
+
+
+## The screen direction (stick or drag) that heads straight for the enemy base.
+func _toward_enemy(practice: PracticeMatch) -> Vector2:
+	var flip: bool = practice.own_side() == MapLayout.SIDE_ENEMY
+	return LocalInput.to_screen(Vector2(0.0, -float(practice.own_side())), flip, CAMERA.yaw_offset_degrees)

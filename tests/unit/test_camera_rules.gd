@@ -38,18 +38,21 @@ func test_aspect_is_kept_in_a_sane_range() -> void:
 func test_offset_sits_behind_and_above_the_target() -> void:
 	var offset: Vector3 = CAMERA.camera_offset(20.0, false)
 	assert_almost_eq(offset.y, 20.0 * sin(deg_to_rad(CAMERA.pitch_degrees)), 0.001)
-	assert_almost_eq(offset.z, 20.0 * cos(deg_to_rad(CAMERA.pitch_degrees)), 0.001)
+	var back: float = 20.0 * cos(deg_to_rad(CAMERA.pitch_degrees))
+	assert_almost_eq(Vector2(offset.x, offset.z).length(), back, 0.001)
 	assert_gt(offset.z, 0.0, "own side: camera behind on +Z, looking toward -Z")
-	assert_eq(offset.x, 0.0)
+	assert_gt(offset.x, 0.0, "and to the right: a bird's-eye view from the back right")
+	assert_almost_eq(rad_to_deg(atan2(offset.x, offset.z)), CAMERA.yaw_offset_degrees, 0.001)
 
 
 func test_other_team_view_is_mirrored() -> void:
 	var own: Vector3 = CAMERA.camera_offset(20.0, false)
 	var other: Vector3 = CAMERA.camera_offset(20.0, true)
 	assert_almost_eq(other.z, -own.z, 0.0001)
+	assert_almost_eq(other.x, -own.x, 0.0001)
 	assert_almost_eq(other.y, own.y, 0.0001)
-	assert_eq(CAMERA.yaw_degrees(false), 0.0)
-	assert_eq(CAMERA.yaw_degrees(true), 180.0)
+	assert_eq(CAMERA.yaw_degrees(false), 45.0)
+	assert_eq(CAMERA.yaw_degrees(true), 225.0)
 
 
 func test_target_looks_ahead_toward_the_enemy_and_is_clamped_near_the_ends() -> void:
