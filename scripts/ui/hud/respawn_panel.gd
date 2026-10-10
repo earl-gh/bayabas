@@ -7,11 +7,8 @@ extends Control
 signal swap_pressed
 
 const DIM: Color = Color(0.03, 0.02, 0.08, 0.38)
-const CARD: Color = Color(0.09, 0.11, 0.26, 0.86)
-const GOLD: Color = Color(1.0, 0.8, 0.32)
 const INK: Color = Color(0.1, 0.06, 0.06)
 const TITLE_COLOR: Color = Color(1.0, 0.4, 0.34)
-const SWAP_COLOR: Color = Color(1.0, 0.66, 0.16)
 const CARD_SIZE: Vector2 = Vector2(460.0, 330.0)
 const BOTTOM_GAP: float = 40.0
 const WEAPON_ICON: float = 64.0
@@ -43,7 +40,9 @@ func _ready() -> void:
 	card.offset_top = -CARD_SIZE.y - BOTTOM_GAP
 	card.offset_bottom = -BOTTOM_GAP
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_theme_stylebox_override("panel", _card_style())
+	var card_style: StyleBoxTexture = KalyeahTheme.painted_panel(26.0)
+	card_style.modulate_color = Color(1.0, 1.0, 1.0, 0.94)
+	card.add_theme_stylebox_override("panel", card_style)
 	add_child(card)
 	var column: VBoxContainer = VBoxContainer.new()
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -78,10 +77,7 @@ func _ready() -> void:
 	swap_button.text = "CHANGE WEAPONS"
 	swap_button.custom_minimum_size = Vector2(0.0, 72.0)
 	swap_button.add_theme_font_size_override("font_size", 28)
-	for state: String in ["normal", "hover", "pressed"]:
-		var shade: float = 0.0 if state == "normal" else (0.08 if state == "hover" else -0.12)
-		var fill: Color = SWAP_COLOR.lightened(shade) if shade >= 0.0 else SWAP_COLOR.darkened(-shade)
-		swap_button.add_theme_stylebox_override(state, _chunky(fill))
+	KalyeahTheme.style_button(swap_button, "orange")
 	swap_button.pressed.connect(swap_pressed.emit)
 	column.add_child(swap_button)
 
@@ -109,26 +105,3 @@ func _label(text: String, font_size: int, color: Color) -> Label:
 	label.add_theme_color_override("font_outline_color", INK)
 	label.add_theme_constant_override("outline_size", 8)
 	return label
-
-
-func _card_style() -> StyleBoxFlat:
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = CARD
-	style.border_color = GOLD
-	style.set_border_width_all(5)
-	style.set_corner_radius_all(28)
-	style.set_content_margin_all(22)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
-	style.shadow_size = 14
-	style.shadow_offset = Vector2(0, 6)
-	return style
-
-
-func _chunky(color: Color) -> StyleBoxFlat:
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = color
-	style.border_color = INK
-	style.set_border_width_all(3)
-	style.border_width_bottom = 8
-	style.set_corner_radius_all(20)
-	return style

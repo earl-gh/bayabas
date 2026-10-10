@@ -88,9 +88,10 @@ func test_match_audio_follows_sim_events() -> void:
 func test_the_ui_theme_is_applied_everywhere() -> void:
 	var button: Button = autofree(Button.new()) as Button
 	add_child(button)
-	var box: StyleBoxFlat = button.get_theme_stylebox("normal") as StyleBoxFlat
-	assert_not_null(box, "every button gets the chunky style")
-	assert_eq(box.bg_color, KalyeahTheme.BUTTON)
+	var box: StyleBoxTexture = button.get_theme_stylebox("normal") as StyleBoxTexture
+	assert_not_null(box, "every button gets the painted, bevelled style")
+	assert_not_null(box.texture)
+	assert_eq(box.texture.resource_path, "res://assets/ui/button_orange.png")
 
 
 func _animation_after(kid: KidModel, state: PlayerState, speed: float = 0.0) -> String:
@@ -237,3 +238,19 @@ func test_cardboard_walls_carry_kids_doodles() -> void:
 	assert_eq(holder.get_child_count(), 2, "both faces")
 	assert_not_null(material.albedo_texture)
 	assert_eq(material.transparency, BaseMaterial3D.TRANSPARENCY_ALPHA)
+
+
+
+func test_a_hit_wall_flashes_sheds_chips_and_tears_as_it_weakens() -> void:
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var view: WallsView = autofree(WallsView.new()) as WallsView
+	add_child(view)
+	view.watch(sim)
+	sim.damage_wall(0, 30)
+	assert_gt(view.hit_time_left(0), 0.0, "flashes and wobbles")
+	var tears: StandardMaterial3D = (view.get_child(0).find_child("Tears", true, false) as MeshInstance3D).mesh.surface_get_material(0) as StandardMaterial3D
+	var light: float = tears.albedo_color.a
+	sim.damage_wall(0, 200)
+	assert_gt(tears.albedo_color.a, light, "more rips and holes as it weakens")
+	sim.damage_wall(0, 500)
+	assert_eq(view.standing_count(), sim.walls.size() - 1, "broken walls disappear")

@@ -4,8 +4,9 @@ extends Control
 ## of Legends: a segmented health bar (green you, blue ally, red enemy, grey gray
 ## HP in the death delay), a status in *italic* above it ("Stunned"), and one row
 ## of two thin bars under it: Dash cooldown on the left, Mark cooldown on the
-## right. No names. Also floating damage and heal numbers. Reads the sim and
-## projects through the match camera.
+## right. No names. Also floating damage and heal numbers, and over every damaged
+## cardboard wall a cardboard-coloured health bar and the damage it takes. Reads
+## the sim and projects through the match camera.
 
 const BAR_SIZE: Vector2 = Vector2(92.0, 13.0)
 const COOLDOWN_HEIGHT: float = 5.0
@@ -28,6 +29,11 @@ const COOLDOWN_COLOR: Color = Color(0.3, 0.68, 1.0)
 const COOLDOWN_ACTIVE_COLOR: Color = Color(1.0, 0.82, 0.25)
 const DAMAGE_COLOR: Color = Color(1.0, 0.95, 0.85)
 const HEAL_COLOR: Color = Color(0.55, 1.0, 0.45)
+const WALL_BAR_SIZE: Vector2 = Vector2(78.0, 10.0)
+const WALL_TOP: float = 2.7
+const WALL_COLOR: Color = Color(1.0, 0.68, 0.3)
+const WALL_LOW_COLOR: Color = Color(1.0, 0.36, 0.22)
+const WALL_DAMAGE_COLOR: Color = Color(1.0, 0.78, 0.45)
 
 var _sim: MatchSim
 var _camera: Camera3D
@@ -36,6 +42,8 @@ var _local_team: int = 0
 var _italic: FontVariation
 ## {id, amount, age, heal, jitter}
 var _popups: Array[Dictionary] = []
+## Last known HP of each wall, to turn wall_damaged into an amount.
+var _wall_hp: Array[int] = []
 
 
 func setup(sim: MatchSim, camera: Camera3D, local_id: int, local_team: int) -> void:
@@ -49,6 +57,34 @@ func setup(sim: MatchSim, camera: Camera3D, local_id: int, local_team: int) -> v
 	_italic.variation_transform = Transform2D(Vector2(1.0, 0.0), Vector2(ITALIC_SLANT, 1.0), Vector2.ZERO)
 	sim.player_damaged.connect(_on_damaged)
 	sim.player_healed.connect(_on_healed)
+	sim.wall_damaged.connect(_on_wall_damaged)
+	sim.walls_rebuilt.connect(_remember_walls)
+	_remember_walls()
+
+
+func _remember_walls() -> void:
+	_wall_hp.clear()
+	for wall: MapLayout.WallSpec in _sim.walls:
+		_wall_hp.append(wall.hp)
+
+
+func _on_wall_damaged(index: int) -> void:
+	if index >= _wall_hp.size():
+		_remember_walls()
+		return
+	var amount: int = _wall_hp[index] - _sim.walls[index].hp
+	_wall_hp[index] = _sim.walls[index].hp
+	if amount > 0:
+		_popups.append({"id": -1, "wall": index, "amount": amount, "age": 0.0, "heal": false, "jitter": float((index * 29 + _popups.size() * 11) % 30) - 15.0})
+
+
+## Screen point above wall `index`, or null when it is off camera.
+func _wall_top(index: int) -> Variant:
+	var center: Vector2 = _sim.walls[index].rect.get_center()
+	var world: Vector3 = Vector3(center.x, WALL_TOP, center.y)
+	if _camera == null or _camera.is_position_behind(world):
+		return null
+	return _camera.unproject_position(world)
 
 
 ## The status words shown (in italic) above a hero's bar: "Stunned", "Down", ...
@@ -125,8 +161,23 @@ func _draw() -> void:
 		var at: Variant = _head(state)
 		if at != null:
 			_draw_hero(state, at as Vector2)
+	for index: int in _sim.walls.size():
+		var wall: MapLayout.WallSpec = _sim.walls[index]
+		if wall.hp > 0 and wall.hp < _sim.layout.wall_hp:
+			var top: Variant = _wall_top(index)
+			if top != null:
+				_draw_wall_bar(top as Vector2, float(wall.hp) / float(_sim.layout.wall_hp))
 	for popup: Dictionary in _popups:
 		_draw_popup(popup)
+
+
+## A cardboard-coloured bar over a damaged wall (turns red when it is about to break).
+func _draw_wall_bar(top: Vector2, health: float) -> void:
+	var rect: Rect2 = Rect2(top - Vector2(WALL_BAR_SIZE.x / 2.0, 0.0), WALL_BAR_SIZE)
+	draw_rect(rect.grow(2.0), BACK)
+	var color: Color = WALL_COLOR if health > 0.3 else WALL_LOW_COLOR
+	draw_rect(Rect2(rect.position, Vector2(rect.size.x * health, rect.size.y)), color)
+	draw_rect(Rect2(rect.position, Vector2(rect.size.x * health, rect.size.y * 0.35)), color.lightened(0.35))
 
 
 func _draw_hero(state: PlayerState, head: Vector2) -> void:
@@ -166,6 +217,9 @@ func _cooldown_bar(rect: Rect2, fraction: float, color: Color) -> void:
 
 
 func _draw_popup(popup: Dictionary) -> void:
+	if popup.has("wall"):
+		_draw_wall_popup(popup)
+		return
 	var state: PlayerState = _sim.players.get(popup["id"] as int) as PlayerState
 	if state == null:
 		return
@@ -179,6 +233,20 @@ func _draw_popup(popup: Dictionary) -> void:
 	color.a = 1.0 - age * age
 	var size: int = int(POPUP_FONT * (1.25 - 0.25 * age) * (1.2 if healed else 1.0))
 	_text(ThemeDB.fallback_font, ("+%d" if healed else "-%d") % (popup["amount"] as int), pos, size, color, 6)
+
+
+func _draw_wall_popup(popup: Dictionary) -> void:
+	var index: int = popup["wall"] as int
+	if index >= _sim.walls.size():
+		return
+	var at: Variant = _wall_top(index)
+	if at == null:
+		return
+	var age: float = (popup["age"] as float) / POPUP_TIME
+	var color: Color = WALL_DAMAGE_COLOR
+	color.a = 1.0 - age * age
+	var pos: Vector2 = (at as Vector2) + Vector2(popup["jitter"] as float, -18.0 - POPUP_RISE * age)
+	_text(ThemeDB.fallback_font, "-%d" % (popup["amount"] as int), pos, int(POPUP_FONT * (1.15 - 0.2 * age)), color, 6)
 
 
 func _text(font: Font, text: String, center: Vector2, font_size: int, color: Color, outline: int) -> void:

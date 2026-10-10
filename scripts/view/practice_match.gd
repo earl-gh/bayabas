@@ -217,6 +217,8 @@ func _setup_online() -> void:
 ## Overhead display and minimap get the sim; the top HUD clears the notch.
 func _setup_hud() -> void:
 	input.camera_yaw = _camera.rules.yaw_offset_degrees
+	Cinematic.add_film_finish(self)
+	Cinematic.add_dust(_camera)
 	hud.overhead.setup(sim, _camera, local_id, local_team)
 	hud.minimap.setup(sim, local_id, local_team)
 	hud.set_top_inset(_safe_top_inset())

@@ -9,6 +9,27 @@ extends Node3D
 const OWN_COLOR: Color = Palette.TEAM_OWN
 const ENEMY_COLOR: Color = Palette.TEAM_ENEMY
 const SKY_COLOR: Color = Color(0.56, 0.8, 0.98)
+# cinematic daylight (see make_environment)
+const SUN_ANGLES: Vector3 = Vector3(-46.0, 62.0, 0.0)
+const SUN_COLOR: Color = Color(1.0, 0.88, 0.7)
+const SUN_ENERGY: float = 1.12
+const SHADOW_OPACITY: float = 0.62
+const SHADOW_BLUR: float = 1.4
+const FILL_ANGLES: Vector3 = Vector3(-30.0, 258.0, 0.0)
+const FILL_COLOR: Color = Color(0.58, 0.72, 1.0)
+const FILL_ENERGY: float = 0.18
+const AMBIENT_COLOR: Color = Color(0.84, 0.88, 1.0)
+const AMBIENT_ENERGY: float = 0.4
+const EXPOSURE: float = 1.0
+const TONEMAP_WHITE: float = 4.0
+const GLOW_INTENSITY: float = 0.35
+const GLOW_BLOOM: float = 0.0
+const GLOW_THRESHOLD: float = 1.0
+const SATURATION: float = 1.2
+const CONTRAST: float = 1.14
+const BRIGHTNESS: float = 0.98
+const HAZE_COLOR: Color = Color(1.0, 0.9, 0.78)
+const HAZE_DENSITY: float = 0.0009
 const RING_HEIGHT: float = 0.03
 const CURB_HEIGHT: float = 0.35
 const CROSS_STREET_WIDTH: float = 6.0
@@ -58,36 +79,58 @@ func _ready() -> void:
 	_build_map()
 	if show_overview_camera:
 		_setup_camera()
-	_sun.rotation_degrees = Vector3(-58.0, 32.0, 0.0)
-	_sun.light_color = Color(1.0, 0.94, 0.82)
-	_sun.light_energy = 0.95
-	# real shadows give the toy-town depth; one cheap orthogonal map
-	_sun.shadow_enabled = true
-	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	_sun.directional_shadow_max_distance = SHADOW_DISTANCE
-	_sun.shadow_opacity = 0.42
-	_sun.shadow_blur = 3.0
+	_light_scene(self, _sun)
 	_back_button.pressed.connect(_on_back_pressed)
 
 
-## Shared warm daylight sky + ambient for every camera that views the map.
+## Cinematic daylight: a warm, low-ish key sun from the side (long, crisp shadows
+## across the diagonal street), a cool sky-blue fill from the other side so the
+## shadows stay blue rather than black, a soft bloom on the brightest sunlit
+## highlights, a warm haze into the distance and a punchier grade.
 static func make_environment() -> Environment:
 	var env: Environment = Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = SKY_COLOR
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(1.0, 0.95, 0.88)
-	env.ambient_light_energy = 0.45
-	# punchy, saturated toy-town colours
+	env.ambient_light_color = AMBIENT_COLOR
+	env.ambient_light_energy = AMBIENT_ENERGY
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	env.tonemap_exposure = EXPOSURE
+	env.tonemap_white = TONEMAP_WHITE
+	env.glow_enabled = true
+	env.glow_intensity = GLOW_INTENSITY
+	env.glow_bloom = GLOW_BLOOM
+	env.glow_hdr_threshold = GLOW_THRESHOLD
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
 	env.adjustment_enabled = true
-	env.adjustment_saturation = 1.22
-	env.adjustment_contrast = 1.08
-	# light haze into the distance: the far end of the street softens into the sky
+	env.adjustment_saturation = SATURATION
+	env.adjustment_contrast = CONTRAST
+	env.adjustment_brightness = BRIGHTNESS
 	env.fog_enabled = true
-	env.fog_light_color = SKY_COLOR.lightened(0.15)
-	env.fog_density = 0.001
+	env.fog_light_color = HAZE_COLOR
+	env.fog_density = HAZE_DENSITY
 	env.fog_sky_affect = 0.0
 	return env
+
+
+## The key sun and the sky fill for a scene (`sun` is reused; the fill is added).
+static func _light_scene(parent: Node, sun: DirectionalLight3D) -> void:
+	sun.rotation_degrees = SUN_ANGLES
+	sun.light_color = SUN_COLOR
+	sun.light_energy = SUN_ENERGY
+	# real shadows give the toy-town depth; one cheap orthogonal map
+	sun.shadow_enabled = true
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance = SHADOW_DISTANCE
+	sun.shadow_opacity = SHADOW_OPACITY
+	sun.shadow_blur = SHADOW_BLUR
+	var fill: DirectionalLight3D = DirectionalLight3D.new()
+	fill.name = "SkyFill"
+	fill.rotation_degrees = FILL_ANGLES
+	fill.light_color = FILL_COLOR
+	fill.light_energy = FILL_ENERGY
+	fill.shadow_enabled = false
+	parent.add_child(fill)
 
 
 ## Colors the bases for the viewer: `own_side` is blue, the other red (teams
