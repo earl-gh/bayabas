@@ -188,10 +188,10 @@ func _weapon_button(def: WeaponDef) -> Button:
 	button.add_theme_font_size_override("font_size", CELL_FONT)
 	button.add_theme_color_override("font_color", kind_color(def.kind))
 	# dark cards; picked ones light up yellow
-	var card: StyleBoxFlat = BayabasTheme.button_box(CARD_COLOR)
+	var card: StyleBoxFlat = KalyeahTheme.button_box(CARD_COLOR)
 	button.add_theme_stylebox_override("normal", card)
-	button.add_theme_stylebox_override("hover", BayabasTheme.button_box(CARD_COLOR.lightened(0.1)))
-	var picked: StyleBoxFlat = BayabasTheme.button_box(PICKED_COLOR, true)
+	button.add_theme_stylebox_override("hover", KalyeahTheme.button_box(CARD_COLOR.lightened(0.1)))
+	var picked: StyleBoxFlat = KalyeahTheme.button_box(PICKED_COLOR, true)
 	button.add_theme_stylebox_override("pressed", picked)
 	button.add_theme_stylebox_override("hover_pressed", picked)
 	for state: String in ["font_pressed_color", "font_hover_pressed_color"]:

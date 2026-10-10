@@ -73,7 +73,7 @@ static func draw(canvas: CanvasItem, id: StringName, center: Vector2, size: floa
 				center + Vector2(s * 0.45, s * 0.85), center + Vector2(0.0, s * 0.45), center + Vector2(-s * 0.45, s * 0.85),
 			]), Palette.SARI_RED)
 		&"guava":
-			# bayabas: a round green guava with a leaf and a little crown
+			# the guava (bayabas): a round green guava with a leaf and a little crown
 			canvas.draw_circle(center + Vector2(0.0, s * 0.1), s * 0.75, Color(0.45, 0.78, 0.3))
 			canvas.draw_circle(center + Vector2(-s * 0.25, -s * 0.15), s * 0.22, Color(0.62, 0.9, 0.45))
 			canvas.draw_arc(center + Vector2(0.0, s * 0.1), s * 0.75, 0.0, TAU, 32, OUTLINE, 4.0)

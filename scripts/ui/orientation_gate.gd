@@ -1,7 +1,7 @@
 class_name OrientationGate
 extends CanvasLayer
 ## Covers the screen with a "rotate your phone" prompt when the window is wider
-## than tall. Bayabas is portrait-only; this matters on the web build, where the
+## than tall. Kalyeah is portrait-only; this matters on the web build, where the
 ## browser cannot lock orientation.
 
 @onready var _panel: Control = %Panel

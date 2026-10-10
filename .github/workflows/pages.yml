@@ -1,6 +1,6 @@
 name: Pages
 # One live site: every push to main rebuilds and replaces
-#   https://earl-gh.github.io/bayabas/
+#   https://earl-gh.github.io/kalyeah/
 # Needs Settings -> Pages -> Source: "GitHub Actions". There is no CI on PRs: the
 # unit tests run here, and a failing test stops the deploy (the site keeps the last
 # good build).
@@ -37,8 +37,8 @@ jobs:
       - name: Stamp version and export Web
         env:
           # Optional repo variable (Settings -> Secrets and variables -> Actions ->
-          # Variables): the deployed game server, e.g. wss://bayabas.onrender.com
-          SERVER_URL: ${{ vars.BAYABAS_SERVER_URL }}
+          # Variables): the deployed game server, e.g. wss://kalyeah.onrender.com
+          SERVER_URL: ${{ vars.KALYEAH_SERVER_URL || vars.BAYABAS_SERVER_URL }}
         run: |
           sed -i "s|^config/version=.*|config/version=\"${{ steps.gv.outputs.app }}+${GITHUB_SHA::7}\"|" project.godot
           if [ -n "$SERVER_URL" ]; then

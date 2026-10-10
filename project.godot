@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Bayabas"
+config/name="Kalyeah"
 config/version="0.0.0"
 run/main_scene="res://scenes/ui/title_screen.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
@@ -50,6 +50,6 @@ renderer/rendering_method.mobile="gl_compatibility"
 anti_aliasing/quality/msaa_3d=2
 textures/vram_compression/import_etc2_astc=true
 
-[bayabas]
+[kalyeah]
 
 network/server_url=""
