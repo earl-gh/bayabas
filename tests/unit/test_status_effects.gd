@@ -68,6 +68,8 @@ func test_clear_and_names() -> void:
 	fx.apply(T.SLOW, 1.0, 0.5)
 	assert_eq(fx.active_names().size(), 2)
 	assert_true(fx.active_names().has("STUN"))
+	assert_true(fx.display_names().has("Stunned"))
+	assert_true(fx.display_names().has("Slowed"))
 	fx.clear()
 	assert_true(fx.can_move())
 	assert_eq(fx.speed_multiplier(0.5), 1.0)

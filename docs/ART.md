@@ -21,7 +21,7 @@ The current art is a first pass built **in code**: procedural meshes, vector ico
 ## HUD and UI
 - Theme (`scripts/ui/kalyeah_theme.gd`, `KalyeahTheme`): chunky rounded buttons with a dark rim and drop shadow, outlined text, cream text fields, merged into the engine default theme at startup.
 - Icons (`scripts/ui/icons.gd`): vector icons for the 12 weapons, Dash, Mark, the guava and the tricycle.
-- HUD (`scripts/ui/hud/`): overhead bars and damage numbers, the scoreboard pill with set pips, the lane minimap. Spec in `docs/GDD.md` "HUD". The skill buttons are art only with an ATK / CC / BLK tag.
+- HUD (`scripts/ui/hud/`, built in code by `MatchHud`): over each hero a health bar, an *italic* status above it ("Stunned") and a Dash and a Mark cooldown bar under it (no names); damage and heal numbers; the scoreboard pill with set pips; the lane minimap. Spec in `docs/GDD.md` "HUD". The skill buttons are art only with an ATK / CC / BLK tag.
 - The title screen shows a live 3D street with three kids.
 - Banners pop in, the camera shakes on hits and wall breaks, buttons click.
 

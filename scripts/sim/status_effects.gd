@@ -6,6 +6,15 @@ extends RefCounted
 
 enum Type { NONE, STUN, SLOW, AIRBORNE, POLYMORPH, BOUNCE, KNOCKOUT }
 
+const DISPLAY_NAMES: Dictionary[int, String] = {
+	Type.STUN: "Stunned",
+	Type.SLOW: "Slowed",
+	Type.AIRBORNE: "Airborne",
+	Type.POLYMORPH: "Polymorphed",
+	Type.BOUNCE: "Bounced",
+	Type.KNOCKOUT: "Knocked out",
+}
+
 ## Effects that stop movement and casting.
 const HARD_CC: Array[Type] = [Type.STUN, Type.AIRBORNE, Type.BOUNCE, Type.KNOCKOUT]
 
@@ -70,6 +79,14 @@ func speed_multiplier(polymorph_speed_scale: float) -> float:
 
 
 ## Names of active effects, for HUD tags (e.g. "STUN").
+## Player-facing words for the active effects ("Stunned", "Slowed", ...).
+func display_names() -> PackedStringArray:
+	var words: PackedStringArray = []
+	for type: int in _time_left:
+		words.append(DISPLAY_NAMES.get(type, "") as String)
+	return words
+
+
 func active_names() -> PackedStringArray:
 	var names: PackedStringArray = []
 	for type: int in _time_left:

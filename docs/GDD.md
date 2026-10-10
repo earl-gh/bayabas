@@ -83,10 +83,9 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.
-- Camera (data, tunable in `data/rules/camera_rules.tres`), MOBA style like Mobile Legends / LoL:
-  - Height and angle like Mobile Legends Brawl: a 44° horizontal FOV at a 50° pitch, close enough that about 12 m of the 16 m lane width is visible.
-  - It follows you sideways, never showing more than 1 m past the curb.
-  - It looks 3 m ahead toward the enemy base, eases after the hero (7/s) and stops 5 m before each lane end.
+- Camera (data, tunable in `data/rules/camera_rules.tres`), **copied from League of Legends** (owner):
+  - **Exactly LoL's angle and lens: 56° pitch, 30° vertical field of view**, a far camera with a flat perspective. Only the distance is ours: it is derived so about **13 m of the 16 m lane width** is visible at the hero on any phone shape (about 43 m away, 36 m up on a 720x1280 screen).
+  - It follows you sideways, never showing more than 1 m past the curb, looks 2.5 m ahead toward the enemy base, eases after the hero (7/s) and stops 5 m before each lane end.
   - The lane minimap shows the rest of the width.
   - Team-relative: both teams see their own base at the bottom (the view flips for the other team).
 - Offscreen awareness: edge indicators for allies/enemies/ball/tricycle plus a slim lane minimap. Aim previews and skill ranges must remain readable within the visible area (long-range weapons rely on drag-to-aim and edge indicators).
@@ -96,7 +95,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - **Over each hero:** a segmented health bar (green you, blue ally, red enemy, grey for gray HP in the death delay). **No names.** A status (*Stunned*, *Down*, ...) is shown in *italic* above the bar. Under the bar, one row with two thin bars: **Dash** cooldown on the left, **Mark** cooldown on the right. Damage numbers float up in white or yellow and heals in green.
 - **Skill buttons:** art only (weapon icons, Dash, Mark, guava), the weapon's type as a small tag (ATK, CC or BLK), a cooldown number, a ready flash. Buttons on cooldown are disabled.
 - **Top:** score and set pips, a timer pill (guava and tricycle), the lane minimap on the left edge. There is no health panel in the corner.
-- Status of the italic line, the cooldown bars and the League of Legends camera: planned in `docs/ROADMAP.md` (P2, P3).
+- The cooldown bars show your own and everyone else's Dash and Mark (they fill as they recharge; Mark turns gold and drains while you are out on the mark).
 
 ## Scoring (volleyball format)
 - **Point**: reach enemy base. After a point: 3 s freeze, all players reset to their bases at full HP, cooldowns reset. Walls **persist** within a set.

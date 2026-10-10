@@ -2,29 +2,43 @@ extends GutTest
 
 const CAMERA: CameraRules = preload("res://data/rules/camera_rules.tres")
 const LAYOUT: MapLayout = preload("res://data/rules/map_layout.tres")
+const PHONE: float = 720.0 / 1280.0
 
 
-func test_camera_numbers_come_from_data() -> void:
-	assert_eq(CAMERA.pitch_degrees, 50.0)
-	assert_eq(CAMERA.hfov_degrees, 44.0)
-	assert_eq(CAMERA.lane_margin, -4.0, "closer than the whole lane, like ML Brawl")
+func test_the_angle_and_lens_are_exactly_league_of_legends() -> void:
+	assert_eq(CAMERA.pitch_degrees, 56.0)
+	assert_eq(CAMERA.vfov_degrees, 30.0, "vertical field of view")
+
+
+func test_other_camera_numbers_come_from_data() -> void:
+	assert_eq(CAMERA.visible_width, 13.0)
 	assert_eq(CAMERA.end_clamp, 5.0)
-	assert_eq(CAMERA.look_ahead, 3.0)
+	assert_eq(CAMERA.look_ahead, 2.5)
 
 
-func test_distance_fits_lane_plus_margin_to_screen_width() -> void:
-	var distance: float = CAMERA.distance(LAYOUT.lane_width)
-	# visible width at the target = 2 * d * tan(hfov / 2) = lane + margin
-	var visible_width: float = 2.0 * distance * tan(deg_to_rad(CAMERA.hfov_degrees / 2.0))
-	assert_almost_eq(visible_width, LAYOUT.lane_width + CAMERA.lane_margin, 0.001)
-	assert_almost_eq(distance, 14.85, 0.05)
+func test_distance_shows_the_visible_width_on_any_phone() -> void:
+	for aspect: float in [0.46, PHONE, 0.75]:
+		var distance: float = CAMERA.distance(aspect)
+		var width: float = 2.0 * distance * tan(deg_to_rad(CAMERA.vfov_degrees / 2.0)) * aspect
+		assert_almost_eq(width, CAMERA.visible_width, 0.001, "aspect %.2f" % aspect)
+	assert_almost_eq(CAMERA.distance(PHONE), 43.12, 0.05)
+
+
+func test_the_camera_is_far_and_high_like_league() -> void:
+	var offset: Vector3 = CAMERA.camera_offset(CAMERA.distance(PHONE), false)
+	assert_almost_eq(offset.y, 35.75, 0.1, "about 36 m up")
+	assert_almost_eq(offset.length(), CAMERA.distance(PHONE), 0.001)
+
+
+func test_aspect_is_kept_in_a_sane_range() -> void:
+	assert_eq(CAMERA.distance(0.05), CAMERA.distance(CAMERA.min_aspect))
+	assert_eq(CAMERA.distance(5.0), CAMERA.distance(CAMERA.max_aspect))
 
 
 func test_offset_sits_behind_and_above_the_target() -> void:
 	var offset: Vector3 = CAMERA.camera_offset(20.0, false)
-	assert_almost_eq(offset.y, 20.0 * sin(deg_to_rad(50.0)), 0.001)
-	assert_almost_eq(offset.z, 20.0 * cos(deg_to_rad(50.0)), 0.001)
-	assert_gt(offset.y, 0.0)
+	assert_almost_eq(offset.y, 20.0 * sin(deg_to_rad(56.0)), 0.001)
+	assert_almost_eq(offset.z, 20.0 * cos(deg_to_rad(56.0)), 0.001)
 	assert_gt(offset.z, 0.0, "own side: camera behind on +Z, looking toward -Z")
 	assert_eq(offset.x, 0.0)
 
@@ -40,14 +54,14 @@ func test_other_team_view_is_mirrored() -> void:
 
 func test_target_looks_ahead_toward_the_enemy_and_is_clamped_near_the_ends() -> void:
 	var limit: float = LAYOUT.lane_length / 2.0 - CAMERA.end_clamp
-	assert_eq(CAMERA.clamp_target(Vector2(0.0, 10.0), LAYOUT), Vector2(0.0, 10.0 - 3.0), "own side looks toward -Z")
-	assert_eq(CAMERA.clamp_target(Vector2(0.0, 10.0), LAYOUT, true), Vector2(0.0, 13.0), "flipped looks toward +Z")
+	assert_eq(CAMERA.clamp_target(Vector2(0.0, 10.0), LAYOUT), Vector2(0.0, 7.5), "own side looks toward -Z")
+	assert_eq(CAMERA.clamp_target(Vector2(0.0, 10.0), LAYOUT, true), Vector2(0.0, 12.5), "flipped looks toward +Z")
 	assert_eq(CAMERA.clamp_target(Vector2(0.0, 29.0), LAYOUT), Vector2(0.0, limit))
 	assert_eq(CAMERA.clamp_target(Vector2(0.0, -29.0), LAYOUT), Vector2(0.0, -limit))
 
 
 func test_camera_follows_sideways_but_never_far_past_the_curb() -> void:
-	var half_visible: float = CAMERA.visible_width(LAYOUT.lane_width) / 2.0
+	var half_visible: float = CAMERA.visible_width / 2.0
 	assert_eq(CAMERA.clamp_target(Vector2(1.5, 0.0), LAYOUT).x, 1.5, "follows the hero")
 	for x: float in [LAYOUT.lane_width / 2.0, -LAYOUT.lane_width / 2.0]:
 		var shift: float = CAMERA.clamp_target(Vector2(x, 0.0), LAYOUT).x
@@ -60,3 +74,14 @@ func test_follow_weight_is_frame_rate_independent() -> void:
 	var two_steps: float = 1.0 - pow(1.0 - CAMERA.follow_weight(0.05), 2.0)
 	assert_almost_eq(one_step, two_steps, 0.0001)
 	assert_eq(CAMERA.follow_weight(0.0), 0.0)
+
+
+func test_the_follow_camera_uses_keep_height_and_the_data_angle() -> void:
+	var camera: FollowCamera = autofree(FollowCamera.new()) as FollowCamera
+	camera.rules = CAMERA
+	camera.layout = LAYOUT
+	add_child(camera)
+	assert_eq(camera.keep_aspect, Camera3D.KEEP_HEIGHT)
+	assert_eq(camera.fov, 30.0)
+	camera.follow(Vector2.ZERO, false)
+	assert_almost_eq(camera.rotation_degrees.x, -56.0, 0.001)

@@ -17,7 +17,7 @@ const HOUSE_SPACING: float = 6.5
 const END_WALL_HEIGHT: float = 2.4
 const DASH_LENGTH: float = 2.0
 const DASH_GAP: float = 2.0
-const SHADOW_DISTANCE: float = 45.0
+const SHADOW_DISTANCE: float = 75.0
 const BUNTING_HEIGHT: float = 6.4
 const POLE_SPACING: float = 11.0
 
@@ -66,7 +66,7 @@ static func make_environment() -> Environment:
 	# light haze into the distance: the far end of the street softens into the sky
 	env.fog_enabled = true
 	env.fog_light_color = SKY_COLOR.lightened(0.15)
-	env.fog_density = 0.0022
+	env.fog_density = 0.001
 	env.fog_sky_affect = 0.0
 	return env
 
