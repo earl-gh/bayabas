@@ -21,6 +21,8 @@ extends Resource
 @export var bookmark_cooldown: float = 0.0
 ## Data toggle: return to the mark when the boost ends (GDD D7 default).
 @export var bookmark_returns: bool = false
+## Pin: after the short blink the player tumbles (can't move or cast) this long.
+@export var bookmark_tumble: float = 0.0
 ## Death delay: at 0 HP a player (once per respawn) keeps walking with "gray HP" that
 ## drains while moving. A living teammate touching them, or the player touching their own
 ## base post, revives them with the gray HP they have left. Skills are off meanwhile.

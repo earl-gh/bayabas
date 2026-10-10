@@ -124,6 +124,22 @@ static func hopscotch() -> ArrayMesh:
 		return kit.commit())
 
 
+## The pin a kid leaves where they used the pin skill: a big red round head on a
+## silver needle stuck slanted into the ground, with a small red ring around it.
+static func push_pin() -> ArrayMesh:
+	return cached("push_pin", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.cylinder(Vector3(0.0, 0.0, 0.0), 0.62, 0.62, 0.02, 16, Palette.SARI_RED.darkened(0.15), Palette.SARI_RED)
+		kit.cylinder(Vector3(0.0, 0.0, 0.0), 0.46, 0.46, 0.03, 16, Palette.ASPHALT, Palette.ASPHALT)
+		kit.set_transform(Transform3D(Basis(Vector3.BACK, 0.25), Vector3.ZERO))
+		kit.cylinder(Vector3(0.0, 0.0, 0.0), 0.04, 0.05, 0.9, 6, Palette.JEEP_CHROME)
+		kit.cylinder(Vector3(0.0, 0.86, 0.0), 0.16, 0.2, 0.12, 10, Palette.SARI_RED.darkened(0.2))
+		kit.sphere(Vector3(0.0, 1.12, 0.0), 0.3, Palette.SARI_RED, 12, 8)
+		kit.sphere(Vector3(-0.1, 1.24, -0.12), 0.08, Palette.WHITE, 6, 4)
+		kit.reset_transform()
+		return kit.commit())
+
+
 static func manhole() -> ArrayMesh:
 	return cached("manhole", func() -> ArrayMesh:
 		var kit: LowPoly = LowPoly.new()

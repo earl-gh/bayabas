@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dsffudwv3sxda"
-path="res://.godot/imported/btn_dash.png-285d30152c8a8173df31997d8ef52b11.ctex"
+uid="uid://1mmq2k0ndkvr"
+path="res://.godot/imported/btn_pin.png-4ecd6631d9d83427ae188e8c127d2c1a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/btn_dash.png"
-dest_files=["res://.godot/imported/btn_dash.png-285d30152c8a8173df31997d8ef52b11.ctex"]
+source_file="res://assets/icons/btn_pin.png"
+dest_files=["res://.godot/imported/btn_pin.png-4ecd6631d9d83427ae188e8c127d2c1a.ctex"]
 
 [params]
 

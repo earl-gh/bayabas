@@ -3,7 +3,7 @@
 Run: python3 tools/art/make_buttons.py
 Output: assets/icons/btn_<id>.png (256 px). Each button is a gold rim around a face
 coloured by the skill's type (attack red, block blue, crowd control violet, heal
-green, movement skills navy), with the icon enlarged and cropped inside the face,
+green, the pin navy), with the icon enlarged and cropped inside the face,
 an inner shadow so the face sits deep in the rim, and a glossy highlight on top.
 The weapon types are read from data/weapons/*.tres.
 """
@@ -104,8 +104,7 @@ def main():
         print("btn_" + wid, ["ATK", "CC", "BLK"][kind])
     for name, icon in (("ball", "guava"), ("guava", "guava")):
         compose(icon, HEAL_FACE).save(os.path.join(ICONS, "btn_%s.png" % name), optimize=True)
-    for name in ("dash", "bookmark"):
-        compose(name, MOVE_FACE, scale=1.05, nudge=(0, 2)).save(os.path.join(ICONS, "btn_%s.png" % name), optimize=True)
+    compose("pin", MOVE_FACE, scale=1.1, nudge=(0, 4)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)
     print("buttons done")
 
 

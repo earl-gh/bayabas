@@ -10,26 +10,26 @@ const OWN_COLOR: Color = Palette.TEAM_OWN
 const ENEMY_COLOR: Color = Palette.TEAM_ENEMY
 const SKY_COLOR: Color = Color(0.56, 0.8, 0.98)
 # cinematic daylight (see make_environment)
-const SUN_ANGLES: Vector3 = Vector3(-46.0, 62.0, 0.0)
-const SUN_COLOR: Color = Color(1.0, 0.88, 0.7)
-const SUN_ENERGY: float = 1.12
-const SHADOW_OPACITY: float = 0.62
-const SHADOW_BLUR: float = 1.4
+const SUN_ANGLES: Vector3 = Vector3(-56.0, 40.0, 0.0)
+const SUN_COLOR: Color = Color(0.94, 0.97, 1.0)
+const SUN_ENERGY: float = 1.25
+const SHADOW_OPACITY: float = 0.5
+const SHADOW_BLUR: float = 1.6
 const FILL_ANGLES: Vector3 = Vector3(-30.0, 258.0, 0.0)
-const FILL_COLOR: Color = Color(0.58, 0.72, 1.0)
-const FILL_ENERGY: float = 0.18
-const AMBIENT_COLOR: Color = Color(0.84, 0.88, 1.0)
-const AMBIENT_ENERGY: float = 0.4
+const FILL_COLOR: Color = Color(0.7, 0.82, 1.0)
+const FILL_ENERGY: float = 0.28
+const AMBIENT_COLOR: Color = Color(0.86, 0.92, 1.0)
+const AMBIENT_ENERGY: float = 0.6
 const EXPOSURE: float = 1.0
 const TONEMAP_WHITE: float = 4.0
-const GLOW_INTENSITY: float = 0.35
+const GLOW_INTENSITY: float = 0.25
 const GLOW_BLOOM: float = 0.0
 const GLOW_THRESHOLD: float = 1.0
-const SATURATION: float = 1.2
-const CONTRAST: float = 1.14
-const BRIGHTNESS: float = 0.98
-const HAZE_COLOR: Color = Color(1.0, 0.9, 0.78)
-const HAZE_DENSITY: float = 0.0009
+const SATURATION: float = 1.12
+const CONTRAST: float = 1.05
+const BRIGHTNESS: float = 1.0
+const HAZE_COLOR: Color = Color(0.82, 0.9, 1.0)
+const HAZE_DENSITY: float = 0.0008
 const RING_HEIGHT: float = 0.03
 const CURB_HEIGHT: float = 0.35
 const CROSS_STREET_WIDTH: float = 6.0
@@ -83,10 +83,9 @@ func _ready() -> void:
 	_back_button.pressed.connect(_on_back_pressed)
 
 
-## Cinematic daylight: a warm, low-ish key sun from the side (long, crisp shadows
-## across the diagonal street), a cool sky-blue fill from the other side so the
-## shadows stay blue rather than black, a soft bloom on the brightest sunlit
-## highlights, a warm haze into the distance and a punchier grade.
+## Cool, bright daylight: a high, cool-white sun (crisp shadows), a sky-blue fill
+## from the other side and a bright cool ambient so shadows stay light and blue, a
+## soft bloom on the brightest highlights and a light blue haze into the distance.
 static func make_environment() -> Environment:
 	var env: Environment = Environment.new()
 	env.background_mode = Environment.BG_COLOR

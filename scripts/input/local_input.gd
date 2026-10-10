@@ -32,9 +32,8 @@ static func cancel_held() -> bool:
 ## Space = dash, F = bookmark (R = ball is an aimed slot, see weapon_key_held).
 static func keyboard_buttons() -> int:
 	var buttons: int = 0
-	if Input.is_physical_key_pressed(KEY_SPACE):
-		buttons |= PlayerInput.BTN_DASH
-	if Input.is_physical_key_pressed(KEY_F):
+	# the pin (Space or F); Dash is folded into it and has no key
+	if Input.is_physical_key_pressed(KEY_SPACE) or Input.is_physical_key_pressed(KEY_F):
 		buttons |= PlayerInput.BTN_BOOKMARK
 	return buttons
 

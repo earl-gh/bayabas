@@ -431,6 +431,28 @@ def icon_bookmark():
     return p.result()
 
 
+def icon_pin():
+    """The pin skill: a red round-headed push pin stuck slanted in the ground, with
+    a small red ring where it went in and a dashed hop arc back to it."""
+    p = Painter(ICON, ICON)
+    ring = p.ellipse_mask((40, 176, 176, 226))
+    hole = p.ellipse_mask((62, 186, 154, 216))
+    p.paint(ImageChops.subtract(ring, hole), (230, 60, 60, 230))
+    for k in range(5):
+        a = math.pi * (0.15 + k * 0.14)
+        x, y = 160 + 70 * math.cos(a), 150 - 80 * math.sin(a)
+        p.stroke([(x, y), (x + 8, y - 4)], 6, (255, 255, 255, 200))
+    needle = p.line_mask([(108, 200), (138, 104)], 9)
+    p.fill(needle, (240, 244, 250), (130, 136, 150), angle=0, outline=4)
+    collar = p.ellipse_mask((116, 82, 170, 112), angle=-18)
+    p.fill(collar, (200, 40, 50), (120, 16, 30), outline=5)
+    head = p.ellipse_mask((96, 22, 196, 104), angle=-18)
+    p.fill(head, (255, 110, 100), (176, 20, 36), angle=60, outline=7)
+    p.shade(head, (140, 50, 220, 120), alpha=70)
+    p.shine(head, (112, 34, 150, 62), alpha=190, angle=-18)
+    return p.result()
+
+
 def icon_gear():
     """Settings: a white cog on a gold-rimmed navy button."""
     p = Painter(ICON, ICON)
@@ -782,7 +804,7 @@ def main(only=None):
         "lata": icon_lata, "bato_light": lambda: icon_bato(False), "bato_heavy": lambda: icon_bato(True),
         "gunting_light": lambda: icon_gunting(False), "gunting_heavy": lambda: icon_gunting(True),
         "papel_trap": icon_papel_trap, "papel_shield": icon_papel_shield, "jacks": icon_jacks, "bola": icon_bola,
-        "trumpo": icon_trumpo, "dash": icon_dash, "bookmark": icon_bookmark, "gear": icon_gear, "button_face": button_face,
+        "trumpo": icon_trumpo, "dash": icon_dash, "bookmark": icon_bookmark, "pin": icon_pin, "gear": icon_gear, "button_face": button_face,
     }
     for name, make in icons.items():
         if only is None or name in only:

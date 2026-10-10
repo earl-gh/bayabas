@@ -35,6 +35,7 @@ var input: MatchInput = MatchInput.new()
 
 var _accumulator: float = 0.0
 var _views: Dictionary[int, KidModel] = {}
+var _pins: Dictionary[int, MeshInstance3D] = {}
 var _last_positions: Dictionary[int, Vector2] = {}
 var _characters: Dictionary[StringName, CharacterDef] = {}
 ## The opening pick pauses the match; the respawn swap does not.
@@ -226,7 +227,6 @@ func _setup_hud() -> void:
 
 func _connect_hud() -> void:
 	hud.joystick.changed.connect(set_stick)
-	hud.dash_button.pressed.connect(press_skill.bind(PlayerInput.BTN_DASH))
 	hud.bookmark_button.pressed.connect(press_skill.bind(PlayerInput.BTN_BOOKMARK))
 	for slot: int in hud.aim_buttons.size():
 		hud.aim_buttons[slot].aim_started.connect(aim_started.bind(slot))
@@ -406,6 +406,9 @@ func _sync_actor(state: PlayerState, delta: float) -> void:
 	_last_positions[state.id] = state.position
 	view.face(state.facing)
 	view.animate(delta, minf(speed, 20.0), state)
+	var pin: MeshInstance3D = _pins[state.id]
+	pin.visible = state.alive and state.mark_active
+	pin.position = Vector3(state.mark_position.x, 0.0, state.mark_position.y)
 
 
 ## Aim preview for whichever slot is held (touch or keyboard).
@@ -520,6 +523,14 @@ func _make_actor_view(state: PlayerState) -> void:
 	view.setup(character, team_color, rules.player_radius)
 	_actors.add_child(view)
 	_views[state.id] = view
+	# the pin skill's pin, stuck where the kid used it
+	var pin: MeshInstance3D = MeshInstance3D.new()
+	pin.name = "Pin%d" % state.id
+	pin.mesh = Props.push_pin()
+	pin.visible = false
+	LowPoly.add_outline(pin, 0.02)
+	_actors.get_parent().add_child(pin)
+	_pins[state.id] = pin
 
 
 ## Settings menu > Exit match: online, give the room slot back first.

@@ -1,10 +1,11 @@
 class_name MatchHud
 extends Control
 ## The whole in-match HUD, built in code (no scene text to patch): overhead bars,
-## top row (square slanted minimap and settings button on the left, guava and
-## tricycle timers in the centre, score on the right), the settings menu, and the
+## top row (square slanted minimap and settings button on the left, score in the
+## centre, guava and tricycle timers on the right), the settings menu, and the
 ## one-thumb controls: the joystick sits where a MOBA's basic attack would (bottom
-## right) with the skills in an arc around it; the left-handed setting mirrors them.
+## right) with weapon 1, weapon 2, the pin and the guava in an arc around it; the
+## left-handed setting mirrors them.
 ## The match screen feeds it sim state through `sync_player()` and `sync_score()`.
 
 signal swap_pressed
@@ -18,20 +19,18 @@ const TOP_ROW_Y: float = 40.0
 const MARGIN: float = 14.0
 const MINIMAP_SIZE: Vector2 = Vector2(150.0, 150.0)
 const GEAR_SIZE: float = 64.0
-const SCORE_SIZE: Vector2 = Vector2(210.0, 84.0)
-const INFO_SIZE: Vector2 = Vector2(150.0, 58.0)
+const SCORE_SIZE: Vector2 = Vector2(200.0, 84.0)
+const INFO_SIZE: Vector2 = Vector2(144.0, 58.0)
 ## One-thumb controls, as (distance from the near side edge, distance from the
 ## bottom) of each control's centre on the 720x1280 base, for the right hand.
 const STICK_CENTER: Vector2 = Vector2(140.0, 150.0)
 const STICK_ZONE: float = 270.0
 const ARC_RADIUS: float = 232.0
 ## Arc angles (degrees from straight left, toward straight up) of weapon 1,
-## weapon 2, Dash and Bookmark around the joystick.
+## weapon 2, the pin and the guava around the joystick.
 const ARC_ANGLES: Array[float] = [0.0, 30.0, 60.0, 90.0]
 const WEAPON_SIZE: float = 120.0
 const SKILL_SIZE: float = 104.0
-const GUAVA_SIZE: float = 100.0
-const GUAVA_AT: Vector2 = Vector2(415.0, 415.0)
 const CANCEL_AT: Vector2 = Vector2(118.0, 520.0)
 const CANCEL_SIZE: Vector2 = Vector2(110.0, 100.0)
 const DOWN_TEXT: String = "YOU'RE DOWN!\nTouch a teammate or your base post to get back up"
@@ -42,7 +41,6 @@ var scoreboard: Scoreboard
 var info_label: Label
 var minimap: LaneMinimap
 var joystick: VirtualJoystick
-var dash_button: TouchButton
 var bookmark_button: TouchButton
 var weapon_buttons: Array[AimButton] = []
 var ball_button: AimButton
@@ -78,14 +76,14 @@ func set_top_inset(pixels: float) -> void:
 
 
 func set_controls_active(active: bool) -> void:
-	var controls: Array[Control] = [joystick, dash_button, bookmark_button]
+	var controls: Array[Control] = [joystick, bookmark_button]
 	controls.append_array(aim_buttons)
 	for control: Control in controls:
 		control.set_process_input(active)
 
 
 func controls_active() -> bool:
-	return dash_button.is_processing_input()
+	return bookmark_button.is_processing_input()
 
 
 func show_banner(text: String) -> void:
@@ -111,15 +109,14 @@ func sync_player(sim: MatchSim, rules: GameRules, player: PlayerState, local_id:
 	respawn_panel.sync(player, rules.respawn_time, pick_open)
 	# while you wait to respawn the controls are hidden so the countdown and button sit alone at the bottom
 	joystick.visible = player.alive
-	dash_button.visible = player.alive
 	bookmark_button.visible = player.alive
 	ball_button.visible = player.alive
 	for button: AimButton in weapon_buttons:
 		button.visible = player.alive
 	# disabled while on cooldown too: no pressing or precasting until ready
-	dash_button.set_locked(player.death_delay or player.dash_cooldown_left > 0.0)
-	bookmark_button.set_locked(player.death_delay or not player.bookmark_ready())
-	dash_button.set_cooldown(player.dash_cooldown_left, rules.dash_cooldown)
+	# the pin: ready, or out on the pin (then the same button brings you back early)
+	bookmark_button.set_locked(player.death_delay or not (player.bookmark_ready() or player.mark_active))
+	bookmark_button.highlight = player.mark_active
 	bookmark_button.set_cooldown(player.bookmark_cooldown_left, rules.bookmark_cooldown)
 	var weapons_off: bool = not player.alive or player.death_delay or not player.effects.can_cast()
 	_sync_guava_button(sim, player, local_id)
@@ -199,8 +196,7 @@ func _build() -> void:
 	aim_buttons = [weapon_one, weapon_two, ball_button]
 	for button: AimButton in aim_buttons:
 		button.cancel_zone = cancel_zone
-	dash_button = _skill_button(&"dash", "Dash")
-	bookmark_button = _skill_button(&"bookmark", "Mark")
+	bookmark_button = _skill_button(&"pin", "Pin")
 	banner = Label.new()
 	_place(banner, Vector4(0, 0.3, 1, 0.3), Vector4(0, -60, 0, 60))
 	banner.visible = false
@@ -236,13 +232,12 @@ func _build() -> void:
 func layout_controls(left: bool) -> void:
 	left_handed = left
 	_put(joystick, STICK_CENTER, Vector2(STICK_ZONE, STICK_ZONE))
-	var arc: Array[Control] = [weapon_buttons[0], weapon_buttons[1], dash_button, bookmark_button]
+	var arc: Array[Control] = [weapon_buttons[0], weapon_buttons[1], bookmark_button, ball_button]
 	for i: int in arc.size():
 		var angle: float = deg_to_rad(ARC_ANGLES[i])
 		var at: Vector2 = STICK_CENTER + Vector2(cos(angle), sin(angle)) * ARC_RADIUS
 		var side: float = WEAPON_SIZE if i < 2 else SKILL_SIZE
 		_put(arc[i], at, Vector2(side, side))
-	_put(ball_button, GUAVA_AT, Vector2(GUAVA_SIZE, GUAVA_SIZE))
 	_put(cancel_zone, CANCEL_AT, CANCEL_SIZE)
 
 
@@ -272,18 +267,18 @@ func _build_top_row() -> void:
 	_place(settings_button, Vector4(0, 0, 0, 0), Vector4(gear_x, TOP_ROW_Y, gear_x + GEAR_SIZE, TOP_ROW_Y + GEAR_SIZE))
 	settings_button.pressed.connect(toggle_menu)
 	top.add_child(settings_button)
-	# centre: guava and tricycle countdowns
+	# right: guava and tricycle countdowns
 	info_label = Label.new()
-	_place(info_label, Vector4(0.5, 0, 0.5, 0), Vector4(-INFO_SIZE.x / 2.0, TOP_ROW_Y, INFO_SIZE.x / 2.0, TOP_ROW_Y + INFO_SIZE.y))
+	_place(info_label, Vector4(1, 0, 1, 0), Vector4(-MARGIN - INFO_SIZE.x, TOP_ROW_Y, -MARGIN, TOP_ROW_Y + INFO_SIZE.y))
 	info_label.theme_type_variation = &"HudPill"
 	info_label.add_theme_font_size_override("font_size", 17)
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	info_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_child(info_label)
-	# right: score
+	# centre: score
 	scoreboard = Scoreboard.new()
-	_place(scoreboard, Vector4(1, 0, 1, 0), Vector4(-MARGIN - SCORE_SIZE.x, TOP_ROW_Y, -MARGIN, TOP_ROW_Y + SCORE_SIZE.y))
+	_place(scoreboard, Vector4(0.5, 0, 0.5, 0), Vector4(-SCORE_SIZE.x / 2.0, TOP_ROW_Y, SCORE_SIZE.x / 2.0, TOP_ROW_Y + SCORE_SIZE.y))
 	scoreboard.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_child(scoreboard)
 

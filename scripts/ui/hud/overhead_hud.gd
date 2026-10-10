@@ -2,15 +2,13 @@ class_name OverheadHud
 extends Control
 ## MOBA-style overhead display drawn in screen space over each hero, like League
 ## of Legends: a segmented health bar (green you, blue ally, red enemy, grey gray
-## HP in the death delay), a status in *italic* above it ("Stunned"), and one row
-## of two thin bars under it: Dash cooldown on the left, Mark cooldown on the
-## right. No names. Also floating damage and heal numbers, and over every damaged
-## cardboard wall a cardboard-coloured health bar and the damage it takes. Reads
-## the sim and projects through the match camera.
+## HP in the death delay), a status in *italic* above it ("Stunned"), and one thin
+## bar under it: the pin's cooldown. No names and no damage numbers (heals still
+## pop a green "+N"). Over every damaged cardboard wall, a cardboard-coloured
+## health bar. Reads the sim and projects through the match camera.
 
 const BAR_SIZE: Vector2 = Vector2(92.0, 13.0)
 const COOLDOWN_HEIGHT: float = 5.0
-const COOLDOWN_GAP: float = 4.0
 const HEAD_HEIGHT: float = 3.9
 const SEGMENT_HP: int = 20
 const POPUP_TIME: float = 0.9
@@ -33,7 +31,6 @@ const WALL_BAR_SIZE: Vector2 = Vector2(78.0, 10.0)
 const WALL_TOP: float = 2.7
 const WALL_COLOR: Color = Color(1.0, 0.68, 0.3)
 const WALL_LOW_COLOR: Color = Color(1.0, 0.36, 0.22)
-const WALL_DAMAGE_COLOR: Color = Color(1.0, 0.78, 0.45)
 
 var _sim: MatchSim
 var _camera: Camera3D
@@ -42,8 +39,6 @@ var _local_team: int = 0
 var _italic: FontVariation
 ## {id, amount, age, heal, jitter}
 var _popups: Array[Dictionary] = []
-## Last known HP of each wall, to turn wall_damaged into an amount.
-var _wall_hp: Array[int] = []
 
 
 func setup(sim: MatchSim, camera: Camera3D, local_id: int, local_team: int) -> void:
@@ -55,27 +50,7 @@ func setup(sim: MatchSim, camera: Camera3D, local_id: int, local_team: int) -> v
 	_italic = FontVariation.new()
 	_italic.base_font = ThemeDB.fallback_font
 	_italic.variation_transform = Transform2D(Vector2(1.0, 0.0), Vector2(ITALIC_SLANT, 1.0), Vector2.ZERO)
-	sim.player_damaged.connect(_on_damaged)
 	sim.player_healed.connect(_on_healed)
-	sim.wall_damaged.connect(_on_wall_damaged)
-	sim.walls_rebuilt.connect(_remember_walls)
-	_remember_walls()
-
-
-func _remember_walls() -> void:
-	_wall_hp.clear()
-	for wall: MapLayout.WallSpec in _sim.walls:
-		_wall_hp.append(wall.hp)
-
-
-func _on_wall_damaged(index: int) -> void:
-	if index >= _wall_hp.size():
-		_remember_walls()
-		return
-	var amount: int = _wall_hp[index] - _sim.walls[index].hp
-	_wall_hp[index] = _sim.walls[index].hp
-	if amount > 0:
-		_popups.append({"id": -1, "wall": index, "amount": amount, "age": 0.0, "heal": false, "jitter": float((index * 29 + _popups.size() * 11) % 30) - 15.0})
 
 
 ## Screen point above wall `index`, or null when it is off camera.
@@ -98,11 +73,6 @@ func _status_text(state: PlayerState) -> String:
 	if state.death_delay:
 		words.insert(0, "Down")
 	return " · ".join(words)
-
-
-## Dash recharge as 0..1 (1 = ready).
-func dash_fraction(state: PlayerState) -> float:
-	return _ready_fraction(state.dash_cooldown_left, _sim.rules.dash_cooldown)
 
 
 ## Mark: while you are out on the mark, the bonus time left (1 -> 0, gold);
@@ -134,10 +104,6 @@ func bar_color(state: PlayerState) -> Color:
 	if state.id == _local_id:
 		return SELF_COLOR
 	return ALLY_COLOR if state.team == _local_team else ENEMY_COLOR
-
-
-func _on_damaged(id: int, amount: int) -> void:
-	_popups.append({"id": id, "amount": amount, "age": 0.0, "heal": false, "jitter": float((id * 37 + _popups.size() * 13) % 40) - 20.0})
 
 
 func _on_healed(id: int, amount: int) -> void:
@@ -202,13 +168,11 @@ func _draw_hero(state: PlayerState, head: Vector2) -> void:
 		_text(_italic, status, head + Vector2(0.0, -8.0), STATUS_FONT, STATUS_COLOR, 6)
 
 
-## One row, two thin bars: Dash (left) and Mark (right).
+## One thin bar under the health: the pin (gold while you are out on it).
 func _draw_cooldowns(state: PlayerState, health: Rect2) -> void:
-	var width: float = (health.size.x - COOLDOWN_GAP) / 2.0
 	var top: float = health.end.y + 4.0
-	_cooldown_bar(Rect2(health.position.x, top, width, COOLDOWN_HEIGHT), dash_fraction(state), COOLDOWN_COLOR)
-	var mark_color: Color = COOLDOWN_ACTIVE_COLOR if state.mark_active else COOLDOWN_COLOR
-	_cooldown_bar(Rect2(health.position.x + width + COOLDOWN_GAP, top, width, COOLDOWN_HEIGHT), mark_fraction(state), mark_color)
+	var color: Color = COOLDOWN_ACTIVE_COLOR if state.mark_active else COOLDOWN_COLOR
+	_cooldown_bar(Rect2(health.position.x, top, health.size.x, COOLDOWN_HEIGHT), mark_fraction(state), color)
 
 
 func _cooldown_bar(rect: Rect2, fraction: float, color: Color) -> void:
@@ -217,9 +181,6 @@ func _cooldown_bar(rect: Rect2, fraction: float, color: Color) -> void:
 
 
 func _draw_popup(popup: Dictionary) -> void:
-	if popup.has("wall"):
-		_draw_wall_popup(popup)
-		return
 	var state: PlayerState = _sim.players.get(popup["id"] as int) as PlayerState
 	if state == null:
 		return
@@ -233,20 +194,6 @@ func _draw_popup(popup: Dictionary) -> void:
 	color.a = 1.0 - age * age
 	var size: int = int(POPUP_FONT * (1.25 - 0.25 * age) * (1.2 if healed else 1.0))
 	_text(ThemeDB.fallback_font, ("+%d" if healed else "-%d") % (popup["amount"] as int), pos, size, color, 6)
-
-
-func _draw_wall_popup(popup: Dictionary) -> void:
-	var index: int = popup["wall"] as int
-	if index >= _sim.walls.size():
-		return
-	var at: Variant = _wall_top(index)
-	if at == null:
-		return
-	var age: float = (popup["age"] as float) / POPUP_TIME
-	var color: Color = WALL_DAMAGE_COLOR
-	color.a = 1.0 - age * age
-	var pos: Vector2 = (at as Vector2) + Vector2(popup["jitter"] as float, -18.0 - POPUP_RISE * age)
-	_text(ThemeDB.fallback_font, "-%d" % (popup["amount"] as int), pos, int(POPUP_FONT * (1.15 - 0.2 * age)), color, 6)
 
 
 func _text(font: Font, text: String, center: Vector2, font_size: int, color: Color, outline: int) -> void:
