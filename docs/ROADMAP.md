@@ -19,10 +19,10 @@ Goal: the look of the owner's reference image (League of Legends mid view, Clash
 
 | Phase | Work | Done when |
 |---|---|---|
-| P0 | Rename to Kalyeah; docs cleaned up (this file replaces `HANDOFF.md`) | no stale names or docs; tests green |
-| P1 | Split `practice_match.gd` into input, HUD, camera and audio pieces; build the match HUD in code, not in `.tscn` text | behaviour unchanged, tests green, scene file small |
-| P2 | HUD spec below | screenshot matches the spec |
-| P3 | League of Legends camera | numbers below, camera tests updated |
+| P0 ✅ | Rename to Kalyeah; docs cleaned up (this file replaces `HANDOFF.md`) | no stale names or docs; tests green |
+| P1 ✅ | The match screen is split into `MatchInput`, `MatchHud` (all HUD built in code) and wiring; `practice.tscn` is 79 lines | behaviour unchanged, tests green |
+| P2 ✅ | HUD spec below | screenshot matches the spec |
+| P3 ✅ | League of Legends camera | numbers below, camera tests updated |
 | P4 | Blender pipeline; six kids with skeleton, painted textures, baked soft shadows and animations as `.glb` | kids load in game, same height and hitbox |
 | P5 | Environment kit in Blender (tin roofs, cardboard sheets, tyres, plants, hoop, drains, tricycle with driver, base post with posters) | street matches the reference |
 | P6 | Effects: impact debris, trails, dust, ground rings, per-weapon projectiles | every weapon has a clear effect |
@@ -39,8 +39,8 @@ Budgets (M6): 60 fps on a recommended Android phone, 30+ on the minimum; APK und
 
 ### Camera spec (owner): exactly League of Legends
 - Pitch **56°** from horizontal, field of view **30°** (vertical), far camera with a flat perspective.
-- The camera distance is chosen so about 13 m of the lane width is visible on a phone. The angle and field of view are not changed for that.
-- It follows the hero; it does not tilt or roll.
+- The camera distance is derived from the screen shape so about 13 m of the lane width is visible on any phone; the angle and field of view are not changed for that. It looks 2.5 m ahead of the hero.
+- It follows the hero and eases after them; it does not tilt or roll.
 
 ## Rules for building (to avoid retries)
 1. **No regex on `.tscn` files.** Complex screens are built in code and tested; scene files stay small and stable.

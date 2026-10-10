@@ -1,11 +1,14 @@
 class_name FollowCamera
 extends Camera3D
-## Team-relative MOBA follow camera for the portrait lane. Own base is always at
+## Team-relative gameplay camera, League of Legends style (see CameraRules): a far
+## camera with a 30 degree vertical FOV at 56 degrees pitch. Own base is always at
 ## the bottom of the screen; the other team's view is rotated 180 degrees. Eases
 ## toward its target (CameraRules.follow_rate); snaps on the first frame and when
 ## the view flips (new set).
 
 const SHAKE_DECAY: float = 1.4
+const NEAR: float = 4.0
+const FAR: float = 170.0
 
 @export var rules: CameraRules
 @export var layout: MapLayout
@@ -18,17 +21,31 @@ var _flip: bool = false
 
 func _ready() -> void:
 	projection = Camera3D.PROJECTION_PERSPECTIVE
-	keep_aspect = Camera3D.KEEP_WIDTH
-	fov = rules.hfov_degrees
-	near = 1.0
-	far = 120.0
+	keep_aspect = Camera3D.KEEP_HEIGHT
+	fov = rules.vfov_degrees
+	near = NEAR
+	far = FAR
 	environment = StreetMap.make_environment()
+
+
+## Current screen aspect (width / height); portrait phones are about 0.46 to 0.56.
+func screen_aspect() -> float:
+	var viewport: Viewport = get_viewport()
+	if viewport == null:
+		return 0.5625
+	var size: Vector2 = viewport.get_visible_rect().size
+	return size.x / size.y if size.y > 0.0 else 0.5625
+
+
+## Distance from the hero's ground point to the camera for this screen.
+func distance() -> float:
+	return rules.distance(screen_aspect())
 
 
 ## Where the camera wants to be for a hero at `world_pos`.
 func desired_position(world_pos: Vector2, flip: bool) -> Vector3:
 	var target: Vector2 = rules.clamp_target(world_pos, layout, flip)
-	return Vector3(target.x, 0.0, target.y) + rules.camera_offset(rules.distance(layout.lane_width), flip)
+	return Vector3(target.x, 0.0, target.y) + rules.camera_offset(distance(), flip)
 
 
 ## `delta` 0 snaps straight to the target.

@@ -415,7 +415,7 @@ func test_aim_indicator_shows_range_and_landing_circle() -> void:
 	assert_eq(cone.size(), 2)
 
 
-func test_every_player_gets_a_different_character_and_a_name_tag() -> void:
+func test_every_player_gets_a_different_character_and_no_name_over_their_head() -> void:
 	var practice: PracticeMatch = _practice()
 	var seen: Dictionary[StringName, bool] = {}
 	for id: int in practice.sim.players:
@@ -424,18 +424,15 @@ func test_every_player_gets_a_different_character_and_a_name_tag() -> void:
 		assert_false(seen.has(character))
 		seen[character] = true
 	for id: int in practice.sim.players:
-		assert_ne(practice.overhead().text_for(id), "?", "everyone has a name over their head")
-	var own: String = practice.overhead().text_for(PracticeMatch.LOCAL_ID)
-	assert_false(own.contains("("), "no (You) tag on your own character")
-	assert_eq(own, practice.overhead().text_for(PracticeMatch.LOCAL_ID).strip_edges())
+		assert_eq(practice.overhead().text_for(id), "", "no name text over a healthy hero")
 
 
-func test_status_effects_show_on_name_tags() -> void:
+func test_status_effects_show_over_the_hero_in_words() -> void:
 	var practice: PracticeMatch = _practice()
 	practice.sim.apply_effect(PracticeMatch.ENEMY_STAND_ID, StatusEffects.Type.POLYMORPH, 2.0, 0.0)
 	practice.advance(DT)
 	var enemy_view: Node3D = practice.get_node("%Actors").get_child(1) as Node3D
-	assert_eq(practice.overhead().text_for(PracticeMatch.ENEMY_STAND_ID), "POLYMORPH")
+	assert_eq(practice.overhead().text_for(PracticeMatch.ENEMY_STAND_ID), "Polymorphed")
 	assert_true((enemy_view as KidModel).is_can(), "turned into a can")
 
 
@@ -623,18 +620,46 @@ func test_skill_buttons_show_cooldown_seconds() -> void:
 
 
 
-func test_a_status_replaces_the_name_over_a_player() -> void:
+func test_a_status_is_shown_as_words_and_clears() -> void:
 	var practice: PracticeMatch = _practice()
 	var hud: OverheadHud = practice.overhead()
-	var before: String = hud.text_for(PracticeMatch.ENEMY_STAND_ID)
+	assert_eq(hud.text_for(PracticeMatch.ENEMY_STAND_ID), "")
 	practice.sim.apply_effect(PracticeMatch.ENEMY_STAND_ID, StatusEffects.Type.STUN, 2.0, 0.0)
-	assert_eq(hud.text_for(PracticeMatch.ENEMY_STAND_ID), "STUN")
-	assert_ne(before, "STUN")
+	assert_eq(hud.text_for(PracticeMatch.ENEMY_STAND_ID), "Stunned")
 	practice.sim.players[PracticeMatch.ENEMY_STAND_ID].effects.clear()
-	assert_eq(hud.text_for(PracticeMatch.ENEMY_STAND_ID), before, "the name is back")
+	assert_eq(hud.text_for(PracticeMatch.ENEMY_STAND_ID), "")
 	practice.sim.players[PracticeMatch.LOCAL_ID].position = Vector2(0.0, 0.0)
 	practice.hurt_local(100)
-	assert_eq(hud.text_for(PracticeMatch.LOCAL_ID), "DOWN")
+	assert_eq(hud.text_for(PracticeMatch.LOCAL_ID), "Down")
+
+
+func test_the_status_font_is_a_slanted_italic() -> void:
+	var practice: PracticeMatch = _practice()
+	var italic: FontVariation = practice.overhead()._italic
+	assert_not_null(italic)
+	assert_lt(italic.variation_transform.y.x, 0.0, "slanted")
+
+
+func test_dash_and_mark_cooldown_bars_fill_as_they_recharge() -> void:
+	var practice: PracticeMatch = _practice()
+	var hud: OverheadHud = practice.overhead()
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	assert_eq(hud.dash_fraction(player), 1.0)
+	assert_eq(hud.mark_fraction(player), 1.0)
+	practice.press_skill(PlayerInput.BTN_DASH)
+	practice.advance(DT)
+	assert_lt(hud.dash_fraction(player), 0.1, "just used")
+	for i: int in 120:
+		practice.advance(DT)
+	assert_between(hud.dash_fraction(player), 0.4, 0.6, "about half way after 4 of 8 s")
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
+	practice.advance(DT)
+	assert_true(player.mark_active)
+	assert_between(hud.mark_fraction(player), 0.9, 1.0, "out on the mark: bonus time left, draining")
+	for i: int in 135:
+		practice.advance(DT)
+	assert_false(player.mark_active)
+	assert_lt(hud.mark_fraction(player), 0.1, "back at the mark: the 14 s cooldown starts")
 
 
 func test_skill_buttons_are_art_with_only_the_type_tag() -> void:

@@ -212,12 +212,9 @@ func _setup_online() -> void:
 	local_team = sim.players[local_id].team
 
 
-## Overhead bars and minimap get the sim; the top HUD clears the notch.
+## Overhead display and minimap get the sim; the top HUD clears the notch.
 func _setup_hud() -> void:
-	var names: Dictionary[int, String] = {}
-	for id: int in sim.players:
-		names[id] = _character_name(sim.players[id])
-	hud.overhead.setup(sim, _camera, local_id, local_team, names)
+	hud.overhead.setup(sim, _camera, local_id, local_team)
 	hud.minimap.setup(sim, local_id, local_team)
 	hud.set_top_inset(_safe_top_inset())
 
@@ -502,11 +499,6 @@ func _safe_top_inset() -> float:
 	var safe: Rect2i = DisplayServer.get_display_safe_area()
 	var screen_inset: float = maxf(0.0, float(safe.position.y - DisplayServer.window_get_position().y))
 	return screen_inset * get_viewport().get_visible_rect().size.y / float(window.y)
-
-
-func _character_name(state: PlayerState) -> String:
-	var character: CharacterDef = _characters.get(state.character_id) as CharacterDef
-	return character.display_name if character != null else "?"
 
 
 func _make_actor_view(state: PlayerState) -> void:
