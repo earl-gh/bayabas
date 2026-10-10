@@ -11,13 +11,10 @@ const ENEMY_STAND_ID: int = 2
 const ENEMY_PATROL_ID: int = 3
 const ALLY_ID: int = 4
 const MAX_STEPS_PER_FRAME: int = 8
-const PLAYER_HEIGHT: float = 1.8
 const TAG_HEIGHT: float = 2.4
 const TAG_PIXEL_SIZE: float = 0.012
 const TAG_FONT_SIZE: int = 48
-const RING_THICKNESS: float = 0.12
 const AIRBORNE_LIFT: float = 1.0
-const POLYMORPH_SCALE: Vector3 = Vector3(0.7, 0.4, 0.7)
 ## Aimed buttons: the two weapons and the ball (press, drag to aim, release).
 const AIM_BITS: Array[int] = [PlayerInput.BTN_WEAPON_1, PlayerInput.BTN_WEAPON_2, PlayerInput.BTN_BALL]
 const WEAPON_SLOTS: int = 2
@@ -26,9 +23,7 @@ const BANNER_TIME: float = 2.0
 const RECONNECT_INTERVAL: float = 2.0
 ## Practice-only debug button to test the death delay without an enemy that fights back.
 const DEBUG_DAMAGE: int = 30
-const ALLY_COLOR: Color = Color(0.5, 0.75, 1.0)
 const DELAY_COLOR: Color = Color(0.62, 0.62, 0.66)
-const POLYMORPH_COLOR: Color = Color(0.75, 0.75, 0.8)
 const HP_TEXT_COLOR: Color = Color(1.0, 1.0, 1.0)
 
 @export var rules: GameRules
@@ -45,9 +40,8 @@ var local_team: int = LOCAL_TEAM
 var _accumulator: float = 0.0
 var _stick: Vector2 = Vector2.ZERO
 var _pending_buttons: int = 0
-var _views: Dictionary[int, MeshInstance3D] = {}
-var _materials: Dictionary[int, StandardMaterial3D] = {}
-var _base_colors: Dictionary[int, Color] = {}
+var _views: Dictionary[int, KidModel] = {}
+var _last_positions: Dictionary[int, Vector2] = {}
 var _tags: Dictionary[int, Label3D] = {}
 var _characters: Dictionary[StringName, CharacterDef] = {}
 ## The opening pick pauses the match; the respawn swap does not.
@@ -86,7 +80,7 @@ var _reconnect_left: float = -1.0
 @onready var _pick_screen: WeaponPickScreen = %PickScreen
 @onready var _hurt_button: Button = %HurtButton
 @onready var _swap_button: Button = %SwapButton
-@onready var _map: GreyboxMap = %Map
+@onready var _map: StreetMap = %Map
 @onready var _walls: WallsView = %Walls
 @onready var _neutrals: NeutralsView = %Neutrals
 @onready var _score_label: Label = %ScoreLabel
@@ -94,6 +88,7 @@ var _reconnect_left: float = -1.0
 @onready var _banner: Label = %Banner
 @onready var _again_button: Button = %AgainButton
 @onready var _tricycle_button: Button = %TricycleButton
+@onready var _audio: MatchAudio = %Audio
 
 
 func _ready() -> void:
@@ -106,9 +101,13 @@ func _ready() -> void:
 	for id: int in sim.players:
 		_make_actor_view(sim.players[id])
 	_fx.watch(sim)
+	_audio.watch(sim, local_team)
 	_walls.watch(sim)
 	_neutrals.watch(sim)
 	_map.set_own_side(own_side())
+	_dash_button.icon_id = &"dash"
+	_bookmark_button.icon_id = &"bookmark"
+	_aim_buttons[BALL_SLOT].icon_id = &"ball"
 	_joystick.changed.connect(set_stick)
 	_dash_button.pressed.connect(press_skill.bind(PlayerInput.BTN_DASH))
 	_bookmark_button.pressed.connect(press_skill.bind(PlayerInput.BTN_BOOKMARK))
@@ -365,6 +364,7 @@ func _open_pick(heading: String, current: Array[StringName]) -> void:
 
 
 func _on_pick_confirmed(picks: Array[StringName]) -> void:
+	_audio.start_music()
 	sim.set_loadout(local_id, picks[0], picks[1])
 	if online:
 		# the server starts play for everyone once all have picked (or time is up)
@@ -434,7 +434,7 @@ func _on_player_respawned(id: int) -> void:
 
 func _sync_views(delta: float) -> void:
 	for id: int in sim.players:
-		_sync_actor(sim.players[id])
+		_sync_actor(sim.players[id], delta)
 	var player: PlayerState = sim.players[local_id]
 	_sync_hud(player)
 	_sync_aim(player)
@@ -444,19 +444,16 @@ func _sync_views(delta: float) -> void:
 	_camera.follow(player.position, _flip())
 
 
-func _sync_actor(state: PlayerState) -> void:
-	var view: MeshInstance3D = _views[state.id]
+func _sync_actor(state: PlayerState, delta: float) -> void:
+	var view: KidModel = _views[state.id]
 	var lift: float = AIRBORNE_LIFT if state.effects.has(StatusEffects.Type.AIRBORNE) else 0.0
-	view.position = Vector3(state.position.x, PLAYER_HEIGHT / 2.0 + lift, state.position.y)
+	view.position = Vector3(state.position.x, lift, state.position.y)
 	view.visible = state.alive
-	var polymorphed: bool = state.effects.has(StatusEffects.Type.POLYMORPH)
-	view.scale = POLYMORPH_SCALE if polymorphed else Vector3.ONE
-	var color: Color = _base_colors[state.id]
-	if state.death_delay:
-		color = DELAY_COLOR
-	elif polymorphed:
-		color = POLYMORPH_COLOR
-	_materials[state.id].albedo_color = color
+	var last: Vector2 = _last_positions.get(state.id, state.position) as Vector2
+	var speed: float = last.distance_to(state.position) / delta if delta > 0.0 else 0.0
+	_last_positions[state.id] = state.position
+	view.face(state.facing)
+	view.animate(delta, minf(speed, 20.0), state)
 	var tag: Label3D = _tags[state.id]
 	var lines: PackedStringArray = PackedStringArray([_character_name(state)])
 	if state.id != local_id:
@@ -496,6 +493,7 @@ func _sync_hud(player: PlayerState) -> void:
 		if button.label_text != def.short_name or button.sub_text != def.kind_label():
 			button.label_text = def.short_name
 			button.sub_text = def.kind_label()
+			button.icon_id = def.id
 			button.sub_color = WeaponPickScreen.kind_color(def.kind)
 			button.queue_redraw()
 		button.set_locked(weapons_off or player.weapon_cooldowns[slot] > 0.0)
@@ -627,43 +625,24 @@ func _character_name(state: PlayerState) -> String:
 
 
 func _make_actor_view(state: PlayerState) -> void:
-	var team_color: Color = GreyboxMap.ENEMY_COLOR
+	var team_color: Color = Palette.TEAM_ENEMY
 	if state.id == local_id:
-		team_color = GreyboxMap.OWN_COLOR
+		team_color = Palette.TEAM_OWN
 	elif state.team == local_team:
-		team_color = ALLY_COLOR
+		team_color = Palette.TEAM_ALLY
 	var character: CharacterDef = _characters.get(state.character_id) as CharacterDef
-	var color: Color = character.tint if character != null else team_color
-	var mesh: CapsuleMesh = CapsuleMesh.new()
-	mesh.radius = rules.player_radius
-	mesh.height = PLAYER_HEIGHT
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = color
-	mesh.material = material
-	var view: MeshInstance3D = MeshInstance3D.new()
-	view.mesh = mesh
+	if character == null:
+		character = rules.characters[0]
+	var view: KidModel = KidModel.new()
+	view.setup(character, team_color, rules.player_radius)
 	_actors.add_child(view)
 	_views[state.id] = view
-	_materials[state.id] = material
-	_base_colors[state.id] = color
-	var ring_mesh: TorusMesh = TorusMesh.new()
-	ring_mesh.inner_radius = rules.player_radius
-	ring_mesh.outer_radius = rules.player_radius + RING_THICKNESS * 2.0
-	var ring_material: StandardMaterial3D = StandardMaterial3D.new()
-	ring_material.albedo_color = team_color
-	ring_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	ring_mesh.material = ring_material
-	var ring: MeshInstance3D = MeshInstance3D.new()
-	ring.name = "TeamRing"
-	ring.mesh = ring_mesh
-	ring.position = Vector3(0.0, -PLAYER_HEIGHT / 2.0 + RING_THICKNESS, 0.0)
-	view.add_child(ring)
 	var tag: Label3D = Label3D.new()
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tag.pixel_size = TAG_PIXEL_SIZE
 	tag.font_size = TAG_FONT_SIZE
 	tag.outline_size = 8
 	tag.modulate = team_color.lightened(0.5)
-	tag.position = Vector3(0.0, TAG_HEIGHT - PLAYER_HEIGHT / 2.0, 0.0)
+	tag.position = Vector3(0.0, TAG_HEIGHT, 0.0)
 	view.add_child(tag)
 	_tags[state.id] = tag

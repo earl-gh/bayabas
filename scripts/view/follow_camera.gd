@@ -11,7 +11,7 @@ func _ready() -> void:
 	projection = Camera3D.PROJECTION_PERSPECTIVE
 	keep_aspect = Camera3D.KEEP_WIDTH
 	fov = rules.hfov_degrees
-	environment = GreyboxMap.make_environment()
+	environment = StreetMap.make_environment()
 
 
 func follow(world_pos: Vector2, flip: bool) -> void:

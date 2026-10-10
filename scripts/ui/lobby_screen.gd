@@ -348,9 +348,7 @@ func _edit(text: String, placeholder: String) -> LineEdit:
 ## Toggle buttons light up yellow when on (like picked weapons).
 func _make_toggle(button: Button) -> void:
 	button.toggle_mode = true
-	var on: StyleBoxFlat = StyleBoxFlat.new()
-	on.bg_color = WeaponPickScreen.PICKED_COLOR
-	on.set_corner_radius_all(12)
+	var on: StyleBoxFlat = BayabasTheme.button_box(WeaponPickScreen.PICKED_COLOR, true)
 	button.add_theme_stylebox_override("pressed", on)
 	button.add_theme_stylebox_override("hover_pressed", on)
 	for state: String in ["font_pressed_color", "font_hover_pressed_color"]:

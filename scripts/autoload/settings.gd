@@ -11,6 +11,7 @@ var server_url: String = ""
 
 
 func _ready() -> void:
+	BayabasTheme.apply()
 	server_url = ProjectSettings.get_setting(PROJECT_KEY, "") as String
 	var file: ConfigFile = ConfigFile.new()
 	if file.load(SAVE_PATH) == OK:

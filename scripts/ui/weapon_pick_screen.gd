@@ -12,9 +12,11 @@ const COLUMNS: int = 3
 const CELL_SIZE: Vector2 = Vector2(212.0, 96.0)
 const TITLE_FONT: int = 40
 const HEADER_FONT: int = 26
-const CELL_FONT: int = 22
+const CELL_FONT: int = 18
+const ICON_WIDTH: float = 54.0
 const BACKDROP: Color = Color(0.08, 0.06, 0.12, 0.88)
 const PICKED_COLOR: Color = Color(1.0, 0.82, 0.25)
+const CARD_COLOR: Color = Color(0.22, 0.2, 0.3)
 const KIND_COLORS: Dictionary[WeaponDef.Kind, Color] = {
 	WeaponDef.Kind.ATTACK: Color(1.0, 0.55, 0.35),
 	WeaponDef.Kind.CROWD_CONTROL: Color(0.75, 0.6, 1.0),
@@ -175,15 +177,26 @@ func _weapon_button(def: WeaponDef) -> Button:
 	button.toggle_mode = true
 	button.custom_minimum_size = CELL_SIZE
 	button.text = "%s\n%s" % [def.display_name, def.kind_label()]
+	button.alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	button.add_theme_constant_override("h_separation", 0)
+	var icon: IconView = IconView.new()
+	icon.icon_id = def.id
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+	icon.offset_right = ICON_WIDTH
+	button.add_child(icon)
 	button.add_theme_font_size_override("font_size", CELL_FONT)
 	button.add_theme_color_override("font_color", kind_color(def.kind))
-	var picked: StyleBoxFlat = StyleBoxFlat.new()
-	picked.bg_color = PICKED_COLOR
-	picked.set_corner_radius_all(12)
+	# dark cards; picked ones light up yellow
+	var card: StyleBoxFlat = BayabasTheme.button_box(CARD_COLOR)
+	button.add_theme_stylebox_override("normal", card)
+	button.add_theme_stylebox_override("hover", BayabasTheme.button_box(CARD_COLOR.lightened(0.1)))
+	var picked: StyleBoxFlat = BayabasTheme.button_box(PICKED_COLOR, true)
 	button.add_theme_stylebox_override("pressed", picked)
 	button.add_theme_stylebox_override("hover_pressed", picked)
 	for state: String in ["font_pressed_color", "font_hover_pressed_color"]:
 		button.add_theme_color_override(state, Color.BLACK)
+	button.add_theme_constant_override("outline_size", 4)
 	button.pressed.connect(tap.bind(def.id))
 	_buttons[def.id] = button
 	return button

@@ -88,35 +88,14 @@ func _remove(id: int) -> void:
 
 
 func _projectile_mesh(def: WeaponDef) -> Mesh:
-	var color: Color = KIND_COLORS[def.kind]
-	if def.shape == WeaponDef.Shape.SPINNER:
-		var top: CylinderMesh = CylinderMesh.new()
-		top.top_radius = def.radius
-		top.bottom_radius = 0.05
-		top.height = def.radius
-		top.material = _material(color)
-		return top
-	if def.shape == WeaponDef.Shape.BOOMERANG:
-		var slipper: BoxMesh = BoxMesh.new()
-		slipper.size = Vector3(def.projectile_radius * 1.2, 0.08, def.projectile_radius * 2.4)
-		slipper.material = _material(color)
-		return slipper
-	var ball: SphereMesh = SphereMesh.new()
-	var radius: float = def.projectile_radius if def.projectile_radius > 0.0 else 0.3
-	ball.radius = radius
-	ball.height = radius * 2.0
-	ball.material = _material(color)
-	return ball
+	var size: float = def.radius if def.shape == WeaponDef.Shape.SPINNER or def.shape == WeaponDef.Shape.BOUNCER else def.projectile_radius
+	return Props.weapon_object(def.id, maxf(size, 0.25))
 
 
 func _zone_mesh(zone: WeaponSystem.Zone) -> Mesh:
 	var color: Color = ZONE_COLORS[zone.kind]
 	if zone.kind == WeaponSystem.ZoneKind.TRAP:
-		var ball: SphereMesh = SphereMesh.new()
-		ball.radius = TRAP_BALL_RADIUS
-		ball.height = TRAP_BALL_RADIUS * 2.0
-		ball.material = _material(color)
-		return ball
+		return Props.weapon_object(&"papel_trap", TRAP_BALL_RADIUS)
 	var disc: CylinderMesh = CylinderMesh.new()
 	disc.top_radius = zone.radius
 	disc.bottom_radius = zone.radius

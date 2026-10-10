@@ -6,9 +6,14 @@ extends Control
 
 signal pressed
 
-const READY_COLOR: Color = Color(0.1, 0.1, 0.16, 0.55)
-const RIM_COLOR: Color = Color(1.0, 1.0, 1.0, 0.6)
+const READY_COLOR: Color = Color(0.14, 0.12, 0.2, 0.7)
+const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.35)
+const RIM_COLOR: Color = Color(1.0, 0.9, 0.6, 0.95)
+const RIM_WIDTH: float = 5.0
+const SHADOW_DROP: float = 5.0
 const FONT_SIZE: int = 26
+const SMALL_FONT_SIZE: int = 18
+const TEXT_OUTLINE: int = 5
 const COOLDOWN_COLOR: Color = Color(0.0, 0.0, 0.0, 0.45)
 const ARC_COLOR: Color = Color(1.0, 1.0, 1.0, 0.8)
 const TEXT_COLOR: Color = Color(1.0, 1.0, 1.0, 0.95)
@@ -23,6 +28,8 @@ const MOUSE_POINTER: int = -2
 ## Small second line, e.g. the weapon type (ATK / CC / BLOCK).
 @export var sub_text: String = ""
 @export var sub_color: Color = Color(1.0, 1.0, 1.0, 0.8)
+## Icons.draw id ("dash", "bato_light", ...); empty = text only.
+@export var icon_id: StringName = &""
 
 ## 1.0 = just used, 0.0 = ready.
 var cooldown_fraction: float = 0.0
@@ -78,22 +85,34 @@ func _input(event: InputEvent) -> void:
 func _draw() -> void:
 	var center: Vector2 = size / 2.0
 	var radius: float = minf(size.x, size.y) / 2.0
+	draw_circle(center + Vector2(0.0, SHADOW_DROP), radius, SHADOW_COLOR)
 	draw_circle(center, radius, READY_COLOR)
-	draw_arc(center, radius - 1.5, 0.0, TAU, ARC_POINTS, RIM_COLOR, 3.0)
-	if locked:
+	draw_arc(center, radius - RIM_WIDTH / 2.0, 0.0, TAU, ARC_POINTS, RIM_COLOR, RIM_WIDTH)
+	var font: Font = ThemeDB.fallback_font
+	if icon_id != &"":
+		Icons.draw(self, icon_id, center + Vector2(0.0, -radius * 0.18), radius * 0.95)
+		_text(font, label_text, center + Vector2(0.0, radius * 0.5), SMALL_FONT_SIZE, TEXT_COLOR)
+		if not sub_text.is_empty():
+			_text(font, sub_text, center + Vector2(0.0, -radius * 0.68), SMALL_FONT_SIZE - 4, sub_color)
+	else:
+		var line_shift: float = 0.0 if sub_text.is_empty() else -FONT_SIZE * 0.3
+		_text(font, label_text, center + Vector2(0.0, line_shift), FONT_SIZE, TEXT_COLOR)
+		if not sub_text.is_empty():
+			_text(font, sub_text, center + Vector2(0.0, FONT_SIZE * 0.6), SMALL_FONT_SIZE, sub_color)
+	if locked or cooldown_fraction > 0.0:
 		draw_circle(center, radius, COOLDOWN_COLOR)
 	if cooldown_fraction > 0.0:
-		draw_circle(center, radius, COOLDOWN_COLOR)
 		draw_arc(center, radius - ARC_WIDTH, -PI / 2.0, -PI / 2.0 + TAU * cooldown_fraction, ARC_POINTS, ARC_COLOR, ARC_WIDTH)
-	var font: Font = ThemeDB.fallback_font
-	var font_size: int = FONT_SIZE
-	var text_size: Vector2 = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
-	var line_shift: float = 0.0 if sub_text.is_empty() else -text_size.y / 3.0
-	draw_string(font, center + Vector2(-text_size.x / 2.0, text_size.y / 4.0 + line_shift), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, TEXT_COLOR)
-	if not sub_text.is_empty():
-		var sub_size: int = roundi(font_size * 0.75)
-		var sub_width: float = font.get_string_size(sub_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, sub_size).x
-		draw_string(font, center + Vector2(-sub_width / 2.0, text_size.y), sub_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, sub_size, sub_color)
+
+
+## Centred text with a dark outline (readable over the street).
+func _text(font: Font, text: String, at: Vector2, font_size: int, color: Color) -> void:
+	if text.is_empty():
+		return
+	var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
+	var origin: Vector2 = at + Vector2(-text_size.x / 2.0, font_size * 0.35)
+	draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, TEXT_OUTLINE, Icons.OUTLINE)
+	draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)
 
 
 func _hit(viewport_position: Vector2) -> bool:

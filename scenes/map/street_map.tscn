@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/view/greybox_map.gd" id="1_map"]
+[ext_resource type="Script" path="res://scripts/view/street_map.gd" id="1_map"]
 [ext_resource type="Resource" path="res://data/rules/map_layout.tres" id="2_layout"]
 
-[node name="GreyboxMap" type="Node3D"]
+[node name="StreetMap" type="Node3D"]
 script = ExtResource("1_map")
 layout = ExtResource("2_layout")
 
