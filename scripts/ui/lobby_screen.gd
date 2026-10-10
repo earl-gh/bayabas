@@ -203,7 +203,7 @@ func _on_room_changed(room: Dictionary) -> void:
 		if member["player_id"] == client.player_id:
 			me_ready = member["ready"] as bool
 	_ready_button.button_pressed = me_ready
-	_ready_button.text = "Ready!" if me_ready else "Tap when ready"
+	_ready_button.text = "READY!" if me_ready else "Tap when you're ready"
 	_start_button.visible = client.is_host()
 	_start_button.disabled = not (room.get("can_start", false) as bool)
 
@@ -252,7 +252,7 @@ func _build() -> void:
 	var top: HBoxContainer = HBoxContainer.new()
 	column.add_child(top)
 	top.add_child(_button("Back", _on_back))
-	var title: Label = _label("Create Room" if intent == Intent.CREATE else "Join Room", 44)
+	var title: Label = _label("CREATE ROOM" if intent == Intent.CREATE else "JOIN ROOM", 44)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	_setup = VBoxContainer.new()
@@ -287,16 +287,16 @@ func _build() -> void:
 			_code_edit.text = text.to_upper()
 			_code_edit.caret_column = caret)
 		_setup.add_child(_code_edit)
-	_go_button = _button("Create" if intent == Intent.CREATE else "Join", submit)
+	_go_button = _button("CREATE" if intent == Intent.CREATE else "JOIN", submit)
 	_go_button.custom_minimum_size = Vector2(0, 96)
 	_setup.add_child(_go_button)
-	_rejoin_button = _button("Rejoin last match", rejoin)
+	_rejoin_button = _button("REJOIN LAST MATCH", rejoin)
 	_rejoin_button.visible = not Session.reconnect_token.is_empty()
 	_setup.add_child(_rejoin_button)
 	_room_box = VBoxContainer.new()
 	_room_box.add_theme_constant_override("separation", 14)
 	column.add_child(_room_box)
-	_room_box.add_child(_label("Room code - tell your friends", FONT))
+	_room_box.add_child(_label("ROOM CODE - share it with your squad", FONT))
 	_code_label = _label("", BIG_FONT, Color(1.0, 0.86, 0.3))
 	_room_box.add_child(_code_label)
 	for team: int in 2:
@@ -312,11 +312,11 @@ func _build() -> void:
 		var list: VBoxContainer = VBoxContainer.new()
 		_room_box.add_child(list)
 		_team_lists.append(list)
-	_ready_button = _button("Tap when ready", func() -> void: client.set_ready(_ready_button.button_pressed))
+	_ready_button = _button("Tap when you're ready", func() -> void: client.set_ready(_ready_button.button_pressed))
 	_make_toggle(_ready_button)
 	_ready_button.custom_minimum_size = Vector2(0, 96)
 	_room_box.add_child(_ready_button)
-	_start_button = _button("Start match", client.start_match)
+	_start_button = _button("START MATCH", client.start_match)
 	_start_button.custom_minimum_size = Vector2(0, 96)
 	_room_box.add_child(_start_button)
 	_room_box.add_child(_button("Leave room", _on_leave))

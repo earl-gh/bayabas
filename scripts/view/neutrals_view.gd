@@ -4,7 +4,10 @@ extends Node3D
 ## Read-only view of MatchSim.ball and MatchSim.tricycle.
 
 const BALL_HEIGHT: float = 0.4
-const HELD_HEIGHT: float = 2.1
+const HELD_HEIGHT: float = 1.25
+## The guava is drawn bigger than its gameplay radius so it reads on a phone.
+const GUAVA_SCALE: float = 1.5
+const HAND_OFFSET: float = 0.55
 const WARNING_COLOR: Color = Color(1.0, 0.85, 0.1, 0.45)
 const WARNING_BLINK_HZ: float = 4.0
 
@@ -17,7 +20,7 @@ var _clock: float = 0.0
 
 func watch(sim: MatchSim) -> void:
 	_sim = sim
-	_ball = _add(Props.rubber_ball(sim.rules.ball_radius))
+	_ball = _add(Props.guava(sim.rules.ball_radius * GUAVA_SCALE))
 	_tricycle = _add(Props.tricycle(sim.rules.tricycle_length, sim.rules.tricycle_width))
 	var stripe: BoxMesh = BoxMesh.new()
 	stripe.size = Vector3(sim.layout.lane_width, 0.05, sim.rules.tricycle_width)
@@ -33,7 +36,13 @@ func sync(delta: float) -> void:
 	var height: float = HELD_HEIGHT if ball.state == RubberBall.State.HELD else BALL_HEIGHT
 	if ball.state == RubberBall.State.GROUND:
 		height += absf(sin(_clock * 3.0)) * 0.25
-	_ball.position = Vector3(ball.position.x, height, ball.position.y)
+	var at: Vector2 = ball.position
+	if ball.state == RubberBall.State.HELD:
+		var holder: PlayerState = _sim.players.get(ball.holder_id) as PlayerState
+		if holder != null:
+			# carried in the right hand
+			at = holder.position + Vector2(-holder.facing.y, holder.facing.x) * HAND_OFFSET + holder.facing * 0.2
+	_ball.position = Vector3(at.x, height, at.y)
 	_ball.rotation.y += delta * 3.0
 	var tricycle: Tricycle = _sim.tricycle
 	_tricycle.visible = tricycle.phase == Tricycle.Phase.CROSSING

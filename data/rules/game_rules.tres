@@ -60,6 +60,7 @@ ball_holder_speed_scale = 0.9
 ball_knockout_time = 3.0
 ball_wall_damage = 60
 ball_catch_window = 0.3
+ball_pickup_heal_fraction = 0.5
 tricycle_first_time = 120.0
 tricycle_interval = 120.0
 tricycle_warning_time = 2.0

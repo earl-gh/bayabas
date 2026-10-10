@@ -42,6 +42,14 @@ Filipino street; inspired by, never copied).
 - `scripts/ui/icons.gd` (`Icons`): vector icons for the 12 weapons, dash, bookmark,
   ball and the title guava. They're drawn on the round skill buttons and the weapon pick cards.
 
+## Soft Clash-of-Clans look
+- Boxes are bevelled with a light rim on the top edges, spheres and cylinders are smooth-shaded, one matte wrap-lit material (no hard speculars, a gentle rim light), 2x MSAA and soft shadows, a light distance haze, and chunky rounded UI. The title screen stands three kids in the live 3D street.
+- **Cardboard walls** are the bahay-bahayan: DISASSEMBLED boxes, flat single sheets (fold creases, tape, FRAGILE marks, curled flaps, torn corner) leaning on wooden sticks. They are not stacked boxes.
+- **The guava** replaces the rubber ball everywhere: prop, minimap dot, button icon.
+
+## Rig and animation
+The kids have real joints (hips, spine, neck, thighs, knees, shoulders, elbows) with procedural animation: a run cycle with knee/elbow bend, counter-twist and head bob, idle breathing and head turns, a throw, a hit flinch, dash lean, stumble, stun wobble, airborne tumble, knockout lying down, a slump when down, and a can when polymorphed. Footsteps, a camera shake on hits and wall breaks, a pop-in for banners, and heal numbers add the juice.
+
 ## Depth
 - Real sun shadows (one orthogonal shadow map, 45 m), saturated colour grading.
 - Cartoon outlines on the kids and the can (an inside-out shell, `LowPoly.add_outline`).
@@ -61,7 +69,7 @@ Filipino street; inspired by, never copied).
 - **Joystick:** always visible at rest (golden thumb, arrows), and it floats to wherever you touch.
 
 ## Audio
-- `scripts/view/audio/sound_bank.gd` (`SoundBank`): synthesised SFX and the music loop.
+- `scripts/view/audio/sound_bank.gd` (`SoundBank`): synthesised SFX (each weapon has its own cast sound, plus footsteps, heal, stun, poof, KO, respawn, victory/defeat, UI clicks) and the music loop.
   - SFX: cast, hit, snip, boing, bonk, crunch, thud, point jingles, set fanfare, tricycle horn, down, revive, click, dash.
   - Music: an 8-bar pentatonic tune, rendered a few thousand samples per frame so phones don't stall.
 - `scripts/view/audio/match_audio.gd` (`MatchAudio`): plays them on MatchSim signals.

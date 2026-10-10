@@ -18,7 +18,7 @@ const END_WALL_HEIGHT: float = 2.4
 const DASH_LENGTH: float = 2.0
 const DASH_GAP: float = 2.0
 const SHADOW_DISTANCE: float = 45.0
-const BUNTING_HEIGHT: float = 5.2
+const BUNTING_HEIGHT: float = 6.4
 const POLE_SPACING: float = 11.0
 
 @export var layout: MapLayout
@@ -41,13 +41,13 @@ func _ready() -> void:
 		_setup_camera()
 	_sun.rotation_degrees = Vector3(-58.0, 32.0, 0.0)
 	_sun.light_color = Color(1.0, 0.94, 0.82)
-	_sun.light_energy = 1.0
+	_sun.light_energy = 0.95
 	# real shadows give the toy-town depth; one cheap orthogonal map
 	_sun.shadow_enabled = true
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	_sun.directional_shadow_max_distance = SHADOW_DISTANCE
-	_sun.shadow_opacity = 0.55
-	_sun.shadow_blur = 1.5
+	_sun.shadow_opacity = 0.42
+	_sun.shadow_blur = 3.0
 	_back_button.pressed.connect(_on_back_pressed)
 
 
@@ -58,11 +58,16 @@ static func make_environment() -> Environment:
 	env.background_color = SKY_COLOR
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(1.0, 0.95, 0.88)
-	env.ambient_light_energy = 0.55
+	env.ambient_light_energy = 0.45
 	# punchy, saturated toy-town colours
 	env.adjustment_enabled = true
-	env.adjustment_saturation = 1.18
-	env.adjustment_contrast = 1.06
+	env.adjustment_saturation = 1.22
+	env.adjustment_contrast = 1.08
+	# light haze into the distance: the far end of the street softens into the sky
+	env.fog_enabled = true
+	env.fog_light_color = SKY_COLOR.lightened(0.15)
+	env.fog_density = 0.0022
+	env.fog_sky_affect = 0.0
 	return env
 
 
@@ -120,7 +125,7 @@ func _add_details() -> void:
 	var half_l: float = layout.lane_length / 2.0
 	var span: float = layout.lane_width + 2.0 * (layout.boundary_thickness + SIDEWALK_WIDTH)
 	var bunting_index: int = 0
-	for z: float in [-half_l * 0.55, -half_l * 0.18, half_l * 0.18, half_l * 0.55]:
+	for z: float in [-half_l * 0.62, half_l * 0.62]:
 		_add(Props.banderitas(span, bunting_index), Vector3(0.0, BUNTING_HEIGHT, z))
 		bunting_index += 1
 	# power poles along the right sidewalk with wires between them

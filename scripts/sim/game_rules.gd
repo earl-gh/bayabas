@@ -69,6 +69,8 @@ extends Resource
 @export var ball_wall_damage: int = 0
 ## An enemy who pressed the ball button this recently before contact catches it (D2).
 @export var ball_catch_window: float = 0.0
+## Picking the guava up off the ground heals this fraction of max HP (0.5 = half).
+@export var ball_pickup_heal_fraction: float = 0.0
 ## Tricycle: first crossing and the time between crossings.
 @export var tricycle_first_time: float = 0.0
 @export var tricycle_interval: float = 0.0

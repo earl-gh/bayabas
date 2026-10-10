@@ -69,7 +69,7 @@ func kind_label() -> String:
 			return "ATK"
 		Kind.CROWD_CONTROL:
 			return "CC"
-	return "BLOCK"
+	return "BLK"
 
 
 ## Snips for a cone cast after holding the button for `hold_seconds`.

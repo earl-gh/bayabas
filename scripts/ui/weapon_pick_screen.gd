@@ -69,7 +69,7 @@ func close() -> void:
 ## Swap mode shows the respawn countdown instead of a pick timer.
 func show_time(seconds: float) -> void:
 	if visible:
-		_timer.text = "Respawn in %d" % ceili(seconds)
+		_timer.text = "Back in %d" % ceili(seconds)
 
 
 func _show(defs: Array[WeaponDef], heading: String) -> void:
@@ -124,10 +124,10 @@ func _refresh() -> void:
 		button.set_pressed_no_signal(slot >= 0)
 	if swap_mode:
 		_ready_button.disabled = false
-		_ready_button.text = "Done"
+		_ready_button.text = "DONE"
 		return
 	_ready_button.disabled = not pick.can_confirm()
-	_ready_button.text = "Ready!" if pick.can_confirm() else "Pick %d more" % (WeaponPick.SLOTS - pick.picks.size())
+	_ready_button.text = "READY!" if pick.can_confirm() else "Pick %d more" % (WeaponPick.SLOTS - pick.picks.size())
 
 
 ## Builds the grid once; later opens reuse it.

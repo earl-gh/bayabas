@@ -185,3 +185,44 @@ func test_a_point_removes_the_ball() -> void:
 	me.position = LAYOUT.base_center(MapLayout.SIDE_ENEMY)
 	_wait(sim, 4.0)
 	assert_eq(sim.ball.state, S.NONE)
+
+
+# ---- the guava heals ---------------------------------------------------------------
+
+func test_picking_the_guava_up_heals_half_your_max_hp() -> void:
+	var sim: MatchSim = _sim()
+	var me: PlayerState = sim.add_player(1, 0)
+	me.position = Vector2.ZERO
+	me.hp = 30
+	sim.ball.spawn_timer = 0.0
+	watch_signals(sim)
+	sim.step(DT)
+	sim.step(DT)
+	assert_true(sim.ball.is_holder(1))
+	assert_eq(me.hp, 80, "30 + half of 100")
+	assert_signal_emitted_with_parameters(sim, "player_healed", [1, 50])
+
+
+func test_the_heal_stops_at_max_hp_and_skips_the_downed() -> void:
+	var sim: MatchSim = _sim()
+	var me: PlayerState = sim.add_player(1, 0)
+	me.position = Vector2.ZERO
+	me.hp = 70
+	sim.ball.spawn_timer = 0.0
+	_wait(sim, 0.2)
+	assert_eq(me.hp, 100, "capped")
+	assert_eq(sim.heal(1, 10), 0, "already full")
+	me.hp = 40
+	sim.damage(1, 40)
+	assert_true(me.death_delay)
+	assert_eq(sim.heal(1, 50), 0, "no healing while down")
+
+
+func test_catching_or_receiving_the_guava_does_not_heal() -> void:
+	var sim: MatchSim = _holding()
+	var ally: PlayerState = sim.add_dummy(3, 0, Vector2(0.0, -4.0), DummyBrain.standing())
+	ally.hp = 20
+	_throw(sim, 1, Vector2(0.0, -1.0))
+	_wait(sim, 0.5)
+	assert_true(sim.ball.is_holder(3))
+	assert_eq(ally.hp, 20, "a pass is not a pickup")

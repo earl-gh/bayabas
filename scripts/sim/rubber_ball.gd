@@ -86,6 +86,8 @@ func step(sim: MatchSim, dt: float) -> void:
 				var player: PlayerState = sim.players[id]
 				if _can_hold(player) and player.position.distance_to(position) <= player.radius + sim.rules.ball_radius:
 					_hold(player)
+					# the guava: eating it off the ground heals half your max HP
+					sim.heal(id, roundi(sim.rules.player_max_hp * sim.rules.ball_pickup_heal_fraction))
 					picked_up.emit(id)
 					return
 		State.HELD:

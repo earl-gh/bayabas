@@ -83,19 +83,21 @@ func test_long_frames_are_capped_not_spiralling() -> void:
 	assert_eq(practice.sim.tick, PracticeMatch.MAX_STEPS_PER_FRAME)
 
 
-func test_hp_label_and_hurt_button_path() -> void:
+func test_hurt_button_path_and_no_health_panel_in_the_corner() -> void:
 	var practice: PracticeMatch = _practice()
-	var label: Label = practice.get_node("%HpLabel") as Label
-	assert_eq(label.text, "HP 100 / 100")
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	assert_eq(player.hp, 100)
 	practice.hurt_local(30)
-	assert_eq(label.text, "HP 70 / 100")
+	assert_eq(player.hp, 70)
+	assert_null(practice.get_node_or_null("%HpLabel"), "health lives over the character, not top-left")
+	assert_null(practice.get_node_or_null("%PlayerCard"))
 
 
 func test_zero_hp_starts_the_death_delay_with_gray_hp_and_locked_skills() -> void:
 	var practice: PracticeMatch = _practice()
 	practice.sim.players[PracticeMatch.LOCAL_ID].position = Vector2(0.0, 0.0)
 	practice.hurt_local(100)
-	assert_eq((practice.get_node("%HpLabel") as Label).text, "HP 0   GRAY 50")
+	assert_eq(practice.sim.players[PracticeMatch.LOCAL_ID].gray_hp, 50.0)
 	assert_true((practice.get_node("%DelayLabel") as Label).visible)
 	assert_false((practice.get_node("%RespawnLabel") as Label).visible)
 	assert_true((practice.get_node("%Actors").get_child(0) as Node3D).visible, "still on their feet")
@@ -121,7 +123,7 @@ func test_touching_the_base_post_gets_you_up_again() -> void:
 	# the local player spawns at their own base post
 	practice.hurt_local(100)
 	practice.advance(DT)
-	assert_eq((practice.get_node("%HpLabel") as Label).text, "HP 50 / 100")
+	assert_eq(practice.sim.players[PracticeMatch.LOCAL_ID].hp, 50)
 	assert_false((practice.get_node("%DelayLabel") as Label).visible)
 	assert_false((practice.get_node("%DashButton") as TouchButton).locked)
 
@@ -146,12 +148,12 @@ func test_real_death_hides_the_player_and_shows_the_respawn_timer_then_recovers(
 	practice.advance(0.0)
 	assert_false(capsule.visible)
 	assert_true(respawn.visible)
-	assert_eq(respawn.text, "Respawning in 10")
+	assert_eq(respawn.text, "RESPAWN IN 10")
 	for i: int in 305:
 		practice.advance(DT)
 	assert_true(capsule.visible)
 	assert_false(respawn.visible)
-	assert_eq((practice.get_node("%HpLabel") as Label).text, "HP 100 / 100")
+	assert_eq(practice.sim.players[PracticeMatch.LOCAL_ID].hp, 100)
 
 
 func test_practice_has_two_enemy_dummies_and_one_ally() -> void:
@@ -423,7 +425,9 @@ func test_every_player_gets_a_different_character_and_a_name_tag() -> void:
 		seen[character] = true
 	for id: int in practice.sim.players:
 		assert_ne(practice.overhead().text_for(id), "?", "everyone has a name over their head")
-	assert_string_starts_with(practice.overhead().text_for(PracticeMatch.LOCAL_ID), "You (")
+	var own: String = practice.overhead().text_for(PracticeMatch.LOCAL_ID)
+	assert_false(own.contains("("), "no (You) tag on your own character")
+	assert_eq(own, practice.overhead().text_for(PracticeMatch.LOCAL_ID).strip_edges())
 
 
 func test_status_effects_show_on_name_tags() -> void:
@@ -431,7 +435,7 @@ func test_status_effects_show_on_name_tags() -> void:
 	practice.sim.apply_effect(PracticeMatch.ENEMY_STAND_ID, StatusEffects.Type.POLYMORPH, 2.0, 0.0)
 	practice.advance(DT)
 	var enemy_view: Node3D = practice.get_node("%Actors").get_child(1) as Node3D
-	assert_string_contains(practice.overhead().text_for(PracticeMatch.ENEMY_STAND_ID), "POLYMORPH")
+	assert_eq(practice.overhead().text_for(PracticeMatch.ENEMY_STAND_ID), "POLYMORPH")
 	assert_true((enemy_view as KidModel).is_can(), "turned into a can")
 
 
@@ -508,8 +512,8 @@ func test_scoring_shows_a_banner_and_updates_the_scoreboard() -> void:
 	assert_string_starts_with(practice.scoreboard().summary(), "YOU 0 - 0 THEM")
 	_score_point(practice)
 	assert_string_starts_with(practice.scoreboard().summary(), "YOU 1 - 0 THEM")
-	assert_eq(practice.banner_text(), "POINT - YOU!")
-	assert_string_contains((practice.get_node("%InfoLabel") as Label).text, "Next point in")
+	assert_eq(practice.banner_text(), "BASE CAPTURED!")
+	assert_string_contains((practice.get_node("%InfoLabel") as Label).text, "Next round in")
 	_finish_freeze(practice)
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	assert_eq(player.position, player.spawn_position, "back at base")
@@ -542,7 +546,7 @@ func test_match_over_shows_play_again() -> void:
 		_finish_freeze(practice)
 	assert_eq(practice.sim.phase, MatchSim.Phase.MATCH_OVER)
 	assert_true(again.visible)
-	assert_eq(practice.banner_text(), "YOU WIN THE MATCH!")
+	assert_eq(practice.banner_text(), "VICTORY!")
 
 
 func test_ball_button_throws_the_ball_at_a_dummy() -> void:
@@ -572,7 +576,7 @@ func test_tricycle_test_button_brings_it_now() -> void:
 	var practice: PracticeMatch = _practice()
 	(practice.get_node("%TricycleButton") as Button).pressed.emit()
 	practice.advance(DT)
-	assert_eq(practice.banner_text(), "BEEP BEEP! Tricycle!")
+	assert_eq(practice.banner_text(), "TRICYCLE INCOMING!\nGet off the road!")
 	for i: int in 70:
 		practice.advance(DT)
 	assert_true((practice.get_node("%Neutrals") as NeutralsView).tricycle_visible())
@@ -616,3 +620,44 @@ func test_skill_buttons_show_cooldown_seconds() -> void:
 	practice.advance(DT)
 	var dash: TouchButton = practice.get_node("%DashButton") as TouchButton
 	assert_eq(ceili(dash.cooldown_seconds), 8)
+
+
+
+func test_a_status_replaces_the_name_over_a_player() -> void:
+	var practice: PracticeMatch = _practice()
+	var hud: OverheadHud = practice.overhead()
+	var before: String = hud.text_for(PracticeMatch.ENEMY_STAND_ID)
+	practice.sim.apply_effect(PracticeMatch.ENEMY_STAND_ID, StatusEffects.Type.STUN, 2.0, 0.0)
+	assert_eq(hud.text_for(PracticeMatch.ENEMY_STAND_ID), "STUN")
+	assert_ne(before, "STUN")
+	practice.sim.players[PracticeMatch.ENEMY_STAND_ID].effects.clear()
+	assert_eq(hud.text_for(PracticeMatch.ENEMY_STAND_ID), before, "the name is back")
+	practice.sim.players[PracticeMatch.LOCAL_ID].position = Vector2(0.0, 0.0)
+	practice.hurt_local(100)
+	assert_eq(hud.text_for(PracticeMatch.LOCAL_ID), "DOWN")
+
+
+func test_skill_buttons_are_art_with_only_the_type_tag() -> void:
+	var practice: PracticeMatch = _practice()
+	_equip(practice, &"papel_shield", &"bato_light")
+	practice.advance(DT)
+	var block: AimButton = _weapon_button(practice, 0)
+	assert_eq(block.icon_id, &"papel_shield")
+	assert_eq(block.sub_text, "BLK")
+	assert_eq(_weapon_button(practice, 1).sub_text, "ATK")
+	var guava: AimButton = practice.get_node("%BallButton") as AimButton
+	assert_eq(guava.icon_id, &"ball")
+	assert_eq(guava.sub_text, "", "no text on the guava, Dash or Mark buttons")
+	assert_eq((practice.get_node("%DashButton") as TouchButton).sub_text, "")
+
+
+func test_eating_the_guava_heals_and_pops_a_green_number() -> void:
+	var practice: PracticeMatch = _practice()
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	player.position = Vector2.ZERO
+	player.hp = 20
+	practice.sim.ball.spawn_timer = 0.0
+	practice.advance(DT)
+	practice.advance(DT)
+	assert_eq(player.hp, 70)
+	assert_eq(practice.overhead().popup_count(), 1)

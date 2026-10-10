@@ -18,6 +18,13 @@ signal match_won(team: int)
 signal point_reset
 ## New set: the teams swapped bases (and the walls were rebuilt).
 signal sides_switched
+## Dash / Bookmark used (sounds and effects).
+signal player_dashed(id: int)
+signal bookmark_used(id: int)
+## A status effect landed on a player (stun, slow, polymorph...).
+signal effect_applied(id: int, type: int)
+## A player regained HP (the guava).
+signal player_healed(id: int, amount: int)
 ## A weapon was cast (for sounds and effects).
 signal weapon_cast(id: int, weapon_id: StringName)
 ## A player lost HP (or gray HP).
@@ -205,7 +212,10 @@ func apply_effect(id: int, type: StatusEffects.Type, duration: float, magnitude:
 	if not players.has(id) or not is_targetable(players[id]):
 		return
 	var state: PlayerState = players[id]
+	var fresh: bool = type != StatusEffects.Type.NONE and not state.effects.has(type)
 	state.effects.apply(type, duration, magnitude)
+	if fresh:
+		effect_applied.emit(id, type)
 	if state.effects.is_hard_cc(type):
 		state.dash_time_left = 0.0
 
@@ -248,6 +258,19 @@ func damage(id: int, amount: int) -> void:
 		_start_death_delay(state)
 	else:
 		_die(state)
+
+
+## Heals up to max HP; returns the HP actually gained. Nothing for the dead or downed.
+func heal(id: int, amount: int) -> int:
+	var state: PlayerState = players.get(id) as PlayerState
+	if state == null or amount <= 0 or not state.alive or state.death_delay:
+		return 0
+	var gained: int = mini(amount, rules.player_max_hp - state.hp)
+	if gained <= 0:
+		return 0
+	state.hp += gained
+	player_healed.emit(id, gained)
+	return gained
 
 
 ## Immediate death (no death delay), e.g. for scripted or out-of-play kills.
@@ -456,6 +479,7 @@ func _start_dash(state: PlayerState, input: PlayerInput) -> void:
 	state.facing = direction
 	state.dash_time_left = rules.dash_duration
 	state.dash_cooldown_left = rules.dash_cooldown
+	player_dashed.emit(state.id)
 
 
 func _use_bookmark(state: PlayerState) -> void:
@@ -463,6 +487,7 @@ func _use_bookmark(state: PlayerState) -> void:
 	state.mark_active = true
 	state.boost_time_left = rules.bookmark_boost_duration
 	_move_by(state, state.facing * rules.bookmark_blink)
+	bookmark_used.emit(state.id)
 
 
 func _tick_boost(state: PlayerState, dt: float) -> void:

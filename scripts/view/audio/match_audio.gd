@@ -13,6 +13,7 @@ const THUD_GAP: float = 0.12
 
 var _sim: MatchSim
 var _local_team: int = 0
+var _local_id: int = -1
 var _voices: Array[AudioStreamPlayer] = []
 var _next_voice: int = 0
 var _music: AudioStreamPlayer
@@ -23,9 +24,10 @@ var _clock: float = 0.0
 var played: Array[StringName] = []
 
 
-func watch(sim: MatchSim, local_team: int) -> void:
+func watch(sim: MatchSim, local_team: int, local_id: int = -1) -> void:
 	_sim = sim
 	_local_team = local_team
+	_local_id = local_id
 	for i: int in VOICES:
 		var voice: AudioStreamPlayer = AudioStreamPlayer.new()
 		voice.volume_db = SFX_DB
@@ -34,8 +36,15 @@ func watch(sim: MatchSim, local_team: int) -> void:
 	_music = AudioStreamPlayer.new()
 	_music.volume_db = MUSIC_DB
 	add_child(_music)
-	sim.weapon_cast.connect(func(_id: int, _weapon: StringName) -> void: play(&"cast"))
-	sim.player_damaged.connect(func(_id: int, _amount: int) -> void: play(&"hit"))
+	sim.weapon_cast.connect(func(_id: int, weapon: StringName) -> void: play(SoundBank.cast_id(weapon), 0.06))
+	sim.player_dashed.connect(func(_id: int) -> void: play(&"dash", 0.05))
+	sim.bookmark_used.connect(func(_id: int) -> void: play(&"mark"))
+	sim.player_healed.connect(func(_id: int, _amount: int) -> void: play(&"heal"))
+	sim.effect_applied.connect(_on_effect)
+	sim.player_died.connect(func(_id: int) -> void: play(&"ko"))
+	sim.player_respawned.connect(func(id: int) -> void: if id == _local_id: play(&"respawn"))
+	sim.match_won.connect(func(team: int) -> void: play(&"victory" if team == _local_team else &"defeat"))
+	sim.player_damaged.connect(func(_id: int, _amount: int) -> void: play(&"hit", 0.08))
 	sim.weapons.cone_struck.connect(func(_owner: int, _def: WeaponDef, _origin: Vector2, _dir: Vector2) -> void: play(&"snip"))
 	sim.wall_damaged.connect(_on_wall_damaged)
 	sim.wall_destroyed.connect(func(_index: int) -> void: play(&"crunch"))
@@ -45,7 +54,7 @@ func watch(sim: MatchSim, local_team: int) -> void:
 	sim.player_revived.connect(func(_id: int, _by: int) -> void: play(&"revive"))
 	sim.ball.thrown.connect(func(_id: int) -> void: play(&"boing"))
 	sim.ball.caught.connect(func(_id: int) -> void: play(&"boing"))
-	sim.ball.picked_up.connect(func(_id: int) -> void: play(&"click"))
+	sim.ball.picked_up.connect(func(_id: int) -> void: play(&"crunch"))
 	sim.ball.knocked_out.connect(func(_id: int) -> void: play(&"bonk"))
 	sim.ball.wall_hit.connect(func(_index: int) -> void: play(&"crunch"))
 	sim.ball.blinked.connect(func(_id: int) -> void: play(&"dash"))
@@ -62,14 +71,25 @@ func music_playing() -> bool:
 	return _music != null and _music.playing
 
 
-func play(id: StringName) -> void:
+## `pitch_variation` (0.06 = +-6%) keeps repeated sounds from sounding identical.
+func play(id: StringName, pitch_variation: float = 0.0) -> void:
 	played.append(id)
 	if played.size() > 64:
 		played.pop_front()
 	var voice: AudioStreamPlayer = _voices[_next_voice]
 	_next_voice = (_next_voice + 1) % _voices.size()
 	voice.stream = SoundBank.get_sound(id)
+	voice.pitch_scale = 1.0 + (randf() * 2.0 - 1.0) * pitch_variation
+	voice.volume_db = SFX_DB - (11.0 if id == &"footstep" else 0.0)
 	voice.play()
+
+
+func _on_effect(_id: int, type: int) -> void:
+	match type:
+		StatusEffects.Type.POLYMORPH:
+			play(&"poof")
+		StatusEffects.Type.STUN, StatusEffects.Type.AIRBORNE, StatusEffects.Type.BOUNCE, StatusEffects.Type.KNOCKOUT:
+			play(&"stun")
 
 
 func _process(delta: float) -> void:

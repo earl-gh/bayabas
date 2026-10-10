@@ -84,9 +84,10 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.
 - Camera (data, tunable in `data/rules/camera_rules.tres`), MOBA style like Mobile Legends / LoL:
-  - Perspective lens with a 44° horizontal FOV at a 52° pitch; the lane plus 3 m fills the screen width.
-  - It looks 3.5 m ahead of your hero toward the enemy base, so you sit low on the screen and see more of what's coming.
-  - It eases after the hero (follow rate 7/s), follows 15% of your sideways position, and stops 6 m before each lane end.
+  - Height and angle like Mobile Legends Brawl: a 44° horizontal FOV at a 50° pitch, close enough that about 12 m of the 16 m lane width is visible.
+  - It follows you sideways, never showing more than 1 m past the curb.
+  - It looks 3 m ahead toward the enemy base, eases after the hero (7/s) and stops 5 m before each lane end.
+  - The lane minimap shows the rest of the width.
   - Team-relative: both teams see their own base at the bottom (the view flips for the other team).
 - Offscreen awareness: edge indicators for allies/enemies/ball/tricycle plus a slim lane minimap. Aim previews and skill ranges must remain readable within the visible area (long-range weapons rely on drag-to-aim and edge indicators).
 - Because the visible depth is shorter than the lane, ranges, speeds and the lane length stay as specified; balance is re-checked in M6 with real play on phones.
@@ -97,7 +98,10 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - **Match**: best of 3 sets. Teams switch bases each set; walls fully rebuild each set.
 - Implementation defaults: during the 3 s freeze nothing moves. The reset also clears status effects, weapon objects on the field, the ball (its 15 s spawn timer restarts) and an active tricycle crossing (the next one comes a full interval later). Dead players come back too. After the last point of the match the game stops and shows the result. Numbers in `data/rules/game_rules.tres` (`base_capture_time`, `point_freeze_time`, `set_points_to_win`, `set_win_by`, `set_point_cap`, `match_sets_to_win`).
 
-## Rubber ball
+## The guava (neutral ball)
+The neutral at the centre of the lane is a **guava** (bayabas; the game's namesake). It works as the rubber ball always did (below), with one addition from the owner:
+- **Eating it heals you.** Picking the guava up off the ground heals **half your max HP** (50 of 100, capped at max; `ball_pickup_heal_fraction` in `data/rules/game_rules.tres`). A catch or a pass is not a pickup and doesn't heal. Nobody who is dead or down can pick it up or be healed. You still carry it afterwards and can throw it as before. (If you'd rather it be eaten and gone, say so; that is a one-line rule change.)
+- The heal shows as a green "+50" over the player.
 - Spawns at center every 15 s if none exists.
 - Pick up: walk over it. Holder can throw (skillshot, 12 m, fast). Holder moves at 90% speed.
 - Hit enemy → `KNOCKOUT` 3 s, ball despawns, timer restarts.
@@ -106,7 +110,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Hit cardboard wall → 60 dmg, ball despawns, timer restarts.
 - Hit boundary or max range → drops on ground, can be picked up.
 - While in flight and not yet hit anything, the **thrower** can recast to blink to the ball. **(D3 confirm: thrower only)**
-- Controls: one **Ball** button (R on keyboard). It reads **Throw** while you hold the ball (press, drag to aim, release; auto-aim locked at the press like weapons, cancel zone works), **Blink** while your own throw is flying, otherwise **Catch** (a press opens the 0.3 s catch window).
+- Controls: one **guava button** (R on keyboard), art only. With the guava in hand (the button glows gold) press, drag to aim and release to throw (auto-aim locked at the press like weapons, cancel zone works); while your own throw flies a press blinks to it; otherwise a press opens the 0.3 s catch window.
 - Implementation defaults: thrown at 20 m/s (`ball_speed`); an enemy paper shield stops it and it drops there; it passes through the thrower's own walls (D11) and only damages enemy walls; the holder drops it when they go down or die; the blink moves the thrower onto the ball and the ball keeps flying. Numbers in `data/rules/game_rules.tres` (`ball_*`).
 
 ## Tricycle

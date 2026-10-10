@@ -5,9 +5,13 @@ extends Camera3D
 ## toward its target (CameraRules.follow_rate); snaps on the first frame and when
 ## the view flips (new set).
 
+const SHAKE_DECAY: float = 1.4
+
 @export var rules: CameraRules
 @export var layout: MapLayout
 
+## Screen-shake strength left (decays quickly); view only.
+var _shake: float = 0.0
 var _placed: bool = false
 var _flip: bool = false
 
@@ -37,3 +41,19 @@ func follow(world_pos: Vector2, flip: bool, delta: float = 0.0) -> void:
 	_placed = true
 	_flip = flip
 	rotation_degrees = Vector3(-rules.pitch_degrees, rules.yaw_degrees(flip), 0.0)
+
+
+## Kick the camera (a hit on you, a wall breaking). `strength` ~0.1 small, 0.4 big.
+func shake(strength: float) -> void:
+	_shake = maxf(_shake, strength)
+
+
+func _process(delta: float) -> void:
+	if _shake <= 0.001:
+		_shake = 0.0
+		h_offset = 0.0
+		v_offset = 0.0
+		return
+	h_offset = randf_range(-1.0, 1.0) * _shake
+	v_offset = randf_range(-1.0, 1.0) * _shake
+	_shake = maxf(0.0, _shake - delta * SHAKE_DECAY)

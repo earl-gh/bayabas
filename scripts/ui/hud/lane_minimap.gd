@@ -9,7 +9,7 @@ const ROAD: Color = Color(0.36, 0.37, 0.42, 0.9)
 const WALL: Color = Color(0.86, 0.66, 0.4)
 const OWN: Color = Color(0.3, 0.6, 1.0)
 const ENEMY: Color = Color(1.0, 0.35, 0.35)
-const BALL: Color = Color(1.0, 0.4, 0.6)
+const BALL: Color = Color(0.62, 0.86, 0.3)
 
 var _sim: MatchSim
 var _local_id: int = -1
