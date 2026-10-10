@@ -40,7 +40,7 @@ Dash and Bookmark blink stop at walls that block you, i.e. the enemy's walls and
 
 ## Weapons
 Status effects: `STUN` (no move/cast), `SLOW(x%)`, `AIRBORNE` (stun + vertical anim, no knockback), `POLYMORPH` (can: no cast, 50% speed), `BOUNCE` (short airborne), `KNOCKOUT` (ball; downed, no actions).
-Effects do not stack with themselves; a new hard CC refreshes duration.
+Statuses never stack: only one is active at a time and a new status of a different kind overwrites the current one. The same status re-applied keeps the longer time (SLOW keeps the stronger slow).
 
 | ID | Type | Shape | Range | Damage | Effect | CD |
 |---|---|---|---|---|---|---|

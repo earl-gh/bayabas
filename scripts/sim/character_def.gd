@@ -4,7 +4,7 @@ extends Resource
 ## speed, hitbox and timings for everyone. The outfit fields only drive the
 ## low-poly model (scripts/view/art/kid_model.gd); every kid shares one body.
 
-enum Hair { SHORT, PONYTAIL, PIGTAILS, CAP_BACKWARD, BUZZ }
+enum Hair { SHORT, PONYTAIL, PIGTAILS, CAP_BACKWARD, BUZZ, SPIKY, CURLY, LONG_WAVY }
 enum Top { SANDO, TEE_KNOTTED, BESTIDA, JERSEY, POLO_STRIPED, PE_SHIRT }
 enum Bottom { SHORTS, CARGO_SHORTS, JOGGING_PANTS, NONE }
 enum Extra { NONE, BIMPO, HAIR_CLIP, HEADBAND_BELT_BAG, ICE_CANDY, PONY_BANDS }

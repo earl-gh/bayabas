@@ -3,7 +3,9 @@ extends Node3D
 ## One of the six kids (docs/PROJECT.md 3.2) on a shared, jointed body ("rig"):
 ## hips -> thighs -> knees -> feet, hips -> spine -> neck -> head, spine ->
 ## shoulders -> elbows -> hands. Same proportions for everyone (the hitbox never
-## changes); the outfit comes from CharacterDef. All motion is procedural:
+## changes); the look is the Blender-authored skinned mesh of that kid (KidSkin).
+## The joint nodes here only carry the pose; KidSkin copies them onto the bones.
+## All motion is procedural:
 ## run cycle with knee and elbow bend, counter-twist and head bob, idle breathing,
 ## a throw, a hit flinch, dash lean, stumble, stun wobble, airborne tumble,
 ## knockout lie-down, a limp when down (grey), and a can when polymorphed.
@@ -29,6 +31,8 @@ var character: CharacterDef
 var team_color: Color = Color.WHITE
 
 var _body: Node3D
+var _skin: KidSkin
+var _joints: Array[Node3D] = []
 var _hips: Node3D
 var _spine: Node3D
 var _neck: Node3D
@@ -138,6 +142,7 @@ func animate(delta: float, speed: float, state: PlayerState) -> void:
 		_pose_cast()
 	if _hit_left > 0.0:
 		_pose_hit()
+	_skin.pose(_joints)
 
 
 func _reset_pose() -> void:
@@ -278,21 +283,24 @@ func _joint(parent: Node3D, at: Vector3, joint_name: String) -> Node3D:
 
 
 func _build(ring_radius: float) -> void:
-	var def: CharacterDef = character
-	var width: float = def.body_width
 	_body = _joint(self, Vector3.ZERO, "Body")
 	_body.scale = Vector3.ONE * VISUAL_SCALE
 	_hips = _joint(_body, Vector3(0.0, LEG_LENGTH, 0.0), "Hips")
-	var pelvis: LowPoly = LowPoly.new()
-	var pelvis_color: Color = def.tint if def.bottom == CharacterDef.Bottom.NONE else def.bottom_color
-	pelvis.box(Vector3(0.0, 0.03, 0.0), Vector3(0.36 * width, 0.16, 0.24 * width), pelvis_color)
-	_add_mesh(_hips, pelvis)
-	_build_legs(def, width)
 	_spine = _joint(_hips, Vector3(0.0, 0.08, 0.0), "Spine")
-	_build_torso(def, width)
 	_neck = _joint(_spine, Vector3(0.0, TORSO_HEIGHT, 0.0), "Neck")
-	_build_head(def)
-	_build_arms(def, width)
+	for i: int in 2:
+		var side: float = -1.0 if i == 0 else 1.0
+		_thighs.append(_joint(_hips, Vector3(side * 0.1, 0.0, 0.0), "Thigh%d" % i))
+		_knees.append(_joint(_thighs[i], Vector3(0.0, -THIGH, 0.0), "Knee%d" % i))
+		_shoulders.append(_joint(_spine, Vector3(side * 0.27, TORSO_HEIGHT - 0.06, 0.0), "Shoulder%d" % i))
+		_elbows.append(_joint(_shoulders[i], Vector3(0.0, -UPPER_ARM, 0.0), "Elbow%d" % i))
+	# same order as KidSkin.JOINTS
+	_joints = [_hips, _spine, _neck, _thighs[0], _knees[0], _thighs[1], _knees[1],
+			_shoulders[0], _elbows[0], _shoulders[1], _elbows[1]]
+	_skin = KidSkin.new()
+	_body.add_child(_skin)
+	_skin.setup(character.id, team_color, LEG_LENGTH)
+	_meshes.append_array(_skin.meshes)
 	_can = MeshInstance3D.new()
 	_can.mesh = Props.can_body()
 	_can.scale = Vector3.ONE * VISUAL_SCALE
@@ -315,139 +323,3 @@ func _build(ring_radius: float) -> void:
 	_ring.position.y = 0.05
 	_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_ring)
-
-
-func _build_legs(def: CharacterDef, width: float) -> void:
-	for i: int in 2:
-		var side: float = -1.0 if i == 0 else 1.0
-		var thigh: Node3D = _joint(_hips, Vector3(side * 0.1 * width, 0.0, 0.0), "Thigh%d" % i)
-		var covered_thigh: bool = def.bottom != CharacterDef.Bottom.NONE
-		var upper: LowPoly = LowPoly.new()
-		upper.box(Vector3(0.0, -THIGH / 2.0, 0.0), Vector3(0.15, THIGH, 0.15), def.skin)
-		if covered_thigh:
-			upper.box(Vector3(0.0, -THIGH * 0.4, 0.0), Vector3(0.18 * width, THIGH * 0.85, 0.18), def.bottom_color)
-			if def.bottom == CharacterDef.Bottom.CARGO_SHORTS:
-				upper.box(Vector3(side * 0.09, -THIGH * 0.55, 0.0), Vector3(0.04, 0.09, 0.1), def.bottom_color.darkened(0.2))
-		elif def.top == CharacterDef.Top.BESTIDA:
-			upper.box(Vector3(0.0, -0.04, 0.0), Vector3(0.17, 0.08, 0.17), def.tint)
-		_add_mesh(thigh, upper)
-		var knee: Node3D = _joint(thigh, Vector3(0.0, -THIGH, 0.0), "Knee%d" % i)
-		var lower: LowPoly = LowPoly.new()
-		var shin_color: Color = def.bottom_color if def.bottom == CharacterDef.Bottom.JOGGING_PANTS else def.skin
-		lower.box(Vector3(0.0, -SHIN / 2.0, 0.0), Vector3(0.14, SHIN, 0.14), shin_color)
-		if def.shoes:
-			lower.box(Vector3(0.0, -SHIN + 0.05, -0.04), Vector3(0.17, 0.11, 0.27), def.shoe_color, Palette.WHITE)
-		else:
-			lower.box(Vector3(0.0, -SHIN + 0.015, -0.04), Vector3(0.16, 0.035, 0.27), def.shoe_color)
-			lower.box(Vector3(0.0, -SHIN + 0.04, -0.09), Vector3(0.1, 0.02, 0.03), def.shoe_color.darkened(0.3))
-		_add_mesh(knee, lower)
-		_thighs.append(thigh)
-		_knees.append(knee)
-
-
-func _build_torso(def: CharacterDef, width: float) -> void:
-	var torso: LowPoly = LowPoly.new()
-	torso.box(Vector3(0.0, TORSO_HEIGHT / 2.0, 0.0), Vector3(0.42 * width, TORSO_HEIGHT, 0.26 * width), def.tint)
-	match def.top:
-		CharacterDef.Top.SANDO:
-			torso.box(Vector3(0.0, TORSO_HEIGHT - 0.06, 0.0), Vector3(0.28, 0.12, 0.27), def.skin)
-		CharacterDef.Top.TEE_KNOTTED:
-			torso.box(Vector3(0.0, 0.26, -0.135), Vector3(0.16, 0.14, 0.02), def.top_accent)
-			torso.box(Vector3(0.17, 0.04, -0.1), Vector3(0.1, 0.1, 0.1), def.tint.darkened(0.15))
-		CharacterDef.Top.BESTIDA:
-			torso.cylinder(Vector3(0.0, -0.36, 0.0), 0.34, 0.22, 0.42, 10, def.tint)
-			for i: int in 8:
-				var angle: float = TAU * float(i) / 8.0
-				torso.box(Vector3(cos(angle) * 0.29, -0.2 + float(i % 2) * 0.12, sin(angle) * 0.29), Vector3(0.06, 0.06, 0.06), def.top_accent)
-		CharacterDef.Top.JERSEY:
-			torso.box(Vector3(0.0, TORSO_HEIGHT / 2.0 - 0.04, 0.0), Vector3(0.5, TORSO_HEIGHT + 0.08, 0.3), def.tint)
-			torso.box(Vector3(0.0, 0.25, -0.16), Vector3(0.14, 0.18, 0.02), def.top_accent)
-		CharacterDef.Top.POLO_STRIPED:
-			for i: int in 3:
-				torso.box(Vector3(0.0, 0.09 + float(i) * 0.13, 0.0), Vector3(0.43 * width, 0.05, 0.27 * width), def.top_accent)
-			torso.box(Vector3(0.0, TORSO_HEIGHT - 0.02, -0.1), Vector3(0.2, 0.05, 0.08), def.top_accent)
-		CharacterDef.Top.PE_SHIRT:
-			torso.box(Vector3(0.0, 0.3, -0.135), Vector3(0.12, 0.1, 0.02), def.top_accent)
-			torso.box(Vector3(0.0, TORSO_HEIGHT - 0.03, 0.0), Vector3(0.43, 0.06, 0.27), def.top_accent)
-	# team bandana around the neck
-	torso.box(Vector3(0.0, TORSO_HEIGHT + 0.01, 0.0), Vector3(0.3, 0.07, 0.24), team_color)
-	torso.tri(Vector3(-0.1, TORSO_HEIGHT, -0.12), Vector3(0.1, TORSO_HEIGHT, -0.12), Vector3(0.0, TORSO_HEIGHT - 0.15, -0.15), team_color, Vector3(0.0, TORSO_HEIGHT, 0.0))
-	match def.extra:
-		CharacterDef.Extra.BIMPO:
-			torso.box(Vector3(0.0, 0.18, 0.16), Vector3(0.18, 0.3, 0.04), def.extra_color)
-		CharacterDef.Extra.HEADBAND_BELT_BAG:
-			torso.box(Vector3(0.12, 0.08, -0.15), Vector3(0.2, 0.1, 0.07), def.extra_color)
-	var node: MeshInstance3D = _add_mesh(_spine, torso)
-	node.name = "Torso"
-
-
-func _build_head(def: CharacterDef) -> void:
-	var head: LowPoly = LowPoly.new()
-	var c: Vector3 = Vector3(0.0, HEAD_RADIUS + 0.05, 0.0)
-	head.box(Vector3(0.0, 0.03, 0.0), Vector3(0.12, 0.08, 0.12), def.skin)
-	head.sphere(c, HEAD_RADIUS, def.skin, 12, 8)
-	for side: float in [-1.0, 1.0]:
-		head.sphere(c + Vector3(side * 0.09, 0.02, -HEAD_RADIUS + 0.03), 0.045, Palette.BLACK, 6, 4)
-		head.sphere(c + Vector3(side * 0.08, 0.035, -HEAD_RADIUS + 0.005), 0.014, Palette.WHITE, 4, 3)
-		head.sphere(c + Vector3(side * 0.16, -0.06, -HEAD_RADIUS + 0.08), 0.035, Color(1.0, 0.55, 0.55), 5, 3)
-	head.box(c + Vector3(0.0, -0.1, -HEAD_RADIUS + 0.035), Vector3(0.09, 0.022, 0.03), def.skin.darkened(0.4))
-	var hair_top: Vector3 = c + Vector3(0.0, 0.07, 0.03)
-	match def.hair:
-		CharacterDef.Hair.SHORT:
-			head.sphere(hair_top, HEAD_RADIUS * 1.04, def.hair_color, 12, 5)
-		CharacterDef.Hair.BUZZ:
-			head.sphere(hair_top + Vector3(0.0, 0.03, 0.0), HEAD_RADIUS * 0.98, def.hair_color.lightened(0.15), 12, 4)
-		CharacterDef.Hair.PONYTAIL:
-			head.sphere(hair_top, HEAD_RADIUS * 1.05, def.hair_color, 12, 5)
-			head.sphere(c + Vector3(0.0, 0.02, HEAD_RADIUS + 0.12), 0.11, def.hair_color, 8, 5)
-			head.sphere(c + Vector3(0.0, -0.12, HEAD_RADIUS + 0.12), 0.08, def.hair_color, 8, 5)
-		CharacterDef.Hair.PIGTAILS:
-			head.sphere(hair_top, HEAD_RADIUS * 1.05, def.hair_color, 12, 5)
-			for side: float in [-1.0, 1.0]:
-				head.sphere(c + Vector3(side * (HEAD_RADIUS + 0.06), -0.06, 0.05), 0.1, def.hair_color, 8, 5)
-				head.sphere(c + Vector3(side * (HEAD_RADIUS + 0.08), -0.2, 0.06), 0.07, def.hair_color, 8, 5)
-		CharacterDef.Hair.CAP_BACKWARD:
-			head.sphere(hair_top + Vector3(0.0, -0.02, 0.0), HEAD_RADIUS * 1.02, def.hair_color, 12, 5)
-			head.cylinder(c + Vector3(0.0, 0.12, 0.0), HEAD_RADIUS * 1.06, HEAD_RADIUS * 0.85, 0.16, 12, def.extra_color)
-			head.box(c + Vector3(0.0, 0.14, HEAD_RADIUS + 0.08), Vector3(0.28, 0.04, 0.2), def.extra_color)
-	match def.extra:
-		CharacterDef.Extra.HAIR_CLIP:
-			head.box(c + Vector3(0.18, 0.18, -0.05), Vector3(0.1, 0.05, 0.05), def.extra_color)
-		CharacterDef.Extra.HEADBAND_BELT_BAG:
-			head.cylinder(c + Vector3(0.0, 0.08, 0.0), HEAD_RADIUS * 1.08, HEAD_RADIUS * 1.08, 0.07, 12, def.extra_color)
-		CharacterDef.Extra.PONY_BANDS:
-			for side: float in [-1.0, 1.0]:
-				head.sphere(c + Vector3(side * (HEAD_RADIUS + 0.06), 0.05, 0.05), 0.05, def.extra_color, 6, 4)
-	_add_mesh(_neck, head)
-
-
-func _build_arms(def: CharacterDef, width: float) -> void:
-	var sleeve: bool = def.top != CharacterDef.Top.SANDO and def.top != CharacterDef.Top.JERSEY
-	for i: int in 2:
-		var side: float = -1.0 if i == 0 else 1.0
-		var shoulder: Node3D = _joint(_spine, Vector3(side * (0.24 * width + 0.03), TORSO_HEIGHT - 0.06, 0.0), "Shoulder%d" % i)
-		var upper: LowPoly = LowPoly.new()
-		upper.box(Vector3(0.0, -UPPER_ARM / 2.0, 0.0), Vector3(0.11, UPPER_ARM + 0.02, 0.11), def.skin)
-		if sleeve:
-			upper.box(Vector3(0.0, -0.05, 0.0), Vector3(0.14, 0.12, 0.14), def.tint)
-		if i == 0:
-			upper.box(Vector3(0.0, -0.13, 0.0), Vector3(0.13, 0.06, 0.13), team_color)
-		_add_mesh(shoulder, upper)
-		var elbow: Node3D = _joint(shoulder, Vector3(0.0, -UPPER_ARM, 0.0), "Elbow%d" % i)
-		var lower: LowPoly = LowPoly.new()
-		lower.box(Vector3(0.0, -FOREARM / 2.0, 0.0), Vector3(0.1, FOREARM, 0.1), def.skin)
-		lower.sphere(Vector3(0.0, -FOREARM - 0.03, 0.0), 0.065, def.skin, 6, 4)
-		if i == 1 and def.extra == CharacterDef.Extra.ICE_CANDY:
-			lower.box(Vector3(0.0, -FOREARM - 0.12, -0.04), Vector3(0.06, 0.16, 0.06), def.extra_color)
-		_add_mesh(elbow, lower)
-		_shoulders.append(shoulder)
-		_elbows.append(elbow)
-
-
-func _add_mesh(parent: Node3D, kit: LowPoly) -> MeshInstance3D:
-	var node: MeshInstance3D = MeshInstance3D.new()
-	node.mesh = kit.commit()
-	parent.add_child(node)
-	_meshes.append(node)
-	LowPoly.add_outline(node, OUTLINE)
-	return node
