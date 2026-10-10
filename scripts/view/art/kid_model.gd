@@ -216,8 +216,8 @@ func _show_frame(anim: String, bob: float) -> void:
 	var size: Vector2 = texture.get_size()
 	_sprite.texture = texture
 	_sprite.pixel_size = CELL_HEIGHT / size.y
-	# the side view would face backwards if mirrored, so only the other views swap feet
-	_sprite.flip_h = _flipped != (_stride_flip and index != 2)
+	# mirroring a side or diagonal view swings the body (or turns it around), so only the full front and back views swap feet
+	_sprite.flip_h = _flipped != (_stride_flip and (index == 0 or index == DIRECTIONS.size() - 1))
 	# the feet (bottom of the drawn pixels) sit on the origin
 	var feet: float = frame["feet"] as float
 	_sprite.offset = Vector2(0.0, feet - size.y * 0.5)
