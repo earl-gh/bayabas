@@ -11,6 +11,7 @@ signal pressed
 static var holder: TouchButton = null
 
 const READY_COLOR: Color = Color(0.14, 0.12, 0.2, 0.7)
+const FACE_ART: StringName = &"button_face"
 const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.35)
 const RIM_COLOR: Color = Color(1.0, 0.9, 0.6, 0.95)
 const RIM_WIDTH: float = 5.0
@@ -123,10 +124,15 @@ func _draw() -> void:
 	var center: Vector2 = size / 2.0
 	var radius: float = minf(size.x, size.y) / 2.0
 	draw_circle(center + Vector2(0.0, SHADOW_DROP), radius, SHADOW_COLOR)
-	draw_circle(center, radius, READY_COLOR)
+	var face: Texture2D = Icons.art(FACE_ART)
+	if face != null:
+		# painted gold rim and navy face (tools/art/make_assets.py)
+		draw_texture_rect(face, Rect2(center - Vector2(radius, radius), Vector2(radius, radius) * 2.0), false)
+	else:
+		draw_circle(center, radius, READY_COLOR)
+		draw_arc(center, radius - RIM_WIDTH / 2.0, 0.0, TAU, ARC_POINTS, RIM_COLOR, RIM_WIDTH)
 	if highlight:
 		draw_arc(center, radius + 3.0, 0.0, TAU, ARC_POINTS, READY_GLOW, 7.0)
-	draw_arc(center, radius - RIM_WIDTH / 2.0, 0.0, TAU, ARC_POINTS, RIM_COLOR, RIM_WIDTH)
 	var font: Font = ThemeDB.fallback_font
 	if icon_id != &"":
 		# art only; a weapon adds just its type (ATK / CC / BLK) as a small tag
