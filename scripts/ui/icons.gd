@@ -1,13 +1,31 @@
 class_name Icons
 extends RefCounted
-## Little vector icons drawn with CanvasItem calls (no image files): one per
-## weapon, plus dash, bookmark and ball. Bright, chunky, readable at thumb size.
+## Skill and HUD icons. The painted PNGs in assets/icons/ (tools/art/make_assets.py)
+## are used when they exist; the little vector drawings below are the fallback.
 
 const OUTLINE: Color = Color(0.1, 0.08, 0.12, 0.9)
+const ICON_PATH: String = "res://assets/icons/%s.png"
+## The painted art has a margin and a drop shadow, so it is drawn a bit larger.
+const ART_SCALE: float = 1.3
+
+static var _art: Dictionary[StringName, Texture2D] = {}
+
+
+## The painted image for `id`, or null if there is none.
+static func art(id: StringName) -> Texture2D:
+	if not _art.has(id):
+		var path: String = ICON_PATH % String(id)
+		_art[id] = load(path) as Texture2D if ResourceLoader.exists(path) else null
+	return _art[id]
 
 
 ## Draws icon `id` centred at `center`, about `size` px across.
 static func draw(canvas: CanvasItem, id: StringName, center: Vector2, size: float) -> void:
+	var texture: Texture2D = art(id)
+	if texture != null:
+		var side: float = size * ART_SCALE
+		canvas.draw_texture_rect(texture, Rect2(center - Vector2(side, side) / 2.0, Vector2(side, side)), false)
+		return
 	var s: float = size / 2.0
 	match id:
 		&"bato_light":

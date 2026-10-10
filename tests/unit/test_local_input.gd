@@ -77,3 +77,15 @@ func test_dash_and_mark_are_dropped_while_a_skill_is_held() -> void:
 	input.press_skill(PlayerInput.BTN_DASH)
 	built = input.build(false, func(_slot: int) -> Vector2: return Vector2.ZERO, 3)
 	assert_ne(built.buttons & PlayerInput.BTN_DASH, 0, "dash works again after the release")
+
+
+func test_the_settings_menu_pauses_the_controls() -> void:
+	var hud: MatchHud = autofree(MatchHud.new()) as MatchHud
+	add_child(hud)
+	assert_false(hud.menu.visible)
+	assert_not_null(hud.settings_button.texture_normal, "painted gear")
+	hud.toggle_menu()
+	assert_true(hud.menu.visible)
+	assert_false(hud.controls_active(), "no casting through the menu")
+	hud.toggle_menu()
+	assert_true(hud.controls_active())

@@ -81,12 +81,12 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - What damages a wall column: enemy weapons deal their normal damage to it. A projectile that hits it deals its damage once (a boomerang turns back); ground areas, jacks ticks and bola bounces hit every column inside their circle; cones hit columns in front within range. Non-damaging weapons (trap, shield) don't hurt walls. Own walls never take damage from their own team.
 - Base zone: circle r=2 around the electric post. A living, non-CC'd enemy standing in it for 0.5 s scores.
 - Boundary walls on the long sides (house fronts, fences).
-- Lane geometry (base 4 m from each lane end, wall layers 7 m and 12 m from the base, 1 m thick) lives in `data/rules/map_layout.tres`; adjust there, not in code. The look is separate (`docs/ART.md`).
+- Lane geometry (base 4 m from each lane end, wall layers 10.3 m and 15.3 m from the base, 1 m thick; the middle between the two inner wall rows is 16 x 21.3 m, a 3:4 rectangle) lives in `data/rules/map_layout.tres`; adjust there, not in code. The look is separate (`docs/ART.md`).
 
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.
 - Camera (data, tunable in `data/rules/camera_rules.tres`), **copied from League of Legends** (owner):
-  - **Exactly LoL's angle and lens: 56° pitch, 30° vertical field of view**, a far camera with a flat perspective. Only the distance is ours: it is derived so about **13 m of the 16 m lane width** is visible at the hero on any phone shape (about 43 m away, 36 m up on a 720x1280 screen).
+  - **Tuned to the owner's gameplay reference: 60° pitch, 30° vertical field of view**, a far camera with a flat perspective. The distance is derived so about **11 m of the 16 m lane width** is visible at the hero on any phone shape (about 36 m away, 32 m up on a 720x1280 screen). All four numbers live in `data/rules/camera_rules.tres`.
   - It follows you sideways, never showing more than 1 m past the curb, looks 2.5 m ahead toward the enemy base, eases after the hero (7/s) and stops 5 m before each lane end.
   - The lane minimap shows the rest of the width.
   - Team-relative: both teams see their own base at the bottom (the view flips for the other team).
@@ -96,7 +96,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 ## HUD
 - **Over each hero:** a segmented health bar (green you, blue ally, red enemy, grey for gray HP in the death delay). **No names.** A status (*Stunned*, *Down*, ...) is shown in *italic* above the bar. Under the bar, one row with two thin bars: **Dash** cooldown on the left, **Mark** cooldown on the right. Damage numbers float up in white or yellow and heals in green.
 - **Skill buttons:** art only (weapon icons, Dash, Mark, guava), the weapon's type as a small tag (ATK, CC or BLK), a cooldown number, a ready flash. Buttons on cooldown are disabled.
-- **Top:** score and set pips, a timer pill (guava and tricycle), the lane minimap on the left edge. There is no health panel in the corner.
+- **Top:** the lane minimap (gold frame) at the top left with a small settings button beside it, top aligned; score and set pips at the top right with the timer pill (guava and tricycle) under it. The settings button opens a menu: Resume, the practice test buttons, Exit match. There is no health panel in the corner.
 - The cooldown bars show your own and everyone else's Dash and Mark (they fill as they recharge; Mark turns gold and drains while you are out on the mark).
 
 ## Scoring (volleyball format)

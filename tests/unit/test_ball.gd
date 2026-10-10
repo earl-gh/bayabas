@@ -142,11 +142,11 @@ func test_lane_edge_or_max_range_drops_it_on_the_ground() -> void:
 	_wait(sim, 1.0)
 	assert_eq(sim.ball.state, S.GROUND)
 	assert_lt(sim.ball.position.x, LAYOUT.lane_width / 2.0)
-	var other: MatchSim = _holding(Vector2(0.0, 2.0))
+	var other: MatchSim = _holding(Vector2(0.0, 6.0))
 	_throw(other, 1, Vector2(0.0, -1.0))
 	_wait(other, 1.0)
 	assert_eq(other.ball.state, S.GROUND)
-	assert_almost_eq(other.ball.position.y, 2.0 - 12.0, 0.3, "12 m")
+	assert_almost_eq(other.ball.position.y, 6.0 - 12.0, 0.3, "12 m")
 
 
 func test_the_thrower_can_blink_to_the_flying_ball_once() -> void:

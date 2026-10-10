@@ -10,6 +10,8 @@ const WALL: Color = Color(0.86, 0.66, 0.4)
 const OWN: Color = Color(0.3, 0.6, 1.0)
 const ENEMY: Color = Color(1.0, 0.35, 0.35)
 const BALL: Color = Color(0.62, 0.86, 0.3)
+## Gold frame, like the skill buttons.
+const FRAME: Color = Color(1.0, 0.8, 0.32)
 
 var _sim: MatchSim
 var _local_id: int = -1
@@ -36,7 +38,7 @@ func to_map(world: Vector2) -> Vector2:
 
 
 func _inner() -> Rect2:
-	return Rect2(Vector2(6.0, 6.0), size - Vector2(12.0, 12.0))
+	return Rect2(Vector2(9.0, 9.0), size - Vector2(18.0, 18.0))
 
 
 func _draw() -> void:
@@ -44,7 +46,12 @@ func _draw() -> void:
 		return
 	var box: StyleBoxFlat = StyleBoxFlat.new()
 	box.bg_color = PANEL
-	box.set_corner_radius_all(10)
+	box.set_corner_radius_all(14)
+	box.border_color = FRAME
+	box.set_border_width_all(4)
+	box.shadow_color = Color(0.0, 0.0, 0.0, 0.35)
+	box.shadow_size = 4
+	box.shadow_offset = Vector2(0, 3)
 	draw_style_box(box, Rect2(Vector2.ZERO, size))
 	draw_rect(_inner(), ROAD)
 	for wall: MapLayout.WallSpec in _sim.walls:

@@ -5,13 +5,13 @@ const LAYOUT: MapLayout = preload("res://data/rules/map_layout.tres")
 const PHONE: float = 720.0 / 1280.0
 
 
-func test_the_angle_and_lens_are_exactly_league_of_legends() -> void:
-	assert_eq(CAMERA.pitch_degrees, 56.0)
+func test_the_angle_and_lens_match_the_owners_reference() -> void:
+	assert_eq(CAMERA.pitch_degrees, 60.0)
 	assert_eq(CAMERA.vfov_degrees, 30.0, "vertical field of view")
 
 
 func test_other_camera_numbers_come_from_data() -> void:
-	assert_eq(CAMERA.visible_width, 13.0)
+	assert_eq(CAMERA.visible_width, 11.0)
 	assert_eq(CAMERA.end_clamp, 5.0)
 	assert_eq(CAMERA.look_ahead, 2.5)
 
@@ -21,12 +21,12 @@ func test_distance_shows_the_visible_width_on_any_phone() -> void:
 		var distance: float = CAMERA.distance(aspect)
 		var width: float = 2.0 * distance * tan(deg_to_rad(CAMERA.vfov_degrees / 2.0)) * aspect
 		assert_almost_eq(width, CAMERA.visible_width, 0.001, "aspect %.2f" % aspect)
-	assert_almost_eq(CAMERA.distance(PHONE), 43.12, 0.05)
+	assert_almost_eq(CAMERA.distance(PHONE), 36.49, 0.05)
 
 
-func test_the_camera_is_far_and_high_like_league() -> void:
+func test_the_camera_is_far_and_high() -> void:
 	var offset: Vector3 = CAMERA.camera_offset(CAMERA.distance(PHONE), false)
-	assert_almost_eq(offset.y, 35.75, 0.1, "about 36 m up")
+	assert_almost_eq(offset.y, 31.6, 0.1, "about 32 m up")
 	assert_almost_eq(offset.length(), CAMERA.distance(PHONE), 0.001)
 
 
@@ -37,8 +37,8 @@ func test_aspect_is_kept_in_a_sane_range() -> void:
 
 func test_offset_sits_behind_and_above_the_target() -> void:
 	var offset: Vector3 = CAMERA.camera_offset(20.0, false)
-	assert_almost_eq(offset.y, 20.0 * sin(deg_to_rad(56.0)), 0.001)
-	assert_almost_eq(offset.z, 20.0 * cos(deg_to_rad(56.0)), 0.001)
+	assert_almost_eq(offset.y, 20.0 * sin(deg_to_rad(CAMERA.pitch_degrees)), 0.001)
+	assert_almost_eq(offset.z, 20.0 * cos(deg_to_rad(CAMERA.pitch_degrees)), 0.001)
 	assert_gt(offset.z, 0.0, "own side: camera behind on +Z, looking toward -Z")
 	assert_eq(offset.x, 0.0)
 
@@ -84,4 +84,4 @@ func test_the_follow_camera_uses_keep_height_and_the_data_angle() -> void:
 	assert_eq(camera.keep_aspect, Camera3D.KEEP_HEIGHT)
 	assert_eq(camera.fov, 30.0)
 	camera.follow(Vector2.ZERO, false)
-	assert_almost_eq(camera.rotation_degrees.x, -56.0, 0.001)
+	assert_almost_eq(camera.rotation_degrees.x, -CAMERA.pitch_degrees, 0.001)

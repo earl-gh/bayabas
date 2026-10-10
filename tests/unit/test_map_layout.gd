@@ -86,3 +86,13 @@ func test_props_stay_low_poly() -> void:
 		var vertices: int = mesh.surface_get_array_len(0)
 		assert_lt(vertices, 3000, "%s has %d vertices" % [name, vertices])
 		assert_eq(mesh.surface_get_material(0), LowPoly.material(), "%s uses the one shared material" % name)
+
+
+func test_the_middle_between_the_two_inner_wall_rows_is_3_by_4() -> void:
+	var inner: Array[float] = []
+	for spec: MapLayout.WallSpec in LAYOUT.wall_columns():
+		if spec.layer == LAYOUT.wall_layers - 1 and spec.column == 0:
+			inner.append(spec.rect.get_center().y)
+	assert_eq(inner.size(), 2)
+	var middle_length: float = absf(inner[0] - inner[1])
+	assert_almost_eq(LAYOUT.lane_width / middle_length, 3.0 / 4.0, 0.001, "width : length = 3 : 4")

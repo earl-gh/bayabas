@@ -19,6 +19,7 @@ const BALL_SLOT: int = 2
 const RECONNECT_INTERVAL: float = 2.0
 ## Practice-only debug button to test the death delay without an enemy that fights back.
 const DEBUG_DAMAGE: int = 30
+const TITLE_SCENE: String = "res://scenes/ui/title_screen.tscn"
 
 @export var rules: GameRules
 @export var layout: MapLayout
@@ -70,6 +71,7 @@ func _ready() -> void:
 	_walls.watch(sim)
 	_neutrals.watch(sim)
 	_map.set_own_side(own_side())
+	_map.show_back_button(false)
 	_setup_hud()
 	_connect_hud()
 	_connect_sim()
@@ -232,6 +234,7 @@ func _connect_hud() -> void:
 	hud.tricycle_button.visible = not online
 	hud.again_pressed.connect(_on_again_pressed)
 	hud.swap_pressed.connect(open_swap)
+	hud.exit_pressed.connect(_on_exit_pressed)
 
 
 func _connect_sim() -> void:
@@ -514,3 +517,10 @@ func _make_actor_view(state: PlayerState) -> void:
 	view.setup(character, team_color, rules.player_radius)
 	_actors.add_child(view)
 	_views[state.id] = view
+
+
+## Settings menu > Exit match: online, give the room slot back first.
+func _on_exit_pressed() -> void:
+	if online:
+		client.leave_room()
+	get_tree().change_scene_to_file(TITLE_SCENE)
