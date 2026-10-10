@@ -40,7 +40,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		var touch: InputEventScreenTouch = event as InputEventScreenTouch
 		if touch.pressed:
-			if _pointer == NO_POINTER and not locked and _hit(touch.position):
+			if _pointer == NO_POINTER and can_press() and _hit(touch.position):
 				_pointer = touch.index
 				_begin(touch.position)
 		elif touch.index == _pointer:
@@ -55,7 +55,7 @@ func _input(event: InputEvent) -> void:
 		if click.device == InputEvent.DEVICE_ID_EMULATION or click.button_index != MOUSE_BUTTON_LEFT:
 			return
 		if click.pressed:
-			if _pointer == NO_POINTER and not locked and _hit(click.position):
+			if _pointer == NO_POINTER and can_press() and _hit(click.position):
 				_pointer = MOUSE_POINTER
 				_begin(click.position)
 		elif _pointer == MOUSE_POINTER:
@@ -68,6 +68,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _begin(viewport_position: Vector2) -> void:
+	TouchButton.holder = self
 	aiming = true
 	aim = Vector2.ZERO
 	over_cancel = false
@@ -89,6 +90,8 @@ func _in_cancel_zone(viewport_position: Vector2) -> bool:
 
 
 func _finish(cancelled: bool) -> void:
+	if TouchButton.holder == self:
+		TouchButton.holder = null
 	_pointer = NO_POINTER
 	aiming = false
 	var released_aim: Vector2 = aim

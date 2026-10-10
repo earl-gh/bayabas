@@ -34,6 +34,8 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Takbo (Dash) | 5 m dash over 0.2 s, then 0.4 s stumble (can't move/cast) | 8 s |
 | Bookmark | Place mark, blink 4 m forward, +30% speed for 4 s, then return to mark | 14 s, **starting when you are back at the mark** |
 
+**One skill at a time (owner):** while one skill button is held (aiming), no other skill button can be pressed or cast; Dash and Bookmark are ignored until the release.
+
 **No precasting (owner):** a skill or weapon on cooldown is disabled. Its button is dimmed and ignores presses, and holding a key or button through the cooldown does nothing when the cooldown ends; it needs a fresh press. Bookmark can't be used again while you are still out on a mark, and its cooldown only starts after the return (or when you die out on a mark).
 
 Dash and Bookmark blink stop at walls that block you, i.e. the enemy's walls and the lane edges (your own team's walls are passable). Death cancels active dash/stumble/bookmark effects; cooldowns keep running through death and respawn.

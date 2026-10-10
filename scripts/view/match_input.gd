@@ -72,6 +72,9 @@ func build(flip: bool, mouse_aim: Callable, tick: int) -> PlayerInput:
 	pending_buttons = 0
 	var aim: Vector2 = Vector2.ZERO
 	var cancel: bool = false
+	# holding one skill locks the others: no Dash or Bookmark in the middle of an aim
+	if touch_held.has(true) or key_held.has(true):
+		buttons &= ~(PlayerInput.BTN_DASH | PlayerInput.BTN_BOOKMARK)
 	for slot: int in SLOTS:
 		var bit: int = AIM_BITS[slot]
 		var key: bool = LocalInput.weapon_key_held(slot) and not touch_held[slot] and not _release_pending[slot]
