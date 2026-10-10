@@ -735,6 +735,46 @@ def tex_chalk_preso():
     return img
 
 
+def tex_cardboard_tears():
+    """Damage on a cardboard sheet: dark ragged holes with torn light edges, scuffs,
+    a crease and two strips of brown packing tape. Transparent elsewhere."""
+    w, h = 1024, 512
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    rnd = random.Random(31)
+    for _ in range(14):  # scuffs and dirt
+        x, y = rnd.uniform(40, w - 40), rnd.uniform(40, h - 40)
+        r = rnd.uniform(18, 60)
+        layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        ImageDraw.Draw(layer).ellipse([x - r, y - r * 0.6, x + r, y + r * 0.6], fill=(70, 46, 26, 90))
+        img.alpha_composite(layer.filter(ImageFilter.GaussianBlur(10)))
+    for cx, cy, size in ((260, 300, 70), (700, 190, 54), (520, 380, 36), (860, 360, 44)):
+        pts = []
+        for k in range(14):
+            a = math.tau * k / 14
+            rr = size * rnd.uniform(0.55, 1.15)
+            pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a) * 0.8))
+        d.polygon(pts, fill=(205, 160, 104, 255))  # torn light fibre edge
+        inner = [(cx + (x - cx) * 0.78, cy + (y - cy) * 0.78) for x, y in pts]
+        d.polygon(inner, fill=(28, 18, 12, 255))  # the hole
+        for x, y in pts[::2]:
+            d.line([(x, y), (x + rnd.uniform(-14, 14), y + rnd.uniform(-14, 14))], fill=(205, 160, 104, 255), width=4)
+    crease = [(80, 120)]
+    for k in range(8):
+        crease.append((crease[-1][0] + rnd.uniform(90, 130), crease[-1][1] + rnd.uniform(-25, 30)))
+    d.line(crease, fill=(96, 64, 34, 200), width=6, joint="curve")
+    for x0, y0, x1, y1 in ((150, 80, 420, 140), (600, 420, 900, 330)):
+        tape = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        td = ImageDraw.Draw(tape)
+        nx, ny = -(y1 - y0), x1 - x0
+        n = math.hypot(nx, ny)
+        nx, ny = nx / n * 26, ny / n * 26
+        td.polygon([(x0 + nx, y0 + ny), (x1 + nx, y1 + ny), (x1 - nx, y1 - ny), (x0 - nx, y0 - ny)], fill=(176, 120, 52, 215))
+        td.line([(x0 + nx * 0.6, y0 + ny * 0.6), (x1 + nx * 0.6, y1 + ny * 0.6)], fill=(230, 190, 120, 160), width=4)
+        img.alpha_composite(tape)
+    return img
+
+
 def main(only=None):
     random.seed(1)
     icons = {
@@ -754,6 +794,7 @@ def main(only=None):
     for kind in ("sun", "house", "star", "crown", "smiley", "heart"):
         save(tex_doodle(kind), TEXTURES, "doodle_" + kind)
     save(tex_sari_sign(), TEXTURES, "sari_sign")
+    save(tex_cardboard_tears(), TEXTURES, "cardboard_tears")
     save(tex_road_text("DAHAN-DAHAN", (255, 214, 60)), TEXTURES, "road_dahan")
     save(tex_chalk_piko(), TEXTURES, "chalk_piko")
     save(tex_chalk_preso(), TEXTURES, "chalk_preso")

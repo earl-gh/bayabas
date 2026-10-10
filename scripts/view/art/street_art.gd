@@ -9,6 +9,8 @@ const DOODLES: Array[String] = ["sun", "house", "star", "crown", "smiley", "hear
 ## Doodle size on a wall face, as a fraction of the wall's width and height.
 const DOODLE_FILL: Vector2 = Vector2(0.62, 0.6)
 const DOODLE_ASPECT: float = 4.0 / 3.0
+## Damage overlay size on a wall face, as a fraction of its width and height.
+const TEARS_FILL: Vector2 = Vector2(0.92, 0.88)
 
 static var _textures: Dictionary[String, Texture2D] = {}
 
@@ -85,6 +87,25 @@ static func add_wall_doodles(parent: Node3D, width: float, height: float, varian
 		instance.name = "Doodle"
 		instance.mesh = quad
 		instance.position = Vector3(0.0, height * 0.52, face.x)
+		instance.rotation.y = face.y
+		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(instance)
+	return mat
+
+
+## Rips, holes, scuffs and tape patches over both faces of a wall; the caller fades
+## them in (material alpha) as the wall loses health.
+static func add_wall_tears(parent: Node3D, width: float, height: float) -> StandardMaterial3D:
+	var mat: StandardMaterial3D = material("cardboard_tears", Vector2.ONE, true)
+	mat.albedo_color = Color(1.0, 1.0, 1.0, 0.0)
+	var quad: QuadMesh = QuadMesh.new()
+	quad.size = Vector2(width * TEARS_FILL.x, height * TEARS_FILL.y)
+	quad.material = mat
+	for face: Vector2 in [Vector2(0.285, 0.0), Vector2(-0.195, PI)]:
+		var instance: MeshInstance3D = MeshInstance3D.new()
+		instance.name = "Tears"
+		instance.mesh = quad
+		instance.position = Vector3(0.0, height * 0.5, face.x)
 		instance.rotation.y = face.y
 		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(instance)
