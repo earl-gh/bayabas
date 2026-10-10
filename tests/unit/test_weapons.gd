@@ -493,3 +493,19 @@ func test_a_stun_while_aiming_drops_the_aim() -> void:
 	sim.set_input(CASTER, PlayerInput.create(Vector2.ZERO, Vector2.ZERO, 0, sim.tick))
 	sim.step(DT)
 	assert_eq(caster.weapon_cooldowns[0], 0.0, "press again after the stun")
+
+
+func test_targeted_bato_with_no_enemy_hits_the_nearest_enemy_wall() -> void:
+	var sim: MatchSim = _sim()
+	var face: float = 0.0
+	for spec: MapLayout.WallSpec in LAYOUT.wall_columns():
+		if spec.side == MapLayout.SIDE_ENEMY and spec.layer == LAYOUT.wall_layers - 1:
+			face = spec.rect.end.y
+	var caster: PlayerState = _caster(sim, &"bato_light", &"papel_shield", Vector2(0.0, face + 3.0))
+	_cast(sim, 0)
+	_wait(sim, 1.0)
+	assert_gt(caster.weapon_cooldowns[0], 0.0, "thrown at the wall")
+	var damaged: int = 0
+	for wall: MapLayout.WallSpec in sim.walls:
+		damaged += LAYOUT.wall_hp - wall.hp
+	assert_eq(damaged, 14, "the wall takes the rock's damage")

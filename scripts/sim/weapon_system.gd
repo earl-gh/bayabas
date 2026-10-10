@@ -86,12 +86,16 @@ func fire(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, hold
 	match def.shape:
 		WeaponDef.Shape.TARGETED:
 			var target: PlayerState = sim.players.get(target_id) as PlayerState
-			if target == null or not sim.is_targetable(target) or target.team == caster.team:
-				return false
-			if caster.position.distance_to(target.position) > def.max_range:
-				return false
-			var projectile: Projectile = _new_projectile(caster, def, caster.position.direction_to(target.position))
-			projectile.target_id = target.id
+			var valid: bool = target != null and sim.is_targetable(target) and target.team != caster.team
+			if valid and caster.position.distance_to(target.position) <= def.max_range:
+				var projectile: Projectile = _new_projectile(caster, def, caster.position.direction_to(target.position))
+				projectile.target_id = target.id
+			else:
+				# no enemy to lock: the rock is thrown straight at the nearest enemy wall in range
+				var wall_point: Variant = nearest_wall_point(sim, caster, def.max_range)
+				if wall_point == null:
+					return false
+				_new_projectile(caster, def, caster.position.direction_to(wall_point as Vector2))
 		WeaponDef.Shape.CONE:
 			var direction: Vector2 = aim_direction(caster, aim)
 			if def.delay > 0.0:
@@ -229,6 +233,20 @@ func _step_throws(sim: MatchSim, dt: float) -> void:
 	_throws = still
 
 
+## The closest point of the nearest enemy wall column within `max_range`, or null.
+func nearest_wall_point(sim: MatchSim, caster: PlayerState, max_range: float) -> Variant:
+	var best: Variant = null
+	var best_distance: float = INF
+	for index: int in sim.walls_in_circle(caster.team, caster.position, max_range):
+		var rect: Rect2 = sim.walls[index].rect
+		var closest: Vector2 = Vector2(clampf(caster.position.x, rect.position.x, rect.end.x), clampf(caster.position.y, rect.position.y, rect.end.y))
+		var distance: float = caster.position.distance_to(closest)
+		if distance < best_distance and distance > 0.001:
+			best_distance = distance
+			best = closest
+	return best
+
+
 func _step_projectiles(sim: MatchSim, dt: float) -> void:
 	var still: Array[Projectile] = []
 	for projectile: Projectile in projectiles:
@@ -266,10 +284,14 @@ func _move_projectile(sim: MatchSim, projectile: Projectile, move: float) -> boo
 	var def: WeaponDef = projectile.def
 	match def.shape:
 		WeaponDef.Shape.TARGETED:
-			var target: PlayerState = sim.players.get(projectile.target_id) as PlayerState
-			if target == null or not sim.is_targetable(target):
+			if projectile.target_id >= 0:
+				var target: PlayerState = sim.players.get(projectile.target_id) as PlayerState
+				if target == null or not sim.is_targetable(target):
+					return false
+				projectile.direction = projectile.position.direction_to(target.position)
+			elif projectile.travelled >= def.max_range:
+				# thrown at a wall: flies straight and drops at max range
 				return false
-			projectile.direction = projectile.position.direction_to(target.position)
 		WeaponDef.Shape.BOOMERANG:
 			if projectile.returning:
 				var thrower: PlayerState = sim.players.get(projectile.owner_id) as PlayerState
