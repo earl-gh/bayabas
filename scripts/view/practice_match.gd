@@ -36,7 +36,6 @@ var input: MatchInput = MatchInput.new()
 var _accumulator: float = 0.0
 var _views: Dictionary[int, KidModel] = {}
 var _pins: Dictionary[int, MeshInstance3D] = {}
-var _last_positions: Dictionary[int, Vector2] = {}
 var _characters: Dictionary[StringName, CharacterDef] = {}
 ## The opening pick pauses the match; the respawn swap does not.
 var _opening_pick: bool = false
@@ -401,11 +400,8 @@ func _sync_actor(state: PlayerState, delta: float) -> void:
 	var lift: float = AIRBORNE_LIFT if state.effects.has(StatusEffects.Type.AIRBORNE) else 0.0
 	view.position = Vector3(state.position.x, lift, state.position.y)
 	view.visible = state.alive
-	var last: Vector2 = _last_positions.get(state.id, state.position) as Vector2
-	var speed: float = last.distance_to(state.position) / delta if delta > 0.0 else 0.0
-	_last_positions[state.id] = state.position
 	view.face(state.facing)
-	view.animate(delta, minf(speed, 20.0), state)
+	view.animate(delta, minf(view.ground_speed(state.position, delta), 20.0), state)
 	var pin: MeshInstance3D = _pins[state.id]
 	pin.visible = state.alive and state.mark_active
 	pin.position = Vector3(state.mark_position.x, 0.0, state.mark_position.y)

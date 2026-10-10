@@ -21,6 +21,14 @@ const HIT_TIME: float = 0.28
 ## How long the knockout fall (top row) plays before the kid lies down.
 const KO_FALL_TIME: float = 0.35
 const SHADOW_SIZE: float = 1.1
+## A direction only changes once the facing is this far (in direction steps of 45
+## degrees) past the halfway point, and the left-right mirror only changes outside
+## this many radians of straight toward / away: no flicker while moving.
+const DIRECTION_HYSTERESIS: float = 0.25
+const MIRROR_DEADZONE: float = 0.12
+## The sim steps at 30 Hz but the screen draws faster: with no new position for this
+## long the kid is standing still.
+const STILL_AFTER: float = 0.2
 
 static var _frames: Dictionary[String, Dictionary] = {}
 static var _shadow_texture: GradientTexture2D
@@ -44,6 +52,11 @@ var _ko_time: float = 0.0
 var _move_blend: float = 0.0
 var _last_step: int = 0
 var _anim: String = "idle"
+var _dir_index: int = 0
+var _flipped: bool = false
+var _tracked_position: Vector2 = Vector2.INF
+var _since_move: float = 0.0
+var _ground_speed: float = 0.0
 ## Last pose name, for tests and debugging ("idle", "run", "cast", "ko", ...).
 var pose: String = "idle"
 
@@ -89,6 +102,22 @@ func set_ghost(on: bool) -> void:
 ## Which sprite is showing ("idle", "run", "cast", "stun", "down", "ko_stagger", "ko_lying").
 func current_animation() -> String:
 	return _anim
+
+
+## The ground speed in m/s from the kid's world position, held between sim ticks
+## (the sim moves in 30 Hz steps, so most drawn frames see no movement). Feed it to
+## `animate()` every frame.
+func ground_speed(world_position: Vector2, delta: float) -> float:
+	if _tracked_position == Vector2.INF:
+		_tracked_position = world_position
+	_since_move += delta
+	if world_position != _tracked_position:
+		_ground_speed = _tracked_position.distance_to(world_position) / maxf(_since_move, 0.001)
+		_tracked_position = world_position
+		_since_move = 0.0
+	elif _since_move > STILL_AFTER:
+		_ground_speed = 0.0
+	return _ground_speed
 
 
 ## Per frame: `speed` is the ground speed in m/s.
@@ -171,13 +200,20 @@ func _tint() -> Color:
 func _show_frame(anim: String, bob: float) -> void:
 	_anim = anim
 	var angle: float = _view_angle()
-	var index: int = clampi(int(round(absf(angle) / (PI / 4.0))), 0, DIRECTIONS.size() - 1)
+	var steps: float = absf(angle) / (PI / 4.0)
+	if absf(steps - float(_dir_index)) > 0.5 + DIRECTION_HYSTERESIS:
+		_dir_index = clampi(int(round(steps)), 0, DIRECTIONS.size() - 1)
+	var index: int = _dir_index
+	if index == 0 or index == DIRECTIONS.size() - 1:
+		_flipped = false
+	elif absf(angle) > MIRROR_DEADZONE and absf(angle) < PI - MIRROR_DEADZONE:
+		_flipped = angle < 0.0
 	var frame: Dictionary = _frame(_set, anim, DIRECTIONS[index])
 	var texture: Texture2D = frame["texture"] as Texture2D
 	var size: Vector2 = texture.get_size()
 	_sprite.texture = texture
 	_sprite.pixel_size = CELL_HEIGHT / size.y
-	_sprite.flip_h = angle < 0.0
+	_sprite.flip_h = _flipped
 	# the feet (bottom of the drawn pixels) sit on the origin
 	var feet: float = frame["feet"] as float
 	_sprite.offset = Vector2(0.0, feet - size.y * 0.5)

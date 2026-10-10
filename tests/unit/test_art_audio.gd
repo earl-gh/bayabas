@@ -254,3 +254,54 @@ func test_a_hit_wall_flashes_sheds_chips_and_tears_as_it_weakens() -> void:
 	assert_gt(tears.albedo_color.a, light, "more rips and holes as it weakens")
 	sim.damage_wall(0, 500)
 	assert_eq(view.standing_count(), sim.walls.size() - 1, "broken walls disappear")
+
+
+func test_a_moving_kid_keeps_running_between_the_30_hz_sim_steps() -> void:
+	var kid: KidModel = _kid(0)
+	var position: Vector2 = Vector2.ZERO
+	var state: PlayerState = PlayerState.new()
+	var run_frames: int = 0
+	# 60 fps drawing, the sim moves the kid 5 m/s in 1/30 s steps (every other frame)
+	for frame: int in 60:
+		if frame % 2 == 0:
+			position += Vector2(0.0, -5.0 / 30.0)
+		var speed: float = kid.ground_speed(position, 1.0 / 60.0)
+		kid.animate(1.0 / 60.0, speed, state)
+		if frame > 12 and kid.current_animation() == "run":
+			run_frames += 1
+	assert_eq(run_frames, 47, "run on every drawn frame, never back to idle")
+	for frame: int in 20:
+		kid.animate(1.0 / 60.0, kid.ground_speed(position, 1.0 / 60.0), state)
+	assert_eq(kid.current_animation(), "idle", "standing still again once the movement stops")
+
+
+func test_the_mirror_does_not_flicker_while_the_facing_jitters() -> void:
+	var kid: KidModel = _kid(1)
+	var camera: Camera3D = autofree(Camera3D.new()) as Camera3D
+	add_child(camera)
+	camera.position = Vector3(0.0, 10.0, 10.0)
+	camera.look_at(Vector3.ZERO)
+	camera.current = true
+	var sprite: Sprite3D = kid.find_child("Sprite", true, false) as Sprite3D
+	var state: PlayerState = PlayerState.new()
+	# running straight toward the camera with a hair of noise either side
+	var flips: int = 0
+	var last: bool = sprite.flip_h
+	for i: int in 30:
+		kid.face(Vector2(0.03 if i % 2 == 0 else -0.03, 1.0))
+		kid.animate(0.02, 5.0, state)
+		if sprite.flip_h != last:
+			flips += 1
+			last = sprite.flip_h
+	assert_eq(flips, 0, "no left-right flipping")
+	# and near a 45 degree boundary the direction does not chatter
+	var changes: int = 0
+	var previous: String = ""
+	for i: int in 30:
+		kid.face(Vector2.from_angle(deg_to_rad(112.0 + (3.0 if i % 2 == 0 else -3.0))))
+		kid.animate(0.02, 5.0, state)
+		var name: String = sprite.texture.resource_path
+		if previous != "" and name != previous:
+			changes += 1
+		previous = name
+	assert_lte(changes, 1, "settles on one direction")
