@@ -101,7 +101,7 @@ func test_zero_hp_starts_the_death_delay_with_gray_hp_and_locked_skills() -> voi
 	assert_true(practice.hud.delay_label.visible)
 	assert_false(practice.hud.respawn_label.visible)
 	assert_true((practice.get_node("%Actors").get_child(0) as Node3D).visible, "still on their feet")
-	assert_true(practice.hud.dash_button.locked)
+	assert_true(practice.hud.bookmark_button.locked)
 	assert_true(practice.hud.bookmark_button.locked)
 
 
@@ -125,7 +125,7 @@ func test_touching_the_base_post_gets_you_up_again() -> void:
 	practice.advance(DT)
 	assert_eq(practice.sim.players[PracticeMatch.LOCAL_ID].hp, 50)
 	assert_false(practice.hud.delay_label.visible)
-	assert_false(practice.hud.dash_button.locked)
+	assert_false(practice.hud.bookmark_button.locked)
 
 
 func test_touching_the_ally_dummy_gets_you_up_again() -> void:
@@ -174,55 +174,45 @@ func test_practice_has_two_enemy_dummies_and_one_ally() -> void:
 	assert_eq(ally.position, Vector2(0.0, 11.0))
 
 
-func test_dash_button_starts_a_dash_and_shows_its_cooldown() -> void:
-	var practice: PracticeMatch = _practice()
-	var dash: TouchButton = practice.hud.dash_button
-	assert_eq(dash.cooldown_fraction, 0.0)
-	practice.press_skill(PlayerInput.BTN_DASH)
-	practice.advance(DT)
-	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
-	assert_gt(player.dash_time_left, 0.0)
-	assert_gt(dash.cooldown_fraction, 0.9)
-
-
 func test_bookmark_button_blinks_the_player() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	var start_z: float = player.position.y
 	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
-	assert_almost_eq(player.position.y, start_z - 4.0, 0.05)
+	assert_almost_eq(player.position.distance_to(player.mark_position), 2.5, 0.05)
 	assert_true(player.mark_active)
 
 
 func test_a_pressed_skill_is_sent_once() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
-	practice.press_skill(PlayerInput.BTN_DASH)
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
-	var cooldown: float = player.dash_cooldown_left
 	practice.advance(DT)
-	assert_lt(player.dash_cooldown_left, cooldown, "cooldown runs, not re-triggered")
+	assert_true(player.mark_active, "one press: out on the pin, not straight back")
 
 
-func test_skill_buttons_are_disabled_while_on_cooldown() -> void:
+func test_the_pin_button_returns_early_then_waits_for_its_cooldown() -> void:
 	var practice: PracticeMatch = _practice()
-	var dash: TouchButton = practice.hud.dash_button
-	var mark: TouchButton = practice.hud.bookmark_button
+	var pin: TouchButton = practice.hud.bookmark_button
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	_equip(practice, &"bato_light", &"papel_shield")
 	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
-	assert_true(mark.locked, "out on the mark")
-	assert_false(dash.locked)
+	assert_false(pin.locked, "out on the pin: the same button brings you back")
+	assert_true(pin.highlight, "glows while you can return")
+	practice.advance(DT)
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
+	practice.advance(DT)
+	assert_false(player.mark_active, "returned early")
+	assert_true(pin.locked, "now on cooldown")
 	practice.aim_started(1)
 	practice.aim_released(Vector2.ZERO, false, 1)
 	for i: int in 3:
 		practice.advance(DT)
 	assert_true(_weapon_button(practice, 1).locked, "shield on cooldown")
 	assert_false(_weapon_button(practice, 0).locked)
-	practice.press_skill(PlayerInput.BTN_DASH)
-	practice.advance(DT)
-	assert_true(dash.locked)
 
 
 # ---- weapon pick ---------------------------------------------------------------
@@ -580,13 +570,11 @@ func test_tricycle_test_button_brings_it_now() -> void:
 
 
 
-func test_damage_numbers_pop_up_and_fade() -> void:
+func test_damage_shows_no_numbers() -> void:
 	var practice: PracticeMatch = _practice()
 	practice.sim.damage(PracticeMatch.ENEMY_STAND_ID, 14)
-	assert_eq(practice.overhead().popup_count(), 1)
-	for i: int in 40:
-		practice.advance(DT)
-	assert_eq(practice.overhead().popup_count(), 0, "gone after under a second")
+	practice.sim.damage_wall(0, 30)
+	assert_eq(practice.overhead().popup_count(), 0, "no damage text on heroes or walls")
 
 
 func test_overhead_bars_use_ml_colours() -> void:
@@ -614,10 +602,13 @@ func test_minimap_puts_our_base_at_the_bottom_even_after_the_switch() -> void:
 
 func test_skill_buttons_show_cooldown_seconds() -> void:
 	var practice: PracticeMatch = _practice()
-	practice.press_skill(PlayerInput.BTN_DASH)
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
-	var dash: TouchButton = practice.hud.dash_button
-	assert_eq(ceili(dash.cooldown_seconds), 8)
+	practice.advance(DT)
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
+	practice.advance(DT)
+	var pin: TouchButton = practice.hud.bookmark_button
+	assert_eq(ceili(pin.cooldown_seconds), 14)
 
 
 
@@ -641,26 +632,19 @@ func test_the_status_font_is_a_slanted_italic() -> void:
 	assert_lt(italic.variation_transform.y.x, 0.0, "slanted")
 
 
-func test_dash_and_mark_cooldown_bars_fill_as_they_recharge() -> void:
+func test_the_pin_cooldown_bar_drains_while_out_then_refills() -> void:
 	var practice: PracticeMatch = _practice()
 	var hud: OverheadHud = practice.overhead()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
-	assert_eq(hud.dash_fraction(player), 1.0)
 	assert_eq(hud.mark_fraction(player), 1.0)
-	practice.press_skill(PlayerInput.BTN_DASH)
-	practice.advance(DT)
-	assert_lt(hud.dash_fraction(player), 0.1, "just used")
-	for i: int in 120:
-		practice.advance(DT)
-	assert_between(hud.dash_fraction(player), 0.4, 0.6, "about half way after 4 of 8 s")
 	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
 	assert_true(player.mark_active)
-	assert_between(hud.mark_fraction(player), 0.9, 1.0, "out on the mark: bonus time left, draining")
+	assert_between(hud.mark_fraction(player), 0.9, 1.0, "out on the pin: time left, draining")
 	for i: int in 135:
 		practice.advance(DT)
 	assert_false(player.mark_active)
-	assert_lt(hud.mark_fraction(player), 0.1, "back at the mark: the 14 s cooldown starts")
+	assert_lt(hud.mark_fraction(player), 0.1, "back at the pin: the cooldown starts")
 
 
 func test_skill_buttons_are_art_with_only_the_type_tag() -> void:
@@ -673,8 +657,9 @@ func test_skill_buttons_are_art_with_only_the_type_tag() -> void:
 	assert_eq(_weapon_button(practice, 1).sub_text, "ATK")
 	var guava: AimButton = practice.hud.ball_button
 	assert_eq(guava.icon_id, &"ball")
-	assert_eq(guava.sub_text, "", "no text on the guava, Dash or Mark buttons")
-	assert_eq(practice.hud.dash_button.sub_text, "")
+	assert_eq(guava.sub_text, "", "no text on the guava or the pin")
+	assert_eq(practice.hud.bookmark_button.sub_text, "")
+	assert_eq(practice.hud.bookmark_button.icon_id, &"pin")
 
 
 func test_eating_the_guava_heals_and_pops_a_green_number() -> void:

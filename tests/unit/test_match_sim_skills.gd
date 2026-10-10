@@ -25,8 +25,9 @@ func test_skill_numbers_come_from_data() -> void:
 	assert_eq(RULES.dash_duration, 0.2)
 	assert_eq(RULES.dash_stumble, 0.4)
 	assert_eq(RULES.dash_cooldown, 8.0)
-	assert_eq(RULES.bookmark_blink, 4.0)
-	assert_eq(RULES.bookmark_speed_bonus, 0.3)
+	assert_eq(RULES.bookmark_blink, 2.5)
+	assert_eq(RULES.bookmark_speed_bonus, 0.0)
+	assert_eq(RULES.bookmark_tumble, 0.45)
 	assert_eq(RULES.bookmark_boost_duration, 4.0)
 	assert_eq(RULES.bookmark_cooldown, 14.0)
 
@@ -186,25 +187,20 @@ func test_dash_goes_through_the_own_teams_walls() -> void:
 
 # ---- Bookmark ----
 
-func test_bookmark_blinks_four_meters_and_leaves_a_mark() -> void:
+func test_the_pin_blinks_a_short_way_tumbles_and_leaves_a_pin() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
 	var start: Vector2 = p.position
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_almost_eq(p.position.y, start.y - 4.0, 0.01)
+	assert_almost_eq(p.position.y, start.y - 2.5, 0.01)
+	assert_gt(p.stumble_time_left, 0.0, "tumbles after the blink")
+	var tumbling_at: Vector2 = p.position
+	_run(sim, 1, Vector2(1.0, 0.0), 5)
+	assert_eq(p.position, tumbling_at, "can't move while tumbling")
 	assert_true(p.mark_active)
 	assert_eq(p.mark_position, start)
 	assert_eq(p.bookmark_cooldown_left, 0.0, "the cooldown waits until you are back at the mark")
 	assert_false(p.bookmark_ready(), "but it can't be used again while out on the mark")
-
-
-func test_bookmark_speed_bonus_is_thirty_percent() -> void:
-	var sim: MatchSim = _sim()
-	var p: PlayerState = sim.add_player(1, 0)
-	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	var before: Vector2 = p.position
-	_run(sim, 1, Vector2(1.0, 0.0), 30)
-	assert_almost_eq(p.position.x - before.x, 5.0 * 1.3, 0.05)
 
 
 func test_bookmark_returns_to_the_mark_after_four_seconds() -> void:
@@ -227,7 +223,7 @@ func test_bookmark_return_is_a_data_toggle() -> void:
 	var start: Vector2 = p.position
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
 	_run(sim, 1, Vector2.ZERO, 130)
-	assert_almost_eq(p.position.y, start.y - 4.0, 0.01, "stays where it blinked")
+	assert_almost_eq(p.position.y, start.y - 2.5, 0.01, "stays where it blinked")
 
 
 func test_bookmark_cooldown_starts_only_after_returning_to_the_mark() -> void:
@@ -236,10 +232,8 @@ func test_bookmark_cooldown_starts_only_after_returning_to_the_mark() -> void:
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
 	_run(sim, 1, Vector2.ZERO, 100)
 	assert_eq(p.bookmark_cooldown_left, 0.0, "not counting while out on the mark")
-	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_true(p.mark_active, "pressing again does nothing")
 	_run(sim, 1, Vector2.ZERO, 25)
-	assert_false(p.mark_active, "back at the mark after 4 s")
+	assert_false(p.mark_active, "back at the pin after 4 s")
 	assert_almost_eq(p.bookmark_cooldown_left, 14.0, 0.25, "the 14 s cooldown starts now")
 	_run(sim, 1, Vector2.ZERO, 400)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
@@ -247,6 +241,19 @@ func test_bookmark_cooldown_starts_only_after_returning_to_the_mark() -> void:
 	_run(sim, 1, Vector2.ZERO, 30)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
 	assert_true(p.mark_active, "ready 14 s after the return")
+
+
+func test_pressing_the_pin_again_returns_early() -> void:
+	var sim: MatchSim = _sim()
+	var p: PlayerState = sim.add_player(1, 0)
+	var start: Vector2 = p.position
+	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
+	_run(sim, 1, Vector2(1.0, 0.0), 40)
+	assert_true(p.mark_active)
+	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
+	assert_false(p.mark_active, "back at once")
+	assert_eq(p.position, start)
+	assert_almost_eq(p.bookmark_cooldown_left, RULES.bookmark_cooldown, 0.001, "cooldown starts on the early return")
 
 
 func test_dying_out_on_a_mark_starts_the_bookmark_cooldown() -> void:
@@ -292,9 +299,9 @@ func test_bookmark_blink_stops_at_enemy_walls() -> void:
 func test_bookmark_blink_goes_through_the_own_teams_walls() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
-	p.position = Vector2(0.0, 21.0)
+	p.position = Vector2(0.0, 17.2)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_almost_eq(p.position.y, 17.0, 0.05)
+	assert_almost_eq(p.position.y, 14.7, 0.05, "straight through the own wall row at 15.7")
 
 
 ## Near face of the enemy wall layer nearest mid.

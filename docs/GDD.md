@@ -32,9 +32,9 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Skill | Effect | CD |
 |---|---|---|
 | Takbo (Dash) | 5 m dash over 0.2 s, then 0.4 s stumble (can't move/cast) | 8 s |
-| Bookmark | Place mark, blink 4 m forward, +30% speed for 4 s, then return to mark | 14 s, **starting when you are back at the mark** |
+| Pin (Bookmark; replaces Dash on the HUD) | Leaves a pin (red round head) where you stand, blinks 2.5 m forward, tumbles 0.45 s (can't move/cast), then after 4 s snaps back to the pin. **Press again to return early.** | 14 s, **starting when you are back at the pin** |
 
-**One skill at a time (owner):** while one skill button is held (aiming), no other skill button can be pressed or cast; Dash and Bookmark are ignored until the release.
+**One skill at a time (owner):** while one skill button is held (aiming), no other skill button can be pressed or cast; the pin is ignored until the release.
 
 **No precasting (owner):** a skill or weapon on cooldown is disabled. Its button is dimmed and ignores presses, and holding a key or button through the cooldown does nothing when the cooldown ends; it needs a fresh press. Bookmark can't be used again while you are still out on a mark, and its cooldown only starts after the return (or when you die out on a mark).
 
@@ -94,11 +94,11 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Because the visible depth is shorter than the lane, ranges, speeds and the lane length stay as specified; balance is re-checked in M6 with real play on phones.
 
 ## HUD
-- **Over each hero:** a segmented health bar (green you, blue ally, red enemy, grey for gray HP in the death delay). **No names.** A status (*Stunned*, *Down*, ...) is shown in *italic* above the bar. Under the bar, one row with two thin bars: **Dash** cooldown on the left, **Mark** cooldown on the right. Damage numbers float up in white or yellow and heals in green.
-- **Skill buttons:** art only (weapon icons, Dash, Mark, guava), the weapon's type as a small tag (ATK, CC or BLK), a cooldown number, a ready flash. Buttons on cooldown are disabled.
+- **Over each hero:** a segmented health bar (green you, blue ally, red enemy, grey for gray HP in the death delay). **No names.** A status (*Stunned*, *Down*, ...) is shown in *italic* above the bar. Under the bar, one thin bar: the **pin** cooldown. **No damage numbers** (none on heroes or walls); heals pop a green +N.
+- **Skill buttons:** art only (weapon icons, the pin, guava), the weapon's type as a small tag (ATK, CC or BLK), a cooldown number, a ready flash. Buttons on cooldown are disabled.
 - **Top:** a square minimap (gold frame) at the top left showing the lane slanted from your base (bottom left) to the enemy base (top right), with a small settings button beside it, top aligned; the guava and tricycle countdowns in the centre; score and set pips at the top right. The settings button opens a see-through menu: Controls (left or right hand), the practice test buttons, Resume, Exit match. There is no health panel in the corner.
-- **Controls (one thumb):** the joystick sits where most MOBAs put the basic attack (bottom right for the right hand) and the four skills form an arc around it: weapon 1, weapon 2, Dash, Bookmark; the guava (heal) button sits outside the arc. The left-hand setting mirrors everything to the bottom left and is saved on the device. Skill buttons are coloured by type: attack red, block blue, crowd control violet, heal green (Dash and Bookmark navy).
-- The cooldown bars show your own and everyone else's Dash and Mark (they fill as they recharge; Mark turns gold and drains while you are out on the mark).
+- **Controls (one thumb):** the joystick sits where most MOBAs put the basic attack (bottom right for the right hand) and the four skills form an arc around it: weapon 1, weapon 2, the pin, the guava. The left-hand setting mirrors everything to the bottom left and is saved on the device. Skill buttons are coloured by type: attack red, block blue, crowd control violet, heal green (the pin navy).
+- The pin bar shows your own and everyone else's pin (it fills as it recharges; it turns gold and drains while the kid is out on the pin). The minimap is a square, cropped to its frame, with the lane slanted from your base (bottom left) to the enemy base (top right).
 
 ## Scoring (volleyball format)
 - **Point**: reach enemy base. After a point: 3 s freeze, all players reset to their bases at full HP, cooldowns reset. Walls **persist** within a set.

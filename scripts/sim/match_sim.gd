@@ -318,7 +318,10 @@ func _step_alive(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	# queue a cast for the moment it ends (no precasting).
 	var previous: int = state.previous_buttons
 	var just_pressed: int = input.buttons & ~previous if input != null else 0
-	if input != null and state.can_act():
+	if input != null and just_pressed & PlayerInput.BTN_BOOKMARK and state.mark_active:
+		# out on the pin: pressing again brings you back at once, even mid-tumble
+		_return_to_mark(state)
+	elif input != null and state.can_act():
 		if just_pressed & PlayerInput.BTN_DASH and state.dash_cooldown_left <= 0.0:
 			_start_dash(state, input)
 		elif just_pressed & PlayerInput.BTN_BOOKMARK and state.bookmark_ready():
@@ -482,12 +485,27 @@ func _start_dash(state: PlayerState, input: PlayerInput) -> void:
 	player_dashed.emit(state.id)
 
 
+## The pin (Bookmark): stick a pin where you stand, blink a short way, tumble,
+## and after `bookmark_boost_duration` snap back to the pin. Pressing again while
+## out returns early.
 func _use_bookmark(state: PlayerState) -> void:
 	state.mark_position = state.position
 	state.mark_active = true
 	state.boost_time_left = rules.bookmark_boost_duration
 	_move_by(state, state.facing * rules.bookmark_blink)
+	state.stumble_time_left = rules.bookmark_tumble
 	bookmark_used.emit(state.id)
+
+
+## Back to the pin (early, or when the timer runs out); the cooldown starts now.
+func _return_to_mark(state: PlayerState) -> void:
+	if state.mark_active and rules.bookmark_returns:
+		state.position = state.mark_position
+	state.mark_active = false
+	state.boost_time_left = 0.0
+	state.stumble_time_left = 0.0
+	# the cooldown only starts once the player is back at the pin
+	state.bookmark_cooldown_left = rules.bookmark_cooldown
 
 
 func _tick_boost(state: PlayerState, dt: float) -> void:
@@ -495,12 +513,7 @@ func _tick_boost(state: PlayerState, dt: float) -> void:
 		return
 	state.boost_time_left -= dt
 	if state.boost_time_left <= 0.0:
-		state.boost_time_left = 0.0
-		if state.mark_active and rules.bookmark_returns:
-			state.position = state.mark_position
-		state.mark_active = false
-		# the cooldown only starts once the player is back at the mark
-		state.bookmark_cooldown_left = rules.bookmark_cooldown
+		_return_to_mark(state)
 
 
 func _move(state: PlayerState, input: PlayerInput, dt: float) -> void:

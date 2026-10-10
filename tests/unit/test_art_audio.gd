@@ -228,7 +228,7 @@ func test_every_skill_has_painted_art() -> void:
 	for i: int in RULES.weapons.size():
 		var def: WeaponDef = RULES.weapons[i]
 		assert_not_null(Icons.art(def.id), String(def.id))
-	for id: StringName in [&"guava", &"dash", &"bookmark", &"gear", &"button_face"]:
+	for id: StringName in [&"guava", &"pin", &"btn_pin", &"gear", &"button_face"]:
 		assert_not_null(Icons.art(id), String(id))
 
 

@@ -103,7 +103,7 @@ func test_one_thumb_controls_sit_in_the_corner_and_mirror_for_the_left_hand() ->
 	var screen: Vector2 = hud.get_rect().size
 	assert_gt(stick.x, screen.x * 0.7, "right hand: joystick where the basic attack usually is")
 	assert_gt(stick.y, screen.y * 0.8)
-	for button: Control in [hud.weapon_buttons[0], hud.weapon_buttons[1], hud.dash_button, hud.bookmark_button]:
+	for button: Control in [hud.weapon_buttons[0], hud.weapon_buttons[1], hud.bookmark_button, hud.ball_button]:
 		var distance: float = button.get_rect().get_center().distance_to(stick)
 		assert_almost_eq(distance, MatchHud.ARC_RADIUS, 1.0, "in an arc around the joystick")
 		assert_lt(button.get_rect().get_center().x, stick.x + 1.0, "on the inner side")
