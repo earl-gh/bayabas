@@ -284,12 +284,12 @@ func test_the_mirror_does_not_flicker_while_the_facing_jitters() -> void:
 	camera.current = true
 	var sprite: Sprite3D = kid.find_child("Sprite", true, false) as Sprite3D
 	var state: PlayerState = PlayerState.new()
-	# running straight toward the camera with a hair of noise either side
+	# standing straight toward the camera with a hair of noise either side
 	var flips: int = 0
 	var last: bool = sprite.flip_h
 	for i: int in 30:
 		kid.face(Vector2(0.03 if i % 2 == 0 else -0.03, 1.0))
-		kid.animate(0.02, 5.0, state)
+		kid.animate(0.02, 0.0, state)
 		if sprite.flip_h != last:
 			flips += 1
 			last = sprite.flip_h
@@ -305,3 +305,20 @@ func test_the_mirror_does_not_flicker_while_the_facing_jitters() -> void:
 			changes += 1
 		previous = name
 	assert_lte(changes, 1, "settles on one direction")
+
+
+func test_the_run_frame_mirrors_every_step_to_swap_the_forward_foot() -> void:
+	var kid: KidModel = _kid(1)
+	var sprite: Sprite3D = kid.find_child("Sprite", true, false) as Sprite3D
+	var state: PlayerState = PlayerState.new()
+	var flips: int = 0
+	var last: bool = sprite.flip_h
+	for i: int in 60:
+		kid.animate(0.02, 5.0, state)
+		if sprite.flip_h != last:
+			flips += 1
+			last = sprite.flip_h
+	assert_gte(flips, 2, "mirrors while running")
+	for i: int in 30:
+		kid.animate(0.02, 0.0, state)
+	assert_false(sprite.flip_h, "upright again when standing")
