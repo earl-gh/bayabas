@@ -30,7 +30,7 @@ The current art is a first pass built **in code**: procedural meshes, vector ico
 - `scripts/view/audio/match_audio.gd` (`MatchAudio`) plays them from `MatchSim` signals, so it works online too (the server replays events as the same signals).
 
 ## Asset pipeline (planned, P4 onward)
-- Models are authored with the Blender Python module (`bpy`, pip-installable in the cloud session) and exported as `.glb` into `assets/models/`. The generator scripts live in the repo (`tools/blender/`), so every asset can be regenerated.
+- Environment models (not the kids, who are sprites) are authored with the Blender Python module (`bpy`, pip-installable in the cloud session) and exported as `.glb` into `assets/models/`. Generator scripts will live in `tools/blender/` so every asset can be regenerated.
 - Each asset: chunky bevelled forms, hand-painted-style textures from a small palette atlas, baked ambient occlusion, vertex colours. Characters get a skeleton and baked animations.
 - Budgets: web build under 50 MB, APK under 150 MB, 60 fps target on a recommended phone.
 - Effects use CPU particles (web-safe) and simple mesh and ring effects.
