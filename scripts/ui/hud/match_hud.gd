@@ -50,6 +50,7 @@ var ball_button: AimButton
 var aim_buttons: Array[AimButton] = []
 var cancel_zone: Control
 var respawn_label: Label
+var respawn_panel: RespawnPanel
 var delay_label: Label
 var swap_button: Button
 var hurt_button: Button
@@ -107,9 +108,7 @@ func banner_text() -> String:
 ## Buttons, labels and cooldowns for the local player.
 func sync_player(sim: MatchSim, rules: GameRules, player: PlayerState, local_id: int, pick_open: bool) -> void:
 	delay_label.visible = player.death_delay
-	respawn_label.visible = not player.alive
-	respawn_label.text = "RESPAWN IN %d" % ceili(player.respawn_time_left)
-	swap_button.visible = not player.alive and not pick_open
+	respawn_panel.sync(player, rules.respawn_time, pick_open)
 	# while you wait to respawn the controls are hidden so the countdown and button sit alone at the bottom
 	joystick.visible = player.alive
 	dash_button.visible = player.alive
@@ -188,12 +187,8 @@ func _build() -> void:
 	joystick.rest_fraction = Vector2(0.5, 0.5)
 	joystick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(joystick)
-	respawn_label = _pill_label("", 44, Vector4(0.5, 1, 0.5, 1), Vector4(-170, -250, 170, -170))
 	delay_label = _pill_label(DOWN_TEXT, 26, Vector4(0, 0, 1, 0), Vector4(70, 236, -70, 350))
 	delay_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	swap_button = _button("CHANGE WEAPONS", 28, Vector4(0.5, 1, 0.5, 1), Vector4(-170, -150, 170, -62))
-	swap_button.visible = false
-	swap_button.pressed.connect(swap_pressed.emit)
 	cancel_zone = _build_cancel_zone()
 	var weapon_one: AimButton = _aim_button()
 	var weapon_two: AimButton = _aim_button()
@@ -220,6 +215,11 @@ func _build() -> void:
 	again_button = _button("Play again", 32, Vector4(0.5, 0.5, 0.5, 0.5), Vector4(-160, -30, 160, 60))
 	again_button.pressed.connect(again_pressed.emit)
 	again_button.visible = false
+	respawn_panel = RespawnPanel.new()
+	add_child(respawn_panel)
+	respawn_label = respawn_panel.respawn_label
+	swap_button = respawn_panel.swap_button
+	respawn_panel.swap_pressed.connect(swap_pressed.emit)
 	# last, so it draws over the skill buttons
 	menu = MatchMenu.new()
 	add_child(menu)
