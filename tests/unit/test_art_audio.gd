@@ -322,3 +322,25 @@ func test_the_run_frame_mirrors_every_step_to_swap_the_forward_foot() -> void:
 	for i: int in 30:
 		kid.animate(0.02, 0.0, state)
 	assert_false(sprite.flip_h, "upright again when standing")
+
+
+func test_the_run_frame_is_not_mirrored_on_side_and_diagonal_views() -> void:
+	var kid: KidModel = _kid(1)
+	var camera: Camera3D = autofree(Camera3D.new()) as Camera3D
+	add_child(camera)
+	camera.position = Vector3(0.0, 10.0, 10.0)
+	camera.look_at(Vector3.ZERO)
+	camera.current = true
+	var sprite: Sprite3D = kid.find_child("Sprite", true, false) as Sprite3D
+	var state: PlayerState = PlayerState.new()
+	for degrees: float in [45.0, 90.0, 135.0]:
+		kid.face(Vector2(sin(deg_to_rad(degrees)), cos(deg_to_rad(degrees))))
+		var flips: int = 0
+		kid.animate(0.02, 5.0, state)
+		var last: bool = sprite.flip_h
+		for i: int in 60:
+			kid.animate(0.02, 5.0, state)
+			if sprite.flip_h != last:
+				flips += 1
+				last = sprite.flip_h
+		assert_eq(flips, 0, "no stride mirroring at %d degrees" % int(degrees))
