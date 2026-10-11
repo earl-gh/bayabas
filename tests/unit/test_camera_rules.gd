@@ -41,7 +41,7 @@ func test_offset_sits_behind_and_above_the_target() -> void:
 	var back: float = 20.0 * cos(deg_to_rad(CAMERA.pitch_degrees))
 	assert_almost_eq(Vector2(offset.x, offset.z).length(), back, 0.001)
 	assert_gt(offset.z, 0.0, "own side: camera behind on +Z, looking toward -Z")
-	assert_gt(offset.x, 0.0, "and to the right: a bird's-eye view from the back right")
+	assert_gte(offset.x, 0.0, "never to the left of the hero")
 	assert_almost_eq(rad_to_deg(atan2(offset.x, offset.z)), CAMERA.yaw_offset_degrees, 0.001)
 
 
