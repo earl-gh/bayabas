@@ -1,7 +1,7 @@
 class_name Palette
 extends RefCounted
-## The one shared colour palette (docs/PROJECT.md 3.8): bright, saturated Pinoy
-## street colours. Every prop and character picks from here.
+## The one shared colour palette (docs/PROJECT.md 3.8): Pinoy street colours, kept
+## soft (owner: strong colours caused eye fatigue). Every prop and character picks from here.
 
 const ASPHALT: Color = Color(0.36, 0.37, 0.42)
 const ASPHALT_DARK: Color = Color(0.29, 0.3, 0.35)
@@ -14,8 +14,8 @@ const CARDBOARD_DARK: Color = Color(0.55, 0.42, 0.28)
 const TAPE: Color = Color(0.9, 0.84, 0.66)
 const WOOD: Color = Color(0.62, 0.42, 0.26)
 const ROOF_TIN: Color = Color(0.55, 0.62, 0.66)
-const ROOF_RUST: Color = Color(0.74, 0.38, 0.22)
-const ROOF_RED: Color = Color(0.86, 0.25, 0.2)
+const ROOF_RUST: Color = Color(0.68, 0.43, 0.32)
+const ROOF_RED: Color = Color(0.76, 0.36, 0.3)
 const WALL_MINT: Color = Color(0.62, 0.9, 0.78)
 const WALL_PINK: Color = Color(0.98, 0.7, 0.72)
 const WALL_SKY: Color = Color(0.62, 0.8, 0.98)

@@ -8,30 +8,33 @@ extends Node3D
 
 const OWN_COLOR: Color = Palette.TEAM_OWN
 const ENEMY_COLOR: Color = Palette.TEAM_ENEMY
-const SKY_COLOR: Color = Color(0.72, 0.82, 0.96)
+const SKY_COLOR: Color = Color(0.74, 0.8, 0.9)
 # cinematic morning (see make_environment)
 const SUN_ANGLES: Vector3 = Vector3(-30.0, 52.0, 0.0)
 const SUN_COLOR: Color = Color(1.0, 0.88, 0.7)
-const SUN_ENERGY: float = 1.5
+const SUN_ENERGY: float = 1.15
 const SHADOW_OPACITY: float = 0.62
 const SHADOW_BLUR: float = 1.6
 const FILL_ANGLES: Vector3 = Vector3(-30.0, 258.0, 0.0)
 const FILL_COLOR: Color = Color(0.58, 0.7, 1.0)
 const FILL_ENERGY: float = 0.38
 const AMBIENT_COLOR: Color = Color(0.78, 0.86, 1.0)
-const AMBIENT_ENERGY: float = 0.72
-const EXPOSURE: float = 1.0
+const AMBIENT_ENERGY: float = 0.82
+const EXPOSURE: float = 0.94
 const TONEMAP_WHITE: float = 4.0
-const GLOW_INTENSITY: float = 0.45
-const GLOW_BLOOM: float = 0.12
-const GLOW_THRESHOLD: float = 0.92
-const SATURATION: float = 1.16
-const CONTRAST: float = 1.08
-const BRIGHTNESS: float = 1.0
+const GLOW_INTENSITY: float = 0.18
+const GLOW_BLOOM: float = 0.03
+const GLOW_THRESHOLD: float = 1.1
+const SATURATION: float = 0.9
+const CONTRAST: float = 0.97
+const BRIGHTNESS: float = 0.97
 const HAZE_COLOR: Color = Color(1.0, 0.9, 0.8)
-const HAZE_DENSITY: float = 0.0016
+const HAZE_DENSITY: float = 0.002
 const RING_HEIGHT: float = 0.03
-const YARD_ALPHA: float = 0.5
+const YARD_ALPHA: float = 0.4
+## The yard tint is mixed this far toward a soft grey so it is calm, not neon.
+const YARD_SOFTEN: float = 0.45
+const SOFT_GREY: Color = Color(0.62, 0.64, 0.7)
 const CURB_HEIGHT: float = 0.35
 ## The cross street (the only road, where the tricycle drives): four lanes of 3 m.
 const CROSS_STREET_WIDTH: float = 12.0
@@ -148,6 +151,8 @@ func set_own_side(own_side: int) -> void:
 	for side: int in _base_materials:
 		for material: StandardMaterial3D in _base_materials[side]:
 			var tint: Color = OWN_COLOR if side == own_side else ENEMY_COLOR
+			if material == _base_materials[side][1]:
+				tint = tint.lerp(SOFT_GREY, YARD_SOFTEN)  # the yard tint is the soft one
 			tint.a = material.albedo_color.a
 			material.albedo_color = tint
 	for decal: MeshInstance3D in _readable:
@@ -276,8 +281,8 @@ func _sides() -> ArrayMesh:
 			_alley_wall(kit, side, segment, length)
 		# low fence pieces along the crossing so the lane edge still reads
 		for z: float in [-CROSS_STREET_WIDTH / 2.0 + 0.3, CROSS_STREET_WIDTH / 2.0 - 0.3]:
-			kit.box(Vector3(side * (half_w + t / 2.0), 0.5, z), Vector3(t, 1.0, 0.3), Palette.SARI_YELLOW)
-		kit.box(Vector3(side * (half_w + t / 2.0), CURB_HEIGHT / 2.0, 0.0), Vector3(t, CURB_HEIGHT, CROSS_STREET_WIDTH), Palette.SARI_YELLOW.darkened(0.2))
+			kit.box(Vector3(side * (half_w + t / 2.0), 0.5, z), Vector3(t, 1.0, 0.3), Palette.SARI_YELLOW.lerp(SOFT_GREY, 0.35))
+		kit.box(Vector3(side * (half_w + t / 2.0), CURB_HEIGHT / 2.0, 0.0), Vector3(t, CURB_HEIGHT, CROSS_STREET_WIDTH), Palette.SARI_YELLOW.lerp(SOFT_GREY, 0.35).darkened(0.2))
 	for end: float in [-1.0, 1.0]:
 		kit.box(Vector3(0.0, END_WALL_HEIGHT / 2.0, end * (half_l + t / 2.0)), Vector3(layout.lane_width + 2.0 * t, END_WALL_HEIGHT, t), Palette.WALL_PEACH, Palette.ROOF_RUST)
 	var mesh: ArrayMesh = kit.commit()
@@ -379,7 +384,8 @@ func _add_yard(side: int, color: Color) -> StandardMaterial3D:
 	var mesh: BoxMesh = BoxMesh.new()
 	mesh.size = Vector3(layout.lane_width, RING_HEIGHT, depth)
 	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(color.r, color.g, color.b, YARD_ALPHA)
+	var soft: Color = color.lerp(SOFT_GREY, YARD_SOFTEN)
+	material.albedo_color = Color(soft.r, soft.g, soft.b, YARD_ALPHA)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	# drawn first, so the kids and everything else stand on top of the tint, never under it
 	material.render_priority = -100
