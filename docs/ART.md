@@ -46,3 +46,4 @@ The current art is a first pass built **in code**: procedural meshes, vector ico
 - Budgets: web build under 50 MB, APK under 150 MB, 60 fps target on a recommended phone.
 - Effects use CPU particles (web-safe) and simple mesh and ring effects.
 - Replacing a procedural prop or character with its `.glb` must not change gameplay: same height and hitbox for the kids, same footprint for props.
+- **Alley, not road (owner):** the lane is a concrete alley (`assets/textures/alley.png`, drawn by `tools/art/make_assets.py`): no lane paint, no curbs and sidewalks, tall painted house walls with doors, windows, a roof edge and a drainpipe along both sides. **The only road is the horizontal cross street** where the tricycle drives (asphalt, with its zebra crossings).

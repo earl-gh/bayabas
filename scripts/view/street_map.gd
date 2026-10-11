@@ -37,6 +37,12 @@ const CROSS_STREET_WIDTH: float = 6.0
 const SIDEWALK_WIDTH: float = 2.4
 const HOUSE_SPACING: float = 6.5
 const END_WALL_HEIGHT: float = 2.4
+## The alley is lined with tall house walls; only the cross street is a road.
+const ALLEY_WALL_HEIGHT: float = 3.6
+const ALLEY_WALL_THICKNESS: float = 0.5
+const ALLEY_SEGMENT: float = 4.5
+const ALLEY_FLOOR: Color = Color(0.7, 0.68, 0.64)
+const ALLEY_TINT: Color = Color(0.78, 0.75, 0.7)
 const DASH_LENGTH: float = 2.0
 const DASH_GAP: float = 2.0
 const SHADOW_DISTANCE: float = 75.0
@@ -236,23 +242,13 @@ func _add_details() -> void:
 		_add(Props.banana_plant(), Vector3(tree_x, 0.0, tz + 4.0))
 
 
-## Asphalt lane + cross street, lane paint, crosswalks.
+## Alley floor (concrete), the cross street (the only road, asphalt) and its crosswalks.
 func _road() -> ArrayMesh:
 	var kit: LowPoly = LowPoly.new()
 	var half_w: float = layout.lane_width / 2.0
-	var half_l: float = layout.lane_length / 2.0
-	kit.box(Vector3(0.0, -0.05, 0.0), Vector3(layout.lane_width, 0.1, layout.lane_length), Palette.ASPHALT)
+	kit.box(Vector3(0.0, -0.05, 0.0), Vector3(layout.lane_width, 0.1, layout.lane_length), ALLEY_FLOOR)
 	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
-	kit.box(Vector3(0.0, -0.06, 0.0), Vector3(reach * 2.0, 0.1, CROSS_STREET_WIDTH), Palette.ASPHALT_DARK)
-	# dashed centre line along the lane, skipping the crossing
-	var z: float = -half_l + 1.0
-	while z < half_l - 1.0:
-		if absf(z + DASH_LENGTH / 2.0) > CROSS_STREET_WIDTH / 2.0 + 1.0:
-			kit.box(Vector3(0.0, 0.005, z + DASH_LENGTH / 2.0), Vector3(0.18, 0.02, DASH_LENGTH), Palette.LANE_PAINT)
-		z += DASH_LENGTH + DASH_GAP
-	# side lines
-	for x: float in [-half_w + 0.35, half_w - 0.35]:
-		kit.box(Vector3(x, 0.004, 0.0), Vector3(0.12, 0.02, layout.lane_length - 2.0), Palette.WHITE)
+	kit.box(Vector3(0.0, -0.045, 0.0), Vector3(reach * 2.0, 0.1, CROSS_STREET_WIDTH), Palette.ASPHALT_DARK)
 	# zebra crossings on both sides of the cross street
 	for side: float in [-1.0, 1.0]:
 		var stripes: int = int(layout.lane_width / 1.2)
@@ -274,7 +270,7 @@ func _sides() -> ArrayMesh:
 			var length: float = half_l - CROSS_STREET_WIDTH / 2.0
 			var center_z: float = segment * (CROSS_STREET_WIDTH / 2.0 + length / 2.0)
 			kit.box(Vector3(side * (half_w + t / 2.0), CURB_HEIGHT / 2.0, center_z), Vector3(t, CURB_HEIGHT, length), Palette.CURB, Palette.CURB)
-			kit.box(Vector3(side * (half_w + t + SIDEWALK_WIDTH / 2.0), 0.1, center_z), Vector3(SIDEWALK_WIDTH, 0.2, length), Palette.SIDEWALK)
+			_alley_wall(kit, side, segment, length)
 		# low fence pieces along the crossing so the lane edge still reads
 		for z: float in [-CROSS_STREET_WIDTH / 2.0 + 0.3, CROSS_STREET_WIDTH / 2.0 - 0.3]:
 			kit.box(Vector3(side * (half_w + t / 2.0), 0.5, z), Vector3(t, 1.0, 0.3), Palette.SARI_YELLOW)
@@ -286,27 +282,47 @@ func _sides() -> ArrayMesh:
 	return mesh
 
 
+## One side of the alley between the cross street and a lane end: tall painted
+## house walls in a run of colours, with doors, windows, a roof edge and a drainpipe.
+func _alley_wall(kit: LowPoly, side: float, segment: float, length: float) -> void:
+	var half_w: float = layout.lane_width / 2.0
+	var x: float = side * (half_w + layout.boundary_thickness + ALLEY_WALL_THICKNESS / 2.0)
+	var inner: float = -side * (ALLEY_WALL_THICKNESS / 2.0 + 0.05)
+	var colors: Array[Color] = [Palette.WALL_PEACH, Palette.WALL_MINT, Palette.WALL_LEMON, Palette.WALL_SKY, Palette.WALL_PINK]
+	var count: int = maxi(1, roundi(length / ALLEY_SEGMENT))
+	var piece: float = length / float(count)
+	var start: float = CROSS_STREET_WIDTH / 2.0 if segment > 0.0 else -layout.lane_length / 2.0
+	for i: int in count:
+		var z: float = start + piece * (float(i) + 0.5)
+		var color: Color = colors[(i + int(side + 1.0) * 2 + int(segment + 1.0)) % colors.size()]
+		kit.box(Vector3(x, ALLEY_WALL_HEIGHT / 2.0, z), Vector3(ALLEY_WALL_THICKNESS, ALLEY_WALL_HEIGHT, piece - 0.04), color.darkened(0.04), color)
+		kit.box(Vector3(x, ALLEY_WALL_HEIGHT + 0.1, z), Vector3(ALLEY_WALL_THICKNESS + 0.3, 0.2, piece), Palette.ROOF_TIN)
+		if i % 2 == 0:
+			kit.box(Vector3(x + inner, 1.1, z), Vector3(0.12, 2.2, 1.2), Palette.DOOR)
+		else:
+			kit.box(Vector3(x + inner, 2.0, z), Vector3(0.12, 1.0, 1.1), Palette.WINDOW)
+			kit.box(Vector3(x + inner, 1.45, z), Vector3(0.18, 0.1, 1.3), Palette.CURB)
+		kit.box(Vector3(x + inner, ALLEY_WALL_HEIGHT / 2.0, z + piece / 2.0 - 0.3), Vector3(0.14, ALLEY_WALL_HEIGHT, 0.14), Palette.POST_GREY)
+
+
 ## Painted asphalt over the lane and the cross street, pavers on the sidewalks.
 func _add_ground_textures() -> void:
 	var half_w: float = layout.lane_width / 2.0
 	var half_l: float = layout.lane_length / 2.0
-	var lane: MeshInstance3D = StreetArt.ground("asphalt", Vector2(layout.lane_width, layout.lane_length), GROUND_TILE)
-	lane.position = Vector3(0.0, GROUND_LIFT, 0.0)
-	_geometry.add_child(lane)
+	# the alley: concrete on both sides of the cross street, which is the only road
+	var length: float = half_l - CROSS_STREET_WIDTH / 2.0
+	for segment: float in [-1.0, 1.0]:
+		var floor_piece: MeshInstance3D = StreetArt.ground("alley", Vector2(layout.lane_width, length), GROUND_TILE, ALLEY_TINT)
+		floor_piece.position = Vector3(0.0, GROUND_LIFT, segment * (CROSS_STREET_WIDTH / 2.0 + length / 2.0))
+		_geometry.add_child(floor_piece)
 	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
 	var cross: MeshInstance3D = StreetArt.ground("asphalt", Vector2(reach * 2.0, CROSS_STREET_WIDTH), GROUND_TILE, CROSS_STREET_TINT)
-	cross.position = Vector3(0.0, GROUND_LIFT * 0.5, 0.0)
+	cross.position = Vector3(0.0, GROUND_LIFT, 0.0)
 	_geometry.add_child(cross)
 	# the neighbourhood goes on past the lane: paving all around, no sky below the horizon
 	var yard: MeshInstance3D = StreetArt.ground("pavers", Vector2(reach * 2.0 + OUTER_MARGIN, layout.lane_length + OUTER_MARGIN * 2.0), PAVER_TILE, OUTER_TINT)
 	yard.position = Vector3(0.0, OUTER_DROP, 0.0)
 	_geometry.add_child(yard)
-	var length: float = half_l - CROSS_STREET_WIDTH / 2.0
-	for side: float in [-1.0, 1.0]:
-		for segment: float in [-1.0, 1.0]:
-			var walk: MeshInstance3D = StreetArt.ground("pavers", Vector2(SIDEWALK_WIDTH, length), PAVER_TILE)
-			walk.position = Vector3(side * (half_w + layout.boundary_thickness + SIDEWALK_WIDTH / 2.0), SIDEWALK_TOP + GROUND_LIFT, segment * (CROSS_STREET_WIDTH / 2.0 + length / 2.0))
-			_geometry.add_child(walk)
 
 
 func _add_decal(texture_name: String, size: Vector2, at: Vector3) -> void:
@@ -325,7 +341,8 @@ func _add_sign(texture_name: String, height: float, at: Vector3) -> void:
 func _add_houses() -> void:
 	var half_w: float = layout.lane_width / 2.0
 	var half_l: float = layout.lane_length / 2.0
-	var x_offset: float = half_w + layout.boundary_thickness + SIDEWALK_WIDTH + 2.0
+	# the house fronts stand right behind the alley walls
+	var x_offset: float = half_w + layout.boundary_thickness + ALLEY_WALL_THICKNESS + 1.8
 	var variant: int = 0
 	for side: float in [-1.0, 1.0]:
 		var z: float = -half_l + HOUSE_SPACING / 2.0
