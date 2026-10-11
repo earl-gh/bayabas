@@ -5,6 +5,41 @@
 
 ### Features
 
+* **art:** one narrow crossing through the middle of the road; signal gantries with a horizontal light facing the drivers ([e9d4a01](https://github.com/earl-gh/kalyeah/commit/e9d4a01e18fd80912a06218447446fb485c9ff35))
+* **art:** painted skill icons on a cardboard disc for every skill button ([eef859d](https://github.com/earl-gh/kalyeah/commit/eef859dd96891ec3bd802c40d654e4e0a9be3602))
+* **art:** pedestrian crossing bars between the alleys and the road; stop lights instead of plants ([ec6203a](https://github.com/earl-gh/kalyeah/commit/ec6203a9a67212d34fcb50c3944561ff46f58265))
+* **art:** softer environment colours to ease eye strain ([ad3d136](https://github.com/earl-gh/kalyeah/commit/ad3d1360c0fa2bca8722ec05da1e9bbd2e224e1c))
+* **art:** the lane is a concrete alley lined with tall house walls; only the cross street is a road ([0361e2b](https://github.com/earl-gh/kalyeah/commit/0361e2b703880689abc16ffc76b74799a8d87459))
+* **art:** warm brick-tan pavers so the pedestrian lanes stand out ([650f14a](https://github.com/earl-gh/kalyeah/commit/650f14af2c5fd456fb668af20aaffd9358af796e))
+* **camera:** straight behind the hero (yaw 0) ([6622aed](https://github.com/earl-gh/kalyeah/commit/6622aed607a37e03bd3aacc8e6a044b6bc51a53d))
+* **camera:** ultra-wide lens camera turned 4 degrees, bigger kids, stronger vignette ([b8bfa1c](https://github.com/earl-gh/kalyeah/commit/b8bfa1cf44ae66ee0c5743e18ebd45c92918d0a4))
+* cinematic morning light, fixed see-through joystick circle with a moving knob, longer pin blink ([bf45aac](https://github.com/earl-gh/kalyeah/commit/bf45aac2435aefb81f4490558eb6471faf118a2a))
+* four-lane cross street and a longer middle, no floating dots, spinner in the enemy yard, longer pin dash with a small end circle, enemy walls toggle ([6d809d0](https://github.com/earl-gh/kalyeah/commit/6d809d020529d0d3fc3858fa2c8b6306c20a37ff))
+* **guava:** tap to bite and heal a quarter, throw to deal a quarter or an eighth ([dfeeddb](https://github.com/earl-gh/kalyeah/commit/dfeeddb8d897fffcd3e28858ccdd2e55a87564fd))
+* **hud:** fixed bottom-centre controls, no handedness setting; larger, optically centred skill icons ([2431c11](https://github.com/earl-gh/kalyeah/commit/2431c11430ec636b6a574abfb08e2d669afcb203))
+* **map:** a team's two wall rows as far apart as the middle, post in the inner wall, scoring behind the inner wall ([35623b1](https://github.com/earl-gh/kalyeah/commit/35623b181dd68b566eaa6f754067a7c12e87d518))
+* **map:** a wider four-lane road, pedestrian lanes between the alleys and the road, no yellow bars at the road sides ([42c9de7](https://github.com/earl-gh/kalyeah/commit/42c9de718960d2cfb57ea8e4bd2bf50e8798da32))
+* **map:** remove the white pad under the post; scoring needs 2 s behind the inner wall ([7942167](https://github.com/earl-gh/kalyeah/commit/7942167b22dadee43db135d47ce00ec4ff13c461))
+* **map:** space the wall rows and electric post like MOBA towers and nexus, lane 105 m ([1cf3be2](https://github.com/earl-gh/kalyeah/commit/1cf3be25e95637a9154aff8154a56e98093f08cc))
+* **skills:** the pin dash is an aimed skill: tap dashes the way you face, drag chooses the direction ([62739cc](https://github.com/earl-gh/kalyeah/commit/62739cc82a875afbe25e57d8ccceeb495dbd34d1))
+* softer walls, no rings under posts, stronger yard colour, grey knob, no aim connector lines, thick guava lane, tumble fall pose, heavy attacks root the caster ([8478aab](https://github.com/earl-gh/kalyeah/commit/8478aabe9f627ee3d09ed28c2a4775a383335e1a))
+* **ui:** boot screen with key art and a cardboard loading bar ([68349d2](https://github.com/earl-gh/kalyeah/commit/68349d2210fb06567bd57f3ae00903ee8f61d236))
+* **weapons:** Langit Lupa pair: heal (tap self, drag a teammate) and the soil block, in the weapon pick ([f0d2d2c](https://github.com/earl-gh/kalyeah/commit/f0d2d2c99bdaaef8e53b9aeec32b1a810f05f85d))
+
+
+### Bug Fixes
+
+* **art:** drop the coloured ring and show whole skill icons on the cardboard buttons ([a483afd](https://github.com/earl-gh/kalyeah/commit/a483afd3c65be24ecb242383819617e11699993e))
+* **hud:** hide the guava button until you hold the guava ([8409a43](https://github.com/earl-gh/kalyeah/commit/8409a43638023414cbb5050f25878da5ea585a45))
+* **hud:** the ready pin button shows the dash arrow, the return arrow only while out on the pin ([08faf79](https://github.com/earl-gh/kalyeah/commit/08faf799308712154cc4a86387a4fd3ab9ed48dc))
+* **kids:** swap run feet only on the full front and back views ([83059d1](https://github.com/earl-gh/kalyeah/commit/83059d11deaf66357553b0e819a9d09e84ec9fa8))
+* **ui:** cut the cardboard out of the loading bar and centre it in the empty track ([3fadbd1](https://github.com/earl-gh/kalyeah/commit/3fadbd1a61f35d0e5a6b1663f830cfb697a4b75f))
+
+## [0.1.0](https://github.com/earl-gh/kalyeah/compare/kalyeah-v0.1.0...kalyeah-v0.1.0) (2026-10-11)
+
+
+### Features
+
 * **art:** painted skill icons on a cardboard disc for every skill button ([eef859d](https://github.com/earl-gh/kalyeah/commit/eef859dd96891ec3bd802c40d654e4e0a9be3602))
 * **art:** the lane is a concrete alley lined with tall house walls; only the cross street is a road ([0361e2b](https://github.com/earl-gh/kalyeah/commit/0361e2b703880689abc16ffc76b74799a8d87459))
 * **camera:** straight behind the hero (yaw 0) ([6622aed](https://github.com/earl-gh/kalyeah/commit/6622aed607a37e03bd3aacc8e6a044b6bc51a53d))
