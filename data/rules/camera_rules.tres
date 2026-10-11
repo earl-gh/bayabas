@@ -4,10 +4,10 @@
 
 [resource]
 script = ExtResource("1_camera")
-yaw_offset_degrees = 28.0
-pitch_degrees = 60.0
-vfov_degrees = 30.0
-visible_width = 15.5
+yaw_offset_degrees = 0.0
+pitch_degrees = 56.0
+vfov_degrees = 52.0
+visible_width = 19.0
 edge_margin = 1.0
 end_clamp = 5.0
 look_ahead = 2.5

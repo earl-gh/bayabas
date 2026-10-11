@@ -661,7 +661,7 @@ func test_skill_buttons_are_art_with_only_the_type_tag() -> void:
 	assert_eq(guava.icon_id, &"guava")
 	assert_eq(guava.sub_text, "", "no text on the guava or the pin")
 	assert_eq(practice.hud.bookmark_button.sub_text, "")
-	assert_eq(practice.hud.bookmark_button.icon_id, &"pin")
+	assert_eq(practice.hud.bookmark_button.icon_id, &"dash", "ready: the dash arrow")
 
 
 func test_biting_the_guava_heals_and_pops_a_green_number() -> void:
@@ -698,3 +698,21 @@ func test_the_guava_button_only_shows_while_you_hold_the_guava() -> void:
 	practice.advance(DT)
 	assert_true(practice.sim.ball.is_holder(PracticeMatch.LOCAL_ID))
 	assert_true(practice.hud.ball_button.visible, "holding it")
+
+
+func test_the_pin_button_shows_the_dash_arrow_then_the_return_arrow() -> void:
+	var practice: PracticeMatch = _practice()
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	practice.advance(DT)
+	assert_eq(practice.hud.bookmark_button.icon_id, &"dash", "ready")
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
+	practice.advance(DT)
+	assert_true(player.mark_active)
+	assert_eq(practice.hud.bookmark_button.icon_id, &"dash", "blink and tumble")
+	for i: int in 30:
+		practice.advance(DT)
+	assert_true(player.mark_active)
+	assert_eq(practice.hud.bookmark_button.icon_id, &"pin_return", "out on the pin: press to return")
+	for i: int in 120:
+		practice.advance(DT)
+	assert_eq(practice.hud.bookmark_button.icon_id, &"dash", "back at the pin")

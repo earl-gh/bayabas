@@ -3,7 +3,7 @@ shader_type canvas_item;
 // grain. Drawn as a see-through overlay, so it never reads the screen back (cheap on
 // phones) and never blurs the map.
 
-uniform float vignette = 0.28;
+uniform float vignette = 0.34;
 uniform float grain = 0.025;
 
 void fragment() {
