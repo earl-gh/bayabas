@@ -117,7 +117,9 @@ func sync_player(sim: MatchSim, rules: GameRules, player: PlayerState, local_id:
 	# the pin: ready, or out on the pin (then the same button brings you back early)
 	bookmark_button.set_locked(player.death_delay or not (player.bookmark_ready() or player.mark_active))
 	bookmark_button.highlight = player.mark_active
-	_set_icon(bookmark_button, &"dash" if player.dash_time_left > 0.0 else (&"pin_return" if player.mark_active else &"pin"))
+	# ready: the dash arrow (the blink); through the tumble too; then the return arrow while out on the pin
+	var returning: bool = player.mark_active and player.stumble_time_left <= 0.0
+	_set_icon(bookmark_button, &"pin_return" if returning else &"dash")
 	bookmark_button.set_cooldown(player.bookmark_cooldown_left, rules.bookmark_cooldown)
 	var weapons_off: bool = not player.alive or player.death_delay or not player.effects.can_cast()
 	_sync_guava_button(sim, player, local_id)
@@ -207,7 +209,7 @@ func _build() -> void:
 	aim_buttons = [weapon_one, weapon_two, ball_button]
 	for button: AimButton in aim_buttons:
 		button.cancel_zone = cancel_zone
-	bookmark_button = _skill_button(&"pin", "Pin")
+	bookmark_button = _skill_button(&"dash", "Pin")
 	banner = Label.new()
 	_place(banner, Vector4(0, 0.3, 1, 0.3), Vector4(0, -60, 0, 60))
 	banner.visible = false
