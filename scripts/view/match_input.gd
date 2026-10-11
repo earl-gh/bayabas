@@ -1,31 +1,31 @@
 class_name MatchInput
 extends RefCounted
 ## Turns the local player's devices into one PlayerInput per sim tick: the
-## on-screen stick, skill buttons, the three aimed slots (weapon 1, weapon 2,
-## guava) and the keyboard/mouse equivalents. No nodes; the match screen feeds it
+## on-screen stick, skill buttons, the four aimed slots (weapon 1, weapon 2,
+## guava, the pin) and the keyboard/mouse equivalents. No nodes; the match screen feeds it
 ## events and asks for `build()` every tick.
 ##
 ## An aimed slot is a small state machine so a quick tap is never lost: press
 ## starts aiming (the sim sees the button held), release sends one tick with the
 ## aim and, if it was cancelled, BTN_AIM_CANCEL.
 
-const AIM_BITS: Array[int] = [PlayerInput.BTN_WEAPON_1, PlayerInput.BTN_WEAPON_2, PlayerInput.BTN_BALL]
-const SLOTS: int = 3
+const AIM_BITS: Array[int] = [PlayerInput.BTN_WEAPON_1, PlayerInput.BTN_WEAPON_2, PlayerInput.BTN_BALL, PlayerInput.BTN_BOOKMARK]
+const SLOTS: int = 4
 
 var stick: Vector2 = Vector2.ZERO
 ## The camera's turn (CameraRules.yaw_offset_degrees): screen directions follow it.
 var camera_yaw: float = 0.0
 var pending_buttons: int = 0
 ## Per aimed slot: finger down, release waiting to be sent, Q/E/R aiming.
-var touch_held: Array[bool] = [false, false, false]
-var key_held: Array[bool] = [false, false, false]
-var key_aim: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
-var key_cancel: Array[bool] = [false, false, false]
+var touch_held: Array[bool] = [false, false, false, false]
+var key_held: Array[bool] = [false, false, false, false]
+var key_aim: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
+var key_cancel: Array[bool] = [false, false, false, false]
 
-var _sent_held: Array[bool] = [false, false, false]
-var _release_pending: Array[bool] = [false, false, false]
-var _release_aim: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
-var _release_cancel: Array[bool] = [false, false, false]
+var _sent_held: Array[bool] = [false, false, false, false]
+var _release_pending: Array[bool] = [false, false, false, false]
+var _release_aim: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
+var _release_cancel: Array[bool] = [false, false, false, false]
 
 
 func set_stick(value: Vector2) -> void:
@@ -74,9 +74,9 @@ func build(flip: bool, mouse_aim: Callable, tick: int) -> PlayerInput:
 	pending_buttons = 0
 	var aim: Vector2 = Vector2.ZERO
 	var cancel: bool = false
-	# holding one skill locks the others: no Dash or Bookmark in the middle of an aim
+	# holding one skill locks the others: no Dash in the middle of an aim
 	if touch_held.has(true) or key_held.has(true):
-		buttons &= ~(PlayerInput.BTN_DASH | PlayerInput.BTN_BOOKMARK)
+		buttons &= ~PlayerInput.BTN_DASH
 	for slot: int in SLOTS:
 		var bit: int = AIM_BITS[slot]
 		var key: bool = LocalInput.weapon_key_held(slot) and not touch_held[slot] and not _release_pending[slot]

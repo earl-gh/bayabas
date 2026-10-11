@@ -32,7 +32,7 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Skill | Effect | CD |
 |---|---|---|
 | Takbo (Dash) | 5 m dash over 0.2 s, then 0.4 s stumble (can't move/cast) | 8 s |
-| Pin (Bookmark; replaces Dash on the HUD) | Leaves a pin (red round head) where you stand, blinks 3.2 m forward (`bookmark_blink`), tumbles 0.45 s (can't move/cast), then after 4 s snaps back to the pin. **Press again to return early.** | 14 s, **starting when you are back at the pin** |
+| Pin (Bookmark; replaces Dash on the HUD) | Leaves a pin (red round head) where you stand, dashes 3.2 m (`bookmark_blink`) **the way you face on a tap, or the way you drag** (an aimed skill: press, drag to choose the direction, release; the preview is a band the length of the dash), tumbles 0.45 s (can't move/cast), then after 4 s snaps back to the pin. **Press again to return early.** | 14 s, **starting when you are back at the pin** |
 
 **One skill at a time (owner):** while one skill button is held (aiming), no other skill button can be pressed or cast; the pin is ignored until the release.
 
@@ -42,6 +42,9 @@ Dash and Bookmark blink stop at walls that block you, i.e. the enemy's walls and
 
 ## Weapons
 Status effects: `STUN` (no move/cast), `SLOW(x%)`, `AIRBORNE` (stun + vertical anim, no knockback), `POLYMORPH` (can: no cast, 50% speed), `BOUNCE` (short airborne), `KNOCKOUT` (downed, no actions; no longer caused by the guava).
+
+- **Casting while moving (owner):** every weapon can be aimed while you keep moving. **Light attacks** can also be cast while moving (no rooting). **Heavy attacks** (Bato H, Gunting H, Tsinelas H; `cast_lock` in `data/weapons/*.tres`, 0.5-0.6 s) root the caster until their cast animation finishes.
+- **Aim previews:** a ground circle (rock meteor and the like) is drawn alone, with no line from the player to it. The guava's throw is drawn as a thick band (about 1.1 m wide) instead of a line.
 Statuses never stack: only one is active at a time and a new status of a different kind overwrites the current one. The same status re-applied keeps the longer time (SLOW keeps the stronger slow).
 
 | ID | Type | Shape | Range | Damage | Effect | CD |
@@ -58,6 +61,8 @@ Statuses never stack: only one is active at a time and a new status of a differe
 | jacks | CC | scatter field r=2.0, lasts 4 s | 6 | 3 per 0.5 s | SLOW 30% | 11 |
 | bola | CC | skillshot, 2 bounces (at 1/2 and full range), r=1.2 per bounce | 9 | 6 per bounce | BOUNCE 1 s | 12 |
 | trumpo | CC | linear spinning projectile, stops at max range | 8 | 10 | AIRBORNE 2 s (once per target) | 15 |
+| heal (Langit Lupa) | HEAL | instant: **tap heals yourself**, **drag toward a teammate** (within 8 m, 60° cone around the drag) heals them; a drag with nobody there does nothing and costs no cooldown. Never heals enemies. Aim preview: a ring around the teammate, no line to them | 30 HP (`heal`) | — | — | 12 |
+| langit_lupa (Langit Lupa) | BLOCK | a **person-wide (1.2 m)** block of earth rises 2.2 m in front of you in the aimed direction, blocks enemy projectiles, then **collapses back to the ground after 3.5 s** | — | — | — | 14 |
 
 Two copies of the same weapon cannot be equipped; two weapons of the same *type* can.
 
@@ -76,10 +81,10 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 
 ## Map (single mid lane, 80 m long × 16 m wide)
 - Layout per side, from the lane end toward mid: the **yard** (8 m) → the **inner wall row**, with the **electric post standing at the center of it** → a long stretch → the **middle wall row** → mid.
-- Each wall layer = 3 columns (left / center / right), each column 300 HP. A column at 0 HP is removed and opens that slot. Every hit shows: the sheet flashes and wobbles, cardboard chips fly, the damage number pops above it, a cardboard-coloured health bar appears over a damaged column, and rips, holes and tape spread over it as it weakens; it bursts into chips when it breaks.
+- Each wall layer = 3 columns (left / center / right), each column 150 HP (owner: 300 was too tough). A column at 0 HP is removed and opens that slot. Every hit shows: the sheet flashes and wobbles, cardboard chips fly, the damage number pops above it, a cardboard-coloured health bar appears over a damaged column, and rips, holes and tape spread over it as it weakens; it bursts into chips when it breaks.
 - **A team passes straight through its own cardboard walls; the enemy team is blocked by them** (owner decision, completes D5). Boundary walls block everyone. Walls take damage from enemy attacks and the ball (ball: 60). Which projectiles a wall stops: enemy projectiles are blocked; own-team projectiles pass through (D11).
 - What damages a wall column: enemy weapons deal their normal damage to it. The targeted rock (Bato light) normally needs an enemy in range; with none, it is thrown straight at the nearest enemy wall column in range instead. A projectile that hits it deals its damage once (a boomerang turns back); ground areas, jacks ticks and bola bounces hit every column inside their circle; cones hit columns in front within range. Non-damaging weapons (trap, shield) don't hurt walls. Own walls never take damage from their own team.
-- **Scoring (owner): going behind the enemy's inner wall is a point.** A living, non-CC'd enemy standing in the yard behind a team's inner wall for **2 s** (`base_capture_time`, owner: harder than before) scores. The yard is tinted in that team's colour. The enemy team is blocked by the inner wall, so they have to break a column (300 HP) to get in. Players start and respawn in the middle of their own yard; the electric post (revive touch) is at the center of the inner wall.
+- **Scoring (owner): going behind the enemy's inner wall is a point.** A living, non-CC'd enemy standing in the yard behind a team's inner wall for **2 s** (`base_capture_time`, owner: harder than before) scores. The yard is tinted in that team's colour. The enemy team is blocked by the inner wall, so they have to break a column (150 HP) to get in. Players start and respawn in the middle of their own yard; the electric post (revive touch) is at the center of the inner wall.
 - Boundary walls on the long sides (house fronts, fences).
 - Lane geometry (owner): **the distance between a team's middle wall row and its inner wall row is the same as the distance between the two middle rows**, 21.3 m, so the middle stays 16 x 21.3 m (3:4) and so does the stretch in front of each base. The post/inner wall row is 32 m from the middle and 8 m from the lane end (80 m lane). It lives in `data/rules/map_layout.tres` (`lane_length`, `base_inset`, `wall_first_layer_from_base`, `wall_layer_spacing`); adjust there, not in code. The look is separate (`docs/ART.md`). A lane end to end takes about 16 s at full speed.
 
@@ -160,4 +165,6 @@ The neutral at the centre of the lane is a **guava** (*bayabas* is the Tagalog w
 - **D10** With no basic attack, a loadout of only non-damaging weapons (e.g. `papel_trap` + `papel_shield`) deals no damage. Default: allowed; consider requiring at least one damaging weapon at pick time.
 - **D12** Unarmed papel trap lifetime (not in the brief): default 20 s.
 - **D13** ~~Respawn weapon swap~~ **Decided (owner): swap with no limit while dead.** For the whole respawn timer you can change weapons as often as you like. The swap screen opens on death with your current weapons pre-picked and shows the respawn countdown; every full pair applies at once; **Done** closes it and a **Swap weapons** button reopens it while still dead. It closes when you respawn. No swapping while alive. A weapon kept across a swap keeps its cooldown.
+- **D14** *Heal* numbers were not given by the owner: defaults 30 HP, 12 s cooldown, 8 m range, 60° pick cone, tap = self (all in `data/weapons/heal.tres`). Confirm or change.
+- **D15** *Lupa (soil block)* numbers were not given by the owner: defaults 1.2 m wide, 2.2 m in front, stands 3.5 s then collapses, 14 s cooldown, blocks projectiles like the paper shield (`data/weapons/langit_lupa.tres`). Confirm or change; say if it should also block movement.
 - **D6** Only one Block weapon exists — consider a second one for loadout variety.

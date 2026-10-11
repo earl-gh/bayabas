@@ -542,6 +542,53 @@ def tex_asphalt():
     return img.convert("RGB")
 
 
+def tex_alley():
+    """Worn concrete alley floor: big slabs with joints, stains, wet patches and cracks."""
+    n = 512
+    rng = np.random.default_rng(21)
+    grain = rng.random((n, n)).astype(np.float32)
+    mottled = _noise(n, 48, 5) * 0.55 + _noise(n, 12, 6) * 0.45
+    v = 150 + mottled * 26 + grain * 12
+    rgb = np.stack([v * 1.0, v * 0.98, v * 0.93], -1)
+    img = Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
+    d = ImageDraw.Draw(img)
+    rnd = random.Random(31)
+    slab = n // 2  # 2 x 2 slabs per tile, joints on the wrap so it tiles
+    for k in range(2):
+        for off in (0, n):
+            d.line([(k * slab, 0), (k * slab, n)], fill=(88, 84, 78, 255), width=4)
+            d.line([(0, k * slab), (n, k * slab)], fill=(88, 84, 78, 255), width=4)
+    for k in range(2):
+        d.line([(k * slab + 3, 0), (k * slab + 3, n)], fill=(196, 192, 184, 140), width=1)
+        d.line([(0, k * slab + 3), (n, k * slab + 3)], fill=(196, 192, 184, 140), width=1)
+    for _ in range(7):  # damp stains and wet patches
+        layer = Image.new("RGBA", (160, 120), (0, 0, 0, 0))
+        ImageDraw.Draw(layer).ellipse([14, 18, rnd.randint(70, 150), rnd.randint(50, 110)], fill=(70, 64, 58, rnd.randint(30, 60)))
+        _tile_paste(img, layer.filter(ImageFilter.GaussianBlur(10)), rnd.randint(0, n), rnd.randint(0, n))
+    for _ in range(3):  # moss in the joints
+        layer = Image.new("RGBA", (90, 40), (0, 0, 0, 0))
+        ImageDraw.Draw(layer).ellipse([8, 8, 82, 30], fill=(86, 118, 58, 70))
+        _tile_paste(img, layer.filter(ImageFilter.GaussianBlur(4)), rnd.randint(0, n), (rnd.choice((0, 1)) * slab) % n)
+    for _ in range(5):  # cracks
+        layer = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+        dd = ImageDraw.Draw(layer)
+        x, y = rnd.uniform(0, n), rnd.uniform(0, n)
+        a = rnd.uniform(0, math.tau)
+        pts = [(x, y)]
+        for _ in range(rnd.randint(6, 12)):
+            a += rnd.uniform(-0.8, 0.8)
+            x += math.cos(a) * rnd.uniform(8, 22)
+            y += math.sin(a) * rnd.uniform(8, 22)
+            pts.append((x, y))
+        dd.line(pts, fill=(70, 66, 62, 150), width=2)
+        img.alpha_composite(layer)
+    for _ in range(120):  # pebbles
+        x, y = rnd.uniform(0, n), rnd.uniform(0, n)
+        r = rnd.uniform(0.8, 2.0)
+        ImageDraw.Draw(img).ellipse([x - r, y - r, x + r, y + r], fill=(205, 200, 192, 150))
+    return img.convert("RGB")
+
+
 def tex_pavers():
     """Concrete pavers (sidewalks), stretcher bond, worn and mossy."""
     n = 512
@@ -813,6 +860,7 @@ def main(only=None):
         return
     save(tex_asphalt(), TEXTURES, "asphalt")
     save(tex_pavers(), TEXTURES, "pavers")
+    save(tex_alley(), TEXTURES, "alley")
     for kind in ("sun", "house", "star", "crown", "smiley", "heart"):
         save(tex_doodle(kind), TEXTURES, "doodle_" + kind)
     save(tex_sari_sign(), TEXTURES, "sari_sign")

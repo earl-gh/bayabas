@@ -4,17 +4,13 @@
 
 [resource]
 script = ExtResource("1_weapon")
-id = &"bato_heavy"
-display_name = "Bato (Heavy)"
-short_name = "Bato H"
-street_game = "Bato-bato-pik"
-kind = 0
-shape = 2
+id = &"heal"
+display_name = "Langit (Heal)"
+short_name = "Heal"
+street_game = "Langit Lupa"
+kind = 3
+shape = 9
 cooldown = 12.0
 max_range = 8.0
-damage = 22
-radius = 2.0
-delay = 0.6
-effect = 1
-effect_duration = 2.0
-cast_lock = 0.6
+angle_degrees = 60.0
+heal = 30

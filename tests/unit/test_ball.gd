@@ -146,7 +146,7 @@ func test_an_enemy_wall_takes_60_and_the_ball_despawns() -> void:
 	for index: int in sim.walls.size():
 		if sim.walls[index].hp < LAYOUT.wall_hp:
 			hit.append(index)
-			assert_eq(sim.walls[index].hp, 240)
+			assert_eq(sim.walls[index].hp, LAYOUT.wall_hp - 60)
 	assert_eq(hit.size(), 1)
 	assert_eq(sim.ball.state, S.NONE)
 

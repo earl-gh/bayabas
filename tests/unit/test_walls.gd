@@ -30,12 +30,12 @@ func _enemy_center_wall(sim: MatchSim) -> int:
 	return -1
 
 
-func test_wall_columns_have_300_hp_and_break_at_zero() -> void:
+func test_wall_columns_have_150_hp_and_break_at_zero() -> void:
 	var sim: MatchSim = _sim()
 	var index: int = _enemy_center_wall(sim)
-	assert_eq(sim.walls[index].hp, 300)
+	assert_eq(sim.walls[index].hp, 150)
 	watch_signals(sim)
-	sim.damage_wall(index, 299)
+	sim.damage_wall(index, 149)
 	assert_signal_emitted(sim, "wall_damaged")
 	assert_signal_not_emitted(sim, "wall_destroyed")
 	sim.damage_wall(index, 5)
@@ -68,7 +68,7 @@ func test_projectiles_damage_the_enemy_wall_they_hit() -> void:
 	me.position = Vector2(0.0, sim.walls[index].rect.end.y + 3.0)
 	_cast(sim, 1, Vector2(0.0, -1.0))
 	_wait(sim, 1.5)
-	assert_eq(sim.walls[index].hp, 290, "trumpo deals its 10 to the wall")
+	assert_eq(sim.walls[index].hp, LAYOUT.wall_hp - 10, "trumpo deals its 10 to the wall")
 
 
 func test_area_attacks_damage_walls_in_the_circle() -> void:
@@ -80,7 +80,7 @@ func test_area_attacks_damage_walls_in_the_circle() -> void:
 	me.position = Vector2(0.0, wall_z + 6.0)
 	_cast(sim, 1, Vector2(0.0, -6.0) / 8.0)
 	_wait(sim, 1.0)
-	assert_eq(sim.walls[index].hp, 278)
+	assert_eq(sim.walls[index].hp, LAYOUT.wall_hp - 22)
 
 
 func test_cones_damage_walls_in_front() -> void:
@@ -91,7 +91,7 @@ func test_cones_damage_walls_in_front() -> void:
 	me.position = Vector2(0.0, sim.walls[index].rect.end.y + 1.5)
 	_cast(sim, 1, Vector2(0.0, -1.0))
 	_wait(sim, 1.0)
-	assert_eq(sim.walls[index].hp, 276)
+	assert_eq(sim.walls[index].hp, LAYOUT.wall_hp - 24)
 
 
 func test_own_walls_never_take_damage_from_own_weapons() -> void:
@@ -102,4 +102,4 @@ func test_own_walls_never_take_damage_from_own_weapons() -> void:
 	_cast(sim, 1, Vector2(0.0, -1.0) * 0.25)
 	_wait(sim, 1.0)
 	for wall: MapLayout.WallSpec in sim.walls:
-		assert_eq(wall.hp, 300)
+		assert_eq(wall.hp, 150)

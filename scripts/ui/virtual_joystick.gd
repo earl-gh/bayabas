@@ -11,9 +11,8 @@ const DEADZONE: float = 0.1
 const THUMB_RADIUS: float = 38.0
 const NO_POINTER: int = -1
 const MOUSE_POINTER: int = -2
-const BASE_COLOR: Color = Color(0.1, 0.08, 0.14, 0.3)
-const THUMB_COLOR: Color = Color(1.0, 0.75, 0.25, 0.95)
-const THUMB_SHADE: Color = Color(0.75, 0.45, 0.1, 0.95)
+const BASE_COLOR: Color = Color(0.1, 0.08, 0.14, 0.5)
+const THUMB_COLOR: Color = Color(0.86, 0.87, 0.9, 0.4)
 
 var value: Vector2 = Vector2.ZERO
 ## Resting spot of the stick inside the zone (0..1 of its size).
@@ -69,9 +68,7 @@ func _draw() -> void:
 	var origin: Vector2 = rest_position()
 	var thumb: Vector2 = origin if _pointer == NO_POINTER else _thumb
 	draw_circle(origin, MAX_RADIUS, BASE_COLOR)
-	draw_circle(thumb + Vector2(0.0, 4.0), THUMB_RADIUS, THUMB_SHADE)
 	draw_circle(thumb, THUMB_RADIUS, THUMB_COLOR)
-	draw_circle(thumb + Vector2(-10.0, -10.0), THUMB_RADIUS * 0.35, Color(1, 1, 1, 0.45))
 
 
 func _to_local(viewport_position: Vector2) -> Vector2:

@@ -18,6 +18,8 @@ var respawn_time_left: float = 0.0
 var dash_time_left: float = 0.0
 var dash_direction: Vector2 = Vector2.ZERO
 var stumble_time_left: float = 0.0
+## Rooted by a heavy attack's cast animation (light attacks never root).
+var cast_lock_left: float = 0.0
 var dash_cooldown_left: float = 0.0
 
 var bookmark_cooldown_left: float = 0.0
@@ -50,6 +52,8 @@ var effects: StatusEffects = StatusEffects.new()
 ## Seconds since the ball button was last freshly pressed (catch window, D2).
 var ball_press_age: float = 1.0e9
 ## Ball throw aim: -1 = not aiming; the auto-aim is locked at the press like weapons.
+## The pin (dash): time its button has been held while aiming (-1 = not aiming).
+var pin_aim_hold: float = -1.0
 var ball_aim_hold: float = -1.0
 var ball_aim_lock: Vector2 = Vector2.ZERO
 ## Knockback (tricycle): moved by `push_velocity` until `push_time_left` runs out.

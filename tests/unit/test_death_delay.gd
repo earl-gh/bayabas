@@ -29,6 +29,15 @@ func _downed(sim: MatchSim, id: int = 1) -> PlayerState:
 	return p
 
 
+
+## The pin button: pressed, then released a tick later (a tap dashes the way you face;
+## the move vector is only held for the press tick).
+func _pin(sim: MatchSim, id: int, move: Vector2 = Vector2.ZERO, aim: Vector2 = Vector2.ZERO) -> void:
+	sim.set_input(id, PlayerInput.create(move, Vector2.ZERO, PlayerInput.BTN_BOOKMARK, sim.tick))
+	sim.step(DT)
+	sim.set_input(id, PlayerInput.create(Vector2.ZERO, aim, 0, sim.tick))
+	sim.step(DT)
+
 func test_death_delay_numbers_come_from_data() -> void:
 	assert_true(RULES.death_delay_enabled)
 	assert_eq(RULES.death_delay_gray_hp, 50.0)
@@ -57,7 +66,7 @@ func test_skills_are_disabled_during_the_delay() -> void:
 	var p: PlayerState = _downed(sim)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_DASH)
 	assert_eq(p.dash_time_left, 0.0)
-	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
+	_pin(sim, 1, Vector2.ZERO)
 	assert_false(p.mark_active)
 	assert_eq(p.dash_cooldown_left, 0.0, "no cooldown spent")
 	assert_false(p.can_act())
@@ -67,7 +76,7 @@ func test_starting_the_delay_cancels_active_effects() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
 	p.position = MID
-	_tick(sim, 1, Vector2(0.0, -1.0), PlayerInput.BTN_BOOKMARK)
+	_pin(sim, 1, Vector2(0.0, -1.0))
 	assert_true(p.mark_active)
 	sim.damage(1, 100)
 	assert_false(p.mark_active)

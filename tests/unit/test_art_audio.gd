@@ -119,8 +119,11 @@ func test_each_state_shows_its_own_sprite() -> void:
 	assert_eq(_animation_after(kid, state), "ko_stagger", "delayed death is the stagger pose")
 	state = PlayerState.new()
 	state.stumble_time_left = 0.5
-	assert_eq(_animation_after(kid, state), "down", "the dash stumble is face down")
+	assert_eq(_animation_after(kid, state), "ko_stagger", "a tumble starts with the slightly falling pose")
 	assert_eq(kid.pose, "stumble")
+	for i: int in 6:
+		kid.animate(0.05, 0.0, state)
+	assert_eq(kid.current_animation(), "down", "then the face-down pose")
 
 
 func test_a_knockout_falls_then_lies() -> void:

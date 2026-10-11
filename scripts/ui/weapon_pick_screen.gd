@@ -29,6 +29,7 @@ const KIND_COLORS: Dictionary[WeaponDef.Kind, Color] = {
 	WeaponDef.Kind.ATTACK: Color(1.0, 0.42, 0.34),
 	WeaponDef.Kind.CROWD_CONTROL: Color(0.74, 0.52, 1.0),
 	WeaponDef.Kind.BLOCK: Color(0.42, 0.72, 1.0),
+	WeaponDef.Kind.HEAL: Color(0.45, 0.85, 0.4),
 }
 
 var pick: WeaponPick

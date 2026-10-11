@@ -10,7 +10,7 @@ func test_layout_matches_gdd_numbers() -> void:
 	assert_eq(LAYOUT.base_radius, 2.0)
 	assert_eq(LAYOUT.wall_layers, 2)
 	assert_eq(LAYOUT.wall_columns_per_layer, 3)
-	assert_eq(LAYOUT.wall_hp, 300)
+	assert_eq(LAYOUT.wall_hp, 150)
 
 
 func test_wall_column_count() -> void:
@@ -23,7 +23,7 @@ func test_walls_inside_lane_and_clear_of_each_other() -> void:
 	var lane: Rect2 = LAYOUT.lane_rect()
 	for wall: MapLayout.WallSpec in walls:
 		assert_true(lane.encloses(wall.rect), "wall inside the lane")
-		assert_eq(wall.hp, 300)
+		assert_eq(wall.hp, 150)
 	for i: int in walls.size():
 		for j: int in range(i + 1, walls.size()):
 			assert_false(walls[i].rect.intersects(walls[j].rect), "walls %d and %d overlap" % [i, j])

@@ -16,3 +16,4 @@ damage = 18
 speed = 9.0
 count = 1
 projectile_radius = 0.6
+cast_lock = 0.5
