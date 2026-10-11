@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_layout")
-lane_length = 91.0
+lane_length = 100.0
 lane_width = 16.0
 base_inset = 8.0
 base_radius = 2.0

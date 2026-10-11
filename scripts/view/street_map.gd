@@ -8,34 +8,44 @@ extends Node3D
 
 const OWN_COLOR: Color = Palette.TEAM_OWN
 const ENEMY_COLOR: Color = Palette.TEAM_ENEMY
-const SKY_COLOR: Color = Color(0.72, 0.82, 0.96)
+const SKY_COLOR: Color = Color(0.74, 0.8, 0.9)
 # cinematic morning (see make_environment)
 const SUN_ANGLES: Vector3 = Vector3(-30.0, 52.0, 0.0)
 const SUN_COLOR: Color = Color(1.0, 0.88, 0.7)
-const SUN_ENERGY: float = 1.5
+const SUN_ENERGY: float = 1.15
 const SHADOW_OPACITY: float = 0.62
 const SHADOW_BLUR: float = 1.6
 const FILL_ANGLES: Vector3 = Vector3(-30.0, 258.0, 0.0)
 const FILL_COLOR: Color = Color(0.58, 0.7, 1.0)
 const FILL_ENERGY: float = 0.38
 const AMBIENT_COLOR: Color = Color(0.78, 0.86, 1.0)
-const AMBIENT_ENERGY: float = 0.72
-const EXPOSURE: float = 1.0
+const AMBIENT_ENERGY: float = 0.82
+const EXPOSURE: float = 0.94
 const TONEMAP_WHITE: float = 4.0
-const GLOW_INTENSITY: float = 0.45
-const GLOW_BLOOM: float = 0.12
-const GLOW_THRESHOLD: float = 0.92
-const SATURATION: float = 1.16
-const CONTRAST: float = 1.08
-const BRIGHTNESS: float = 1.0
+const GLOW_INTENSITY: float = 0.18
+const GLOW_BLOOM: float = 0.03
+const GLOW_THRESHOLD: float = 1.1
+const SATURATION: float = 0.9
+const CONTRAST: float = 0.97
+const BRIGHTNESS: float = 0.97
 const HAZE_COLOR: Color = Color(1.0, 0.9, 0.8)
-const HAZE_DENSITY: float = 0.0016
+const HAZE_DENSITY: float = 0.002
 const RING_HEIGHT: float = 0.03
-const YARD_ALPHA: float = 0.5
+const YARD_ALPHA: float = 0.4
+## The yard tint is mixed this far toward a soft grey so it is calm, not neon.
+const YARD_SOFTEN: float = 0.45
+const SOFT_GREY: Color = Color(0.62, 0.64, 0.7)
 const CURB_HEIGHT: float = 0.35
-## The cross street (the only road, where the tricycle drives): four lanes of 3 m.
-const CROSS_STREET_WIDTH: float = 12.0
-const CROSS_LANE_WIDTH: float = 3.0
+## The cross street (the only road, where the tricycle drives): four lanes of 4 m.
+const CROSS_STREET_WIDTH: float = 16.0
+const CROSS_LANE_WIDTH: float = 4.0
+## The road has a pedestrian crossing (horizontal bars) joining the two alleys.
+const PEDESTRIAN_WIDTH: float = 2.4
+## The crossing is narrow (5 m wide) and runs through the middle of the road.
+const CROSSING_WIDTH: float = 5.0
+const CROSSING_BAR: float = 0.4
+const CROSSING_GAP: float = 0.3
+const CROSSING_PAINT: Color = Color(0.93, 0.92, 0.86)
 const SIDEWALK_WIDTH: float = 2.4
 const HOUSE_SPACING: float = 6.5
 const END_WALL_HEIGHT: float = 2.4
@@ -148,6 +158,8 @@ func set_own_side(own_side: int) -> void:
 	for side: int in _base_materials:
 		for material: StandardMaterial3D in _base_materials[side]:
 			var tint: Color = OWN_COLOR if side == own_side else ENEMY_COLOR
+			if material == _base_materials[side][1]:
+				tint = tint.lerp(SOFT_GREY, YARD_SOFTEN)  # the yard tint is the soft one
 			tint.a = material.albedo_color.a
 			material.albedo_color = tint
 	for decal: MeshInstance3D in _readable:
@@ -191,9 +203,14 @@ func _build_map() -> void:
 		_add(Props.laundry_line(4.0), Vector3(-half_w - 1.2, 0.0, z))
 	for z: float in [-half_l * 0.2, half_l * 0.75]:
 		_add(Props.laundry_line(3.0), Vector3(half_w + 1.2, 0.0, z))
-	for z: float in [-half_l * 0.85, -4.5, 4.5, half_l * 0.5]:
+	for z: float in [-half_l * 0.85, half_l * 0.5]:
 		_add(Props.potted_plant(), Vector3(half_w + 0.75, 0.0, z))
 		_add(Props.potted_plant(), Vector3(-half_w - 0.75, 0.0, -z))
+	# a signal gantry at the left and the right of the main road: a pole in each alley,
+	# a bar over the road joining them, a horizontal light in the middle facing the drivers
+	var gantry_span: float = CROSS_STREET_WIDTH + 2.0 * PEDESTRIAN_WIDTH + 0.8
+	for side: float in [-1.0, 1.0]:
+		_add(Props.signal_gantry(gantry_span), Vector3(side * (half_w - 0.8), 0.0, 0.0))
 	_add_details()
 
 
@@ -251,7 +268,13 @@ func _road() -> ArrayMesh:
 	kit.box(Vector3(0.0, -0.05, 0.0), Vector3(layout.lane_width, 0.1, layout.lane_length), ALLEY_FLOOR)
 	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
 	kit.box(Vector3(0.0, -0.045, 0.0), Vector3(reach * 2.0, 0.1, CROSS_STREET_WIDTH), Palette.ASPHALT_DARK)
-	# four lanes: a dashed line, a solid line and a dashed line between them (no white lines)
+	# one pedestrian crossing through the middle of the road, from one alley to the other
+	var crossing_half: float = CROSS_STREET_WIDTH / 2.0 + PEDESTRIAN_WIDTH
+	var bar_z: float = -crossing_half + CROSSING_BAR / 2.0 + 0.2
+	while bar_z < crossing_half - 0.2:
+		kit.box(Vector3(0.0, 0.007, bar_z), Vector3(CROSSING_WIDTH, 0.02, CROSSING_BAR), CROSSING_PAINT)
+		bar_z += CROSSING_BAR + CROSSING_GAP
+	# four lanes: a dashed line, a solid line and a dashed line between them
 	var x: float = -reach + 1.0
 	while x < reach - 1.0:
 		for z: float in [-CROSS_LANE_WIDTH, CROSS_LANE_WIDTH]:
@@ -274,10 +297,7 @@ func _sides() -> ArrayMesh:
 			var center_z: float = segment * (CROSS_STREET_WIDTH / 2.0 + length / 2.0)
 			kit.box(Vector3(side * (half_w + t / 2.0), CURB_HEIGHT / 2.0, center_z), Vector3(t, CURB_HEIGHT, length), Palette.CURB, Palette.CURB)
 			_alley_wall(kit, side, segment, length)
-		# low fence pieces along the crossing so the lane edge still reads
-		for z: float in [-CROSS_STREET_WIDTH / 2.0 + 0.3, CROSS_STREET_WIDTH / 2.0 - 0.3]:
-			kit.box(Vector3(side * (half_w + t / 2.0), 0.5, z), Vector3(t, 1.0, 0.3), Palette.SARI_YELLOW)
-		kit.box(Vector3(side * (half_w + t / 2.0), CURB_HEIGHT / 2.0, 0.0), Vector3(t, CURB_HEIGHT, CROSS_STREET_WIDTH), Palette.SARI_YELLOW.darkened(0.2))
+		# no wall or paint at the road crossing: the boundary still blocks players there
 	for end: float in [-1.0, 1.0]:
 		kit.box(Vector3(0.0, END_WALL_HEIGHT / 2.0, end * (half_l + t / 2.0)), Vector3(layout.lane_width + 2.0 * t, END_WALL_HEIGHT, t), Palette.WALL_PEACH, Palette.ROOF_RUST)
 	var mesh: ArrayMesh = kit.commit()
@@ -318,6 +338,11 @@ func _add_ground_textures() -> void:
 		var floor_piece: MeshInstance3D = StreetArt.ground("alley", Vector2(layout.lane_width, length), GROUND_TILE, ALLEY_TINT)
 		floor_piece.position = Vector3(0.0, GROUND_LIFT, segment * (CROSS_STREET_WIDTH / 2.0 + length / 2.0))
 		_geometry.add_child(floor_piece)
+	# the pedestrian crossing between each alley and the road: asphalt with the bars on it
+	for side: float in [-1.0, 1.0]:
+		var crossing: MeshInstance3D = StreetArt.ground("asphalt", Vector2(layout.lane_width, PEDESTRIAN_WIDTH), GROUND_TILE, CROSS_STREET_TINT)
+		crossing.position = Vector3(0.0, GROUND_LIFT * 2.0, side * (CROSS_STREET_WIDTH / 2.0 + PEDESTRIAN_WIDTH / 2.0))
+		_geometry.add_child(crossing)
 	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
 	var cross: MeshInstance3D = StreetArt.ground("asphalt", Vector2(reach * 2.0, CROSS_STREET_WIDTH), GROUND_TILE, CROSS_STREET_TINT)
 	cross.position = Vector3(0.0, GROUND_LIFT, 0.0)
@@ -379,7 +404,8 @@ func _add_yard(side: int, color: Color) -> StandardMaterial3D:
 	var mesh: BoxMesh = BoxMesh.new()
 	mesh.size = Vector3(layout.lane_width, RING_HEIGHT, depth)
 	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(color.r, color.g, color.b, YARD_ALPHA)
+	var soft: Color = color.lerp(SOFT_GREY, YARD_SOFTEN)
+	material.albedo_color = Color(soft.r, soft.g, soft.b, YARD_ALPHA)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	# drawn first, so the kids and everything else stand on top of the tint, never under it
 	material.render_priority = -100

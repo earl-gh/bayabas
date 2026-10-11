@@ -5,7 +5,7 @@ const MAP_SCENE: PackedScene = preload("res://scenes/map/street_map.tscn")
 
 
 func test_layout_matches_gdd_numbers() -> void:
-	assert_eq(LAYOUT.lane_length, 91.0)
+	assert_eq(LAYOUT.lane_length, 100.0)
 	assert_eq(LAYOUT.lane_width, 16.0)
 	assert_eq(LAYOUT.base_radius, 2.0)
 	assert_eq(LAYOUT.wall_layers, 2)
@@ -55,8 +55,8 @@ func test_layer_order_from_base_outward() -> void:
 
 
 func test_bases_at_opposite_ends() -> void:
-	assert_eq(LAYOUT.base_center(MapLayout.SIDE_OWN).y, 37.5)
-	assert_eq(LAYOUT.base_center(MapLayout.SIDE_ENEMY).y, -37.5)
+	assert_eq(LAYOUT.base_center(MapLayout.SIDE_OWN).y, 42.0)
+	assert_eq(LAYOUT.base_center(MapLayout.SIDE_ENEMY).y, -42.0)
 
 
 func test_boundary_walls_enclose_lane_without_overlapping_it() -> void:
@@ -95,7 +95,7 @@ func test_the_middle_between_the_middle_wall_rows_is_a_long_road_section() -> vo
 			inner.append(spec.rect.get_center().y)
 	assert_eq(inner.size(), 2)
 	var middle_length: float = absf(inner[0] - inner[1])
-	assert_gt(middle_length, 30.0, "room for the alleys and the four-lane road")
+	assert_gt(middle_length, 40.0, "room for the alleys, the pedestrian lanes and the four-lane road")
 
 
 func _row_z(layer: int) -> float:

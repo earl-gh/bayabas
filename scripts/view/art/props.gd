@@ -369,6 +369,27 @@ static func stop_sign() -> ArrayMesh:
 		return kit.commit())
 
 
+## A traffic-light gantry over the road: a pole at each end (in the two alleys) joined by
+## a bar along Z, `span` metres between the poles, with a horizontal signal in the
+## middle whose lights face the drivers (+X and -X), not the camera.
+static func signal_gantry(span: float) -> ArrayMesh:
+	return cached("gantry_%d" % roundi(span * 10.0), func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		var height: float = 4.6
+		for end: float in [-1.0, 1.0]:
+			kit.box(Vector3(0.0, height / 2.0, end * span / 2.0), Vector3(0.18, height, 0.18), Palette.POST_GREY)
+		kit.box(Vector3(0.0, height - 0.1, 0.0), Vector3(0.22, 0.22, span), Palette.POST_GREY)
+		# the horizontal signal: a housing long along Z, three lights in a row on each face
+		var body: Color = Palette.BLACK.lightened(0.12)
+		kit.box(Vector3(0.0, height - 0.75, 0.0), Vector3(0.55, 0.8, 2.6), body)
+		kit.box(Vector3(0.0, height - 0.3, 0.0), Vector3(0.7, 0.1, 2.8), Palette.BLACK)
+		var colors: Array[Color] = [Palette.JEEP_RED, Palette.SARI_YELLOW.darkened(0.3), Palette.LEAF.darkened(0.35)]
+		for face: float in [-1.0, 1.0]:
+			for i: int in 3:
+				kit.sphere(Vector3(face * 0.3, height - 0.75, (float(i) - 1.0) * 0.8), 0.27, colors[i], 8, 5)
+		return kit.commit())
+
+
 ## A parked jeepney, long axis along Z.
 static func jeepney() -> ArrayMesh:
 	return cached("jeep", func() -> ArrayMesh:
