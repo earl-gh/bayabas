@@ -198,7 +198,7 @@ func test_a_point_removes_the_ball() -> void:
 	var sim: MatchSim = _holding()
 	var me: PlayerState = sim.players[1]
 	me.position = LAYOUT.spawn_center(MapLayout.SIDE_ENEMY)
-	_wait(sim, 4.0)
+	_wait(sim, RULES.base_capture_time + RULES.point_freeze_time + 0.5)
 	assert_eq(sim.ball.state, S.NONE)
 
 

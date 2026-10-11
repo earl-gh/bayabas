@@ -166,7 +166,6 @@ func _build_map() -> void:
 	for side: int in [MapLayout.SIDE_OWN, MapLayout.SIDE_ENEMY]:
 		var center: Vector2 = layout.base_center(side)
 		var color: Color = OWN_COLOR if side == MapLayout.SIDE_OWN else ENEMY_COLOR
-		_add(Props.base_pad(layout.base_radius), Vector3(center.x, 0.0, center.y))
 		var ring: StandardMaterial3D = _add_disc(Vector3(center.x, RING_HEIGHT / 2.0, center.y), layout.base_radius, color)
 		var post: MeshInstance3D = _add(Props.electric_post(), Vector3(center.x, 0.0, center.y))
 		# a team-coloured band on the post so you can tell bases apart from afar

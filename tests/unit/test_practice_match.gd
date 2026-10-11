@@ -478,7 +478,7 @@ func test_done_closes_and_the_swap_button_reopens_while_dead() -> void:
 func _score_point(practice: PracticeMatch) -> void:
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	player.position = LAYOUT.spawn_center(-practice.own_side())
-	for i: int in 20:
+	for i: int in ceili((practice.sim.rules.base_capture_time + 0.3) / DT):
 		practice.advance(DT)
 
 

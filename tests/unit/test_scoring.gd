@@ -27,7 +27,7 @@ func _finish_freeze(sim: MatchSim) -> void:
 # ---- MatchScore --------------------------------------------------------------
 
 func test_scoring_numbers_come_from_data() -> void:
-	assert_eq(RULES.base_capture_time, 0.5)
+	assert_eq(RULES.base_capture_time, 2.0)
 	assert_eq(RULES.point_freeze_time, 3.0)
 	assert_eq(RULES.set_points_to_win, 5)
 	assert_eq(RULES.set_win_by, 2)
@@ -74,14 +74,14 @@ func test_best_of_three_sets() -> void:
 
 # ---- base capture --------------------------------------------------------------
 
-func test_standing_behind_the_enemy_inner_wall_for_half_a_second_scores() -> void:
+func test_standing_behind_the_enemy_inner_wall_for_two_seconds_scores() -> void:
 	var sim: MatchSim = _sim()
 	var me: PlayerState = sim.add_player(1, 0)
 	watch_signals(sim)
 	me.position = LAYOUT.spawn_center(MapLayout.SIDE_ENEMY) + Vector2(1.5, 0.0)
-	_wait(sim, 0.4)
+	_wait(sim, RULES.base_capture_time - 0.2)
 	assert_eq(sim.score.points[0], 0, "not yet")
-	_wait(sim, 0.2)
+	_wait(sim, 0.4)
 	assert_eq(sim.score.points[0], 1)
 	assert_signal_emitted_with_parameters(sim, "point_scored", [0, 1])
 	assert_eq(sim.phase, MatchSim.Phase.POINT_FREEZE)
@@ -92,11 +92,11 @@ func test_stepping_out_resets_the_capture_timer() -> void:
 	var me: PlayerState = sim.add_player(1, 0)
 	var base: Vector2 = LAYOUT.spawn_center(MapLayout.SIDE_ENEMY)
 	me.position = base
-	_wait(sim, 0.3)
+	_wait(sim, RULES.base_capture_time - 0.5)
 	me.position = base + Vector2(0.0, 10.0)
 	sim.step(DT)
 	me.position = base
-	_wait(sim, 0.3)
+	_wait(sim, RULES.base_capture_time - 0.5)
 	assert_eq(sim.score.points[0], 0)
 
 
@@ -111,12 +111,12 @@ func test_cc_or_death_delay_in_the_base_does_not_score() -> void:
 	var sim: MatchSim = _sim()
 	var me: PlayerState = sim.add_player(1, 0)
 	me.position = LAYOUT.spawn_center(MapLayout.SIDE_ENEMY)
-	sim.apply_effect(1, StatusEffects.Type.STUN, 1.0, 0.0)
-	_wait(sim, 0.8)
+	sim.apply_effect(1, StatusEffects.Type.STUN, RULES.base_capture_time + 1.0, 0.0)
+	_wait(sim, RULES.base_capture_time + 0.3)
 	assert_eq(sim.score.points[0], 0, "stunned")
 	sim.damage(1, 100)
 	assert_true(me.death_delay)
-	_wait(sim, 0.8)
+	_wait(sim, RULES.base_capture_time + 0.3)
 	assert_eq(sim.score.points[0], 0, "down")
 
 
