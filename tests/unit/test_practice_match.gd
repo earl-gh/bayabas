@@ -683,3 +683,18 @@ func test_biting_the_guava_heals_and_pops_a_green_number() -> void:
 func _toward_enemy(practice: PracticeMatch) -> Vector2:
 	var flip: bool = practice.own_side() == MapLayout.SIDE_ENEMY
 	return LocalInput.to_screen(Vector2(0.0, -float(practice.own_side())), flip, CAMERA.yaw_offset_degrees)
+
+
+func test_the_guava_button_only_shows_while_you_hold_the_guava() -> void:
+	var practice: PracticeMatch = _practice()
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	player.position = Vector2(0.0, 6.0)
+	practice.advance(DT)
+	assert_false(practice.hud.ball_button.visible, "no guava yet")
+	player.position = Vector2.ZERO
+	practice.sim.ball.spawn_timer = 0.0
+	practice.advance(DT)
+	practice.advance(DT)
+	practice.advance(DT)
+	assert_true(practice.sim.ball.is_holder(PracticeMatch.LOCAL_ID))
+	assert_true(practice.hud.ball_button.visible, "holding it")

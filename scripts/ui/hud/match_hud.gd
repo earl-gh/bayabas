@@ -179,6 +179,9 @@ func _sync_guava_button(sim: MatchSim, player: PlayerState, local_id: int) -> vo
 	ball_button.highlight = sim.ball.is_holder(local_id)
 	_set_icon(ball_button, &"guava_bitten" if sim.ball.is_holder(local_id) and sim.ball.bites > 0 else &"guava")
 	ball_button.set_locked(not player.alive or player.death_delay)
+	# no guava in hand, nothing to blink to and nothing flying at you to catch: no button
+	var incoming: bool = sim.ball.state == RubberBall.State.FLYING and sim.ball.team != player.team
+	ball_button.visible = player.alive and (sim.ball.is_holder(local_id) or text == "Blink" or incoming)
 
 
 # ---- building ------------------------------------------------------------------
