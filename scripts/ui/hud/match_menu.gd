@@ -1,8 +1,7 @@
 class_name MatchMenu
 extends Control
 ## The in-match settings modal: a see-through navy card with a gold frame and a
-## title plate, a close button, the handedness switch (controls on the right or the
-## left), the practice test buttons and Resume / Exit. Built in code.
+## title plate, a close button, the practice test buttons and Resume / Exit. Built in code.
 
 signal closed
 signal exit_pressed
@@ -13,15 +12,13 @@ const BACKDROP: Color = Color(0.02, 0.02, 0.06, 0.32)
 const GOLD: Color = Color(1.0, 0.8, 0.32)
 const GOLD_DARK: Color = Color(0.62, 0.4, 0.1)
 const INK: Color = Color(0.1, 0.06, 0.06)
-const CARD_SIZE: Vector2 = Vector2(440.0, 560.0)
+const CARD_SIZE: Vector2 = Vector2(440.0, 480.0)
 ## The card is a little see-through, so the street shows behind it.
 const CARD_ALPHA: float = 0.9
 const BUTTON_HEIGHT: float = 62.0
 
 var hurt_button: Button
 var tricycle_button: Button
-var left_button: Button
-var right_button: Button
 
 var _test_title: Label
 
@@ -45,14 +42,6 @@ func _ready() -> void:
 	var column: VBoxContainer = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)
 	card.add_child(column)
-	_section(column, "CONTROLS")
-	var segments: HBoxContainer = HBoxContainer.new()
-	segments.add_theme_constant_override("separation", 0)
-	column.add_child(segments)
-	left_button = _segment("Left hand", segments)
-	right_button = _segment("Right hand", segments)
-	left_button.pressed.connect(_set_left.bind(true))
-	right_button.pressed.connect(_set_left.bind(false))
 	_test_title = _section(column, "PRACTICE")
 	hurt_button = _button("-30 HP (test)", "blue", column)
 	hurt_button.pressed.connect(hurt_pressed.emit)
@@ -68,11 +57,9 @@ func _ready() -> void:
 	# siblings of the card (a container would lay them out inside it)
 	_title_plate()
 	_close_button()
-	_show_handedness(Settings.left_handed)
 
 
 func open() -> void:
-	_show_handedness(Settings.left_handed)
 	_test_title.visible = hurt_button.visible or tricycle_button.visible
 	visible = true
 
@@ -81,16 +68,6 @@ func close() -> void:
 	if visible:
 		visible = false
 		closed.emit()
-
-
-func _set_left(on: bool) -> void:
-	Settings.set_left_handed(on)
-	_show_handedness(on)
-
-
-func _show_handedness(left: bool) -> void:
-	left_button.button_pressed = left
-	right_button.button_pressed = not left
 
 
 func _on_backdrop_input(event: InputEvent) -> void:
@@ -144,22 +121,6 @@ func _section(parent: Control, text: String) -> Label:
 	label.add_theme_color_override("font_color", GOLD)
 	parent.add_child(label)
 	return label
-
-
-func _segment(text: String, parent: Control) -> Button:
-	var button: Button = Button.new()
-	button.text = text
-	button.toggle_mode = true
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
-	button.add_theme_font_size_override("font_size", 22)
-	# painted: grey when off, gold when chosen
-	button.add_theme_stylebox_override("normal", KalyeahTheme.painted_button("grey"))
-	button.add_theme_stylebox_override("hover", KalyeahTheme.painted_button("grey", false, Color(1.08, 1.08, 1.08)))
-	button.add_theme_stylebox_override("pressed", KalyeahTheme.painted_button("gold"))
-	button.add_theme_stylebox_override("hover_pressed", KalyeahTheme.painted_button("gold"))
-	parent.add_child(button)
-	return button
 
 
 func _button(text: String, paint: String, parent: Control) -> Button:

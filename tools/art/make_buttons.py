@@ -65,22 +65,37 @@ DISC = os.path.join(ROOT, "assets", "ui", "skill_disc.png")
 FACE_RATIO = 0.44  # radius of the flat cardboard face, as a fraction of the disc width
 
 
-def compose(icon_path, scale=0.92, nudge=(0, 0)):
+def centroid(alpha):
+    """Alpha-weighted centre of an image, in pixels."""
+    a = np.asarray(alpha, dtype=np.float32)
+    total = a.sum() or 1.0
+    ys, xs = np.mgrid[0:a.shape[0], 0:a.shape[1]]
+    return float((a * xs).sum() / total), float((a * ys).sum() / total)
+
+
+def compose(icon_path, scale=0.98, nudge=(0, 0)):
     """The cardboard disc with the whole painted icon sitting inside its flat face (not cropped)."""
     img = Image.new("RGBA", (N, N), (0, 0, 0, 0))
     disc = Image.open(DISC).convert("RGBA")
     side = int(N * 0.97)
     disc = disc.resize((side, int(side * disc.height / disc.width)), Image.LANCZOS)
-    ox, oy = (N - disc.width) // 2, (N - disc.height) // 2 + 2 * SS
+    ox, oy = (N - disc.width) // 2, (N - disc.height) // 2
     shadow = Image.new("RGBA", (N, N), (0, 0, 0, 0))
     shadow.paste(Image.new("RGBA", disc.size, (10, 6, 12, 255)), (ox, oy + 5 * SS), disc.split()[3].filter(ImageFilter.GaussianBlur(3 * SS)).point(lambda v: v * 120 // 255))
     img.alpha_composite(shadow)
     img.alpha_composite(disc, (ox, oy))
-    cx, cy = ox + disc.width / 2, oy + disc.height / 2
+    # the centre of the flat face: the disc's own weight centre (its rim is uneven)
+    dx, dy = centroid(disc.split()[3])
+    cx, cy = ox + dx, oy + dy
     icon = Image.open(icon_path).convert("RGBA")
     isz = int(disc.width * FACE_RATIO * 2 * scale)
     icon = icon.resize((isz, isz), Image.LANCZOS)
-    img.alpha_composite(icon, (int(cx - isz / 2 + nudge[0] * SS), int(cy - isz / 2 + nudge[1] * SS)))
+    # optical centring: put the visual weight of the icon (not its box) on the face centre
+    mx, my = centroid(icon.split()[3])
+    limit = isz * 0.07
+    shift_x = max(-limit, min(limit, isz / 2 - mx))
+    shift_y = max(-limit, min(limit, isz / 2 - my))
+    img.alpha_composite(icon, (int(cx - isz / 2 + shift_x + nudge[0] * SS), int(cy - isz / 2 + shift_y + nudge[1] * SS)))
     return img.resize((SIZE, SIZE), Image.LANCZOS)
 
 
@@ -90,7 +105,7 @@ def main():
         print("btn_" + wid, ["ATK", "CC", "BLK"][kind])
     for name in ("heal", "guava", "guava_bitten", "dash", "pin_return"):
         compose(os.path.join(ART, name + ".png")).save(os.path.join(ICONS, "btn_%s.png" % name), optimize=True)
-    compose(os.path.join(ICONS, "pin.png"), scale=0.74, nudge=(0, 2)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)
+    compose(os.path.join(ICONS, "pin.png"), scale=0.84, nudge=(0, 2)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)
     print("buttons done")
 
 
