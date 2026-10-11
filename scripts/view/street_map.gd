@@ -36,9 +36,11 @@ const YARD_ALPHA: float = 0.4
 const YARD_SOFTEN: float = 0.45
 const SOFT_GREY: Color = Color(0.62, 0.64, 0.7)
 const CURB_HEIGHT: float = 0.35
-## The cross street (the only road, where the tricycle drives): four lanes of 3 m.
-const CROSS_STREET_WIDTH: float = 12.0
-const CROSS_LANE_WIDTH: float = 3.0
+## The cross street (the only road, where the tricycle drives): four lanes of 4 m.
+const CROSS_STREET_WIDTH: float = 16.0
+const CROSS_LANE_WIDTH: float = 4.0
+## A pedestrian lane (paved strip) between each alley and the road.
+const PEDESTRIAN_WIDTH: float = 2.4
 const SIDEWALK_WIDTH: float = 2.4
 const HOUSE_SPACING: float = 6.5
 const END_WALL_HEIGHT: float = 2.4
@@ -279,10 +281,7 @@ func _sides() -> ArrayMesh:
 			var center_z: float = segment * (CROSS_STREET_WIDTH / 2.0 + length / 2.0)
 			kit.box(Vector3(side * (half_w + t / 2.0), CURB_HEIGHT / 2.0, center_z), Vector3(t, CURB_HEIGHT, length), Palette.CURB, Palette.CURB)
 			_alley_wall(kit, side, segment, length)
-		# low fence pieces along the crossing so the lane edge still reads
-		for z: float in [-CROSS_STREET_WIDTH / 2.0 + 0.3, CROSS_STREET_WIDTH / 2.0 - 0.3]:
-			kit.box(Vector3(side * (half_w + t / 2.0), 0.5, z), Vector3(t, 1.0, 0.3), Palette.SARI_YELLOW.lerp(SOFT_GREY, 0.35))
-		kit.box(Vector3(side * (half_w + t / 2.0), CURB_HEIGHT / 2.0, 0.0), Vector3(t, CURB_HEIGHT, CROSS_STREET_WIDTH), Palette.SARI_YELLOW.lerp(SOFT_GREY, 0.35).darkened(0.2))
+		# no wall or paint at the road crossing: the boundary still blocks players there
 	for end: float in [-1.0, 1.0]:
 		kit.box(Vector3(0.0, END_WALL_HEIGHT / 2.0, end * (half_l + t / 2.0)), Vector3(layout.lane_width + 2.0 * t, END_WALL_HEIGHT, t), Palette.WALL_PEACH, Palette.ROOF_RUST)
 	var mesh: ArrayMesh = kit.commit()
@@ -323,6 +322,11 @@ func _add_ground_textures() -> void:
 		var floor_piece: MeshInstance3D = StreetArt.ground("alley", Vector2(layout.lane_width, length), GROUND_TILE, ALLEY_TINT)
 		floor_piece.position = Vector3(0.0, GROUND_LIFT, segment * (CROSS_STREET_WIDTH / 2.0 + length / 2.0))
 		_geometry.add_child(floor_piece)
+	# a pedestrian lane (pavers) between each alley and the road
+	for side: float in [-1.0, 1.0]:
+		var walk: MeshInstance3D = StreetArt.ground("pavers", Vector2(layout.lane_width, PEDESTRIAN_WIDTH), PAVER_TILE)
+		walk.position = Vector3(0.0, GROUND_LIFT * 2.0, side * (CROSS_STREET_WIDTH / 2.0 + PEDESTRIAN_WIDTH / 2.0))
+		_geometry.add_child(walk)
 	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
 	var cross: MeshInstance3D = StreetArt.ground("asphalt", Vector2(reach * 2.0, CROSS_STREET_WIDTH), GROUND_TILE, CROSS_STREET_TINT)
 	cross.position = Vector3(0.0, GROUND_LIFT, 0.0)
