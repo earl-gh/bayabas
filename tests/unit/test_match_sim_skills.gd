@@ -98,7 +98,7 @@ func test_other_team_respawns_at_its_own_base() -> void:
 	sim.kill(2)
 	_run(sim, 2, Vector2.ZERO, 305)
 	assert_true(p.alive)
-	assert_eq(p.position, LAYOUT.base_center(MapLayout.SIDE_ENEMY))
+	assert_eq(p.position, LAYOUT.spawn_center(MapLayout.SIDE_ENEMY))
 
 
 func test_death_cancels_dash_and_bookmark_effects() -> void:

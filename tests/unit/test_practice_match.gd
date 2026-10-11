@@ -40,7 +40,7 @@ func _enemy_ahead(practice: PracticeMatch, distance: float) -> PlayerState:
 func test_local_player_starts_at_own_base_seen_from_behind() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
-	assert_eq(player.position, LAYOUT.base_center(MapLayout.SIDE_OWN))
+	assert_eq(player.position, LAYOUT.spawn_center(MapLayout.SIDE_OWN))
 	var camera: Camera3D = practice.get_node("%FollowCamera") as Camera3D
 	assert_gt(camera.position.z, player.position.y - 0.001, "camera is behind the player (+Z side)")
 	assert_almost_eq(camera.rotation_degrees.y, CAMERA.yaw_offset_degrees, 0.001, "behind and to the right")
@@ -120,7 +120,8 @@ func test_skill_presses_do_nothing_in_the_death_delay() -> void:
 
 func test_touching_the_base_post_gets_you_up_again() -> void:
 	var practice: PracticeMatch = _practice()
-	# the local player spawns at their own base post
+	# the post stands in the middle of the own inner wall; walk to it
+	practice.sim.players[PracticeMatch.LOCAL_ID].position = LAYOUT.base_center(practice.own_side())
 	practice.hurt_local(100)
 	practice.advance(DT)
 	assert_eq(practice.sim.players[PracticeMatch.LOCAL_ID].hp, 50)
@@ -476,8 +477,8 @@ func test_done_closes_and_the_swap_button_reopens_while_dead() -> void:
 
 func _score_point(practice: PracticeMatch) -> void:
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
-	player.position = LAYOUT.base_center(-practice.own_side())
-	for i: int in 20:
+	player.position = LAYOUT.spawn_center(-practice.own_side())
+	for i: int in ceili((practice.sim.rules.base_capture_time + 0.3) / DT):
 		practice.advance(DT)
 
 

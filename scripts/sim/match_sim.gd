@@ -562,9 +562,9 @@ func _move_by(state: PlayerState, delta: Vector2) -> void:
 		state.position = Collision.resolve(state.position + piece, state.radius, blocking)
 
 
-## Slot 0 at the base post, then alternating +x / -x by spawn_spacing.
+## Slot 0 in the middle of the yard behind the inner wall, then alternating +x / -x by spawn_spacing.
 func _spawn_position(side: int, slot: int) -> Vector2:
-	var base: Vector2 = layout.base_center(side)
+	var base: Vector2 = layout.spawn_center(side)
 	var offset: int = ceili(slot / 2.0)
 	var direction: int = 1 if slot % 2 == 1 else -1
 	return base + Vector2(direction * offset * rules.spawn_spacing, 0.0)
@@ -692,15 +692,15 @@ func _ball_auto_aim(state: PlayerState) -> Vector2:
 	return state.facing
 
 
-## A living, uncontrolled player standing in the enemy base zone long enough scores.
+## A living, uncontrolled player standing behind the enemy's inner wall long enough scores.
 func _check_base_captures(dt: float) -> void:
 	for id: int in players:
 		var state: PlayerState = players[id]
 		if not state.alive or state.death_delay or not state.effects.can_cast():
 			state.base_time = 0.0
 			continue
-		var enemy_base: Vector2 = layout.base_center(-side_for_team(state.team))
-		if state.position.distance_to(enemy_base) > layout.base_radius:
+		# behind the enemy's inner wall (the electric post stands in that wall) is a point
+		if not layout.in_yard(-side_for_team(state.team), state.position):
 			state.base_time = 0.0
 			continue
 		state.base_time += dt

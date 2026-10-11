@@ -9,7 +9,7 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Move speed | 5.0 m/s |
 | Server tick | 30 Hz; snapshots to clients at 20 Hz |
 | Weapon pick time | 10 s (match start); unpicked slots auto-fill with random weapons |
-| Respawn time | 10 s after a real death, at own base; weapons can be swapped any number of times during the timer (D13) |
+| Respawn time | 10 s after a real death, in own yard; weapons can be swapped any number of times during the timer (D13) |
 | Basic attack | **None.** There is no basic attack: players only use the weapons they picked plus the two default skills (owner decision) |
 
 ## Characters (cosmetic, randomized)
@@ -74,14 +74,14 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Lata travels at 14 m/s to its point before it lands; bato heavy lands 0.6 s after the cast.
 - Effects are applied before damage. Players in the death delay are not hit by anything (D8).
 
-## Map (single mid lane, ~105 m long × 16 m wide)
-- Layout per side, from base outward: base post → wall layer 1 → wall layer 2 → mid.
+## Map (single mid lane, 80 m long × 16 m wide)
+- Layout per side, from the lane end toward mid: the **yard** (8 m) → the **inner wall row**, with the **electric post standing at the center of it** → a long stretch → the **middle wall row** → mid.
 - Each wall layer = 3 columns (left / center / right), each column 300 HP. A column at 0 HP is removed and opens that slot. Every hit shows: the sheet flashes and wobbles, cardboard chips fly, the damage number pops above it, a cardboard-coloured health bar appears over a damaged column, and rips, holes and tape spread over it as it weakens; it bursts into chips when it breaks.
 - **A team passes straight through its own cardboard walls; the enemy team is blocked by them** (owner decision, completes D5). Boundary walls block everyone. Walls take damage from enemy attacks and the ball (ball: 60). Which projectiles a wall stops: enemy projectiles are blocked; own-team projectiles pass through (D11).
 - What damages a wall column: enemy weapons deal their normal damage to it. The targeted rock (Bato light) normally needs an enemy in range; with none, it is thrown straight at the nearest enemy wall column in range instead. A projectile that hits it deals its damage once (a boomerang turns back); ground areas, jacks ticks and bola bounces hit every column inside their circle; cones hit columns in front within range. Non-damaging weapons (trap, shield) don't hurt walls. Own walls never take damage from their own team.
-- Base zone: circle r=2 around the electric post. A living, non-CC'd enemy standing in it for 0.5 s scores.
+- **Scoring (owner): going behind the enemy's inner wall is a point.** A living, non-CC'd enemy standing in the yard behind a team's inner wall for **2 s** (`base_capture_time`, owner: harder than before) scores. The yard is tinted in that team's colour. The enemy team is blocked by the inner wall, so they have to break a column (300 HP) to get in. Players start and respawn in the middle of their own yard; the electric post (revive touch) is at the center of the inner wall.
 - Boundary walls on the long sides (house fronts, fences).
-- Lane geometry, spaced like the towers and nexus of LoL and MLBB (owner): the electric post (our nexus) is 4 m from each lane end, 48.5 m from the middle. Measured from the post toward the middle, the **inner wall row** (our inner tower) is **58%** of the way (28.1 m) and the **outer wall row** (our outer tower) **78%** (37.8 m), 9.7 m apart, so the outer rows are close to mid like the outer towers are. The middle between the two outer rows stays 16 x 21.3 m, a 3:4 rectangle, which is why the lane grew from 60 m to 105 m. All of it lives in `data/rules/map_layout.tres` (`lane_length`, `base_inset`, `wall_first_layer_from_base`, `wall_layer_spacing`); adjust there, not in code. The look is separate (`docs/ART.md`). Ranges, speeds and the 15 s guava spawn are unchanged; a lane end to end now takes about 21 s at full speed instead of 12 s, so balance is re-checked in M6.
+- Lane geometry (owner): **the distance between a team's middle wall row and its inner wall row is the same as the distance between the two middle rows**, 21.3 m, so the middle stays 16 x 21.3 m (3:4) and so does the stretch in front of each base. The post/inner wall row is 32 m from the middle and 8 m from the lane end (80 m lane). It lives in `data/rules/map_layout.tres` (`lane_length`, `base_inset`, `wall_first_layer_from_base`, `wall_layer_spacing`); adjust there, not in code. The look is separate (`docs/ART.md`). A lane end to end takes about 16 s at full speed.
 
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.
@@ -101,7 +101,7 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - The pin bar shows your own and everyone else's pin (it fills as it recharges; it turns gold and drains while the kid is out on the pin). The minimap is a square, cropped to its frame, with the lane slanted from your base (bottom left) to the enemy base (top right).
 
 ## Scoring (volleyball format)
-- **Point**: reach enemy base. After a point: 3 s freeze, all players reset to their bases at full HP, cooldowns reset. Walls **persist** within a set.
+- **Point**: get behind the enemy's inner wall (see Map). After a point: 3 s freeze, all players reset to their bases at full HP, cooldowns reset. Walls **persist** within a set.
 - **Set**: first to 5 points, win by 2, hard cap 7.
 - **Match**: best of 3 sets. Teams switch bases each set; walls fully rebuild each set.
 - Implementation defaults: during the 3 s freeze nothing moves. The reset also clears status effects, weapon objects on the field, the ball (its 15 s spawn timer restarts) and an active tricycle crossing (the next one comes a full interval later). Dead players come back too. After the last point of the match the game stops and shows the result. Numbers in `data/rules/game_rules.tres` (`base_capture_time`, `point_freeze_time`, `set_points_to_win`, `set_win_by`, `set_point_cap`, `match_sets_to_win`).
