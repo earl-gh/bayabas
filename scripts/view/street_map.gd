@@ -39,13 +39,12 @@ const CURB_HEIGHT: float = 0.35
 ## The cross street (the only road, where the tricycle drives): four lanes of 4 m.
 const CROSS_STREET_WIDTH: float = 16.0
 const CROSS_LANE_WIDTH: float = 4.0
-## A pedestrian crossing (horizontal bars) between each alley and the road.
+## The road has a pedestrian crossing (horizontal bars) joining the two alleys.
 const PEDESTRIAN_WIDTH: float = 2.4
-const CROSSING_BARS: int = 4
-const CROSSING_BAR: float = 0.34
-const CROSSING_GAP: float = 0.2
-## Stop lights are drawn bigger than life so they read from the high camera.
-const STOP_LIGHT_SCALE: float = 1.5
+## The crossing is narrow (5 m wide) and runs through the middle of the road.
+const CROSSING_WIDTH: float = 5.0
+const CROSSING_BAR: float = 0.4
+const CROSSING_GAP: float = 0.3
 const CROSSING_PAINT: Color = Color(0.93, 0.92, 0.86)
 const SIDEWALK_WIDTH: float = 2.4
 const HOUSE_SPACING: float = 6.5
@@ -207,11 +206,11 @@ func _build_map() -> void:
 	for z: float in [-half_l * 0.85, half_l * 0.5]:
 		_add(Props.potted_plant(), Vector3(half_w + 0.75, 0.0, z))
 		_add(Props.potted_plant(), Vector3(-half_w - 0.75, 0.0, -z))
-	# stop lights at the left and right of the main road, instead of plants
+	# a signal gantry at the left and the right of the main road: a pole in each alley,
+	# a bar over the road joining them, a horizontal light in the middle facing the drivers
+	var gantry_span: float = CROSS_STREET_WIDTH + 2.0 * PEDESTRIAN_WIDTH + 0.8
 	for side: float in [-1.0, 1.0]:
-		for z: float in [-CROSS_STREET_WIDTH / 2.0 + 0.8, CROSS_STREET_WIDTH / 2.0 - 0.8]:
-			var light: MeshInstance3D = _add(Props.stop_light(), Vector3(side * (half_w + 0.8), 0.0, z))
-			light.scale = Vector3.ONE * STOP_LIGHT_SCALE
+		_add(Props.signal_gantry(gantry_span), Vector3(side * (half_w - 0.8), 0.0, 0.0))
 	_add_details()
 
 
@@ -269,11 +268,12 @@ func _road() -> ArrayMesh:
 	kit.box(Vector3(0.0, -0.05, 0.0), Vector3(layout.lane_width, 0.1, layout.lane_length), ALLEY_FLOOR)
 	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
 	kit.box(Vector3(0.0, -0.045, 0.0), Vector3(reach * 2.0, 0.1, CROSS_STREET_WIDTH), Palette.ASPHALT_DARK)
-	# the pedestrian crossings: horizontal bars between each alley and the road
-	for side: float in [-1.0, 1.0]:
-		for i: int in CROSSING_BARS:
-			var z: float = side * (CROSS_STREET_WIDTH / 2.0 + 0.2 + CROSSING_BAR * 0.5 + float(i) * (CROSSING_BAR + CROSSING_GAP))
-			kit.box(Vector3(0.0, 0.007, z), Vector3(layout.lane_width - 1.0, 0.02, CROSSING_BAR), CROSSING_PAINT)
+	# one pedestrian crossing through the middle of the road, from one alley to the other
+	var crossing_half: float = CROSS_STREET_WIDTH / 2.0 + PEDESTRIAN_WIDTH
+	var bar_z: float = -crossing_half + CROSSING_BAR / 2.0 + 0.2
+	while bar_z < crossing_half - 0.2:
+		kit.box(Vector3(0.0, 0.007, bar_z), Vector3(CROSSING_WIDTH, 0.02, CROSSING_BAR), CROSSING_PAINT)
+		bar_z += CROSSING_BAR + CROSSING_GAP
 	# four lanes: a dashed line, a solid line and a dashed line between them
 	var x: float = -reach + 1.0
 	while x < reach - 1.0:
