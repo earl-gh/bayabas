@@ -12,7 +12,7 @@ const DUST_AMOUNT: int = 16
 const DUST_BOX: Vector3 = Vector3(9.0, 6.0, 9.0)
 ## Metres in front of the camera where the dust floats (around the hero).
 const DUST_DISTANCE: float = 30.0
-const DUST_COLOR: Color = Color(0.9, 0.96, 1.0, 0.32)
+const DUST_COLOR: Color = Color(1.0, 0.92, 0.74, 0.4)
 
 
 ## Adds the film finish over everything `parent` shows; returns its layer.

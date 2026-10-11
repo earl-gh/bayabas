@@ -181,7 +181,7 @@ func test_bookmark_button_blinks_the_player() -> void:
 	var start_z: float = player.position.y
 	practice.press_skill(PlayerInput.BTN_BOOKMARK)
 	practice.advance(DT)
-	assert_almost_eq(player.position.distance_to(player.mark_position), 2.5, 0.05)
+	assert_almost_eq(player.position.distance_to(player.mark_position), practice.sim.rules.bookmark_blink, 0.05)
 	assert_true(player.mark_active)
 
 

@@ -25,7 +25,7 @@ func test_skill_numbers_come_from_data() -> void:
 	assert_eq(RULES.dash_duration, 0.2)
 	assert_eq(RULES.dash_stumble, 0.4)
 	assert_eq(RULES.dash_cooldown, 8.0)
-	assert_eq(RULES.bookmark_blink, 2.5)
+	assert_eq(RULES.bookmark_blink, 3.2)
 	assert_eq(RULES.bookmark_speed_bonus, 0.0)
 	assert_eq(RULES.bookmark_tumble, 0.45)
 	assert_eq(RULES.bookmark_boost_duration, 4.0)
@@ -192,7 +192,7 @@ func test_the_pin_blinks_a_short_way_tumbles_and_leaves_a_pin() -> void:
 	var p: PlayerState = sim.add_player(1, 0)
 	var start: Vector2 = p.position
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_almost_eq(p.position.y, start.y - 2.5, 0.01)
+	assert_almost_eq(p.position.y, start.y - RULES.bookmark_blink, 0.01)
 	assert_gt(p.stumble_time_left, 0.0, "tumbles after the blink")
 	var tumbling_at: Vector2 = p.position
 	_run(sim, 1, Vector2(1.0, 0.0), 5)
@@ -223,7 +223,7 @@ func test_bookmark_return_is_a_data_toggle() -> void:
 	var start: Vector2 = p.position
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
 	_run(sim, 1, Vector2.ZERO, 130)
-	assert_almost_eq(p.position.y, start.y - 2.5, 0.01, "stays where it blinked")
+	assert_almost_eq(p.position.y, start.y - RULES.bookmark_blink, 0.01, "stays where it blinked")
 
 
 func test_bookmark_cooldown_starts_only_after_returning_to_the_mark() -> void:
@@ -299,9 +299,13 @@ func test_bookmark_blink_stops_at_enemy_walls() -> void:
 func test_bookmark_blink_goes_through_the_own_teams_walls() -> void:
 	var sim: MatchSim = _sim()
 	var p: PlayerState = sim.add_player(1, 0)
-	p.position = Vector2(0.0, 17.2)
+	var row_z: float = 0.0
+	for spec: MapLayout.WallSpec in (load("res://data/rules/map_layout.tres") as MapLayout).wall_columns():
+		if spec.side == MapLayout.SIDE_OWN and spec.layer == 0:
+			row_z = spec.rect.get_center().y
+	p.position = Vector2(0.0, row_z + 1.0)
 	_tick(sim, 1, Vector2.ZERO, PlayerInput.BTN_BOOKMARK)
-	assert_almost_eq(p.position.y, 14.7, 0.05, "straight through the own wall row at 15.7")
+	assert_almost_eq(p.position.y, row_z + 1.0 - RULES.bookmark_blink, 0.05, "straight through the own wall row")
 
 
 ## Near face of the enemy wall layer nearest mid.
