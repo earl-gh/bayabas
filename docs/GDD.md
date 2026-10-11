@@ -32,7 +32,7 @@ All numbers live in `res://data/` resources, never hardcoded. Units: meters, sec
 | Skill | Effect | CD |
 |---|---|---|
 | Takbo (Dash) | 5 m dash over 0.2 s, then 0.4 s stumble (can't move/cast) | 8 s |
-| Pin (Bookmark; replaces Dash on the HUD) | Leaves a pin (red round head) where you stand, blinks 2.5 m forward, tumbles 0.45 s (can't move/cast), then after 4 s snaps back to the pin. **Press again to return early.** | 14 s, **starting when you are back at the pin** |
+| Pin (Bookmark; replaces Dash on the HUD) | Leaves a pin (red round head) where you stand, blinks 3.2 m forward (`bookmark_blink`), tumbles 0.45 s (can't move/cast), then after 4 s snaps back to the pin. **Press again to return early.** | 14 s, **starting when you are back at the pin** |
 
 **One skill at a time (owner):** while one skill button is held (aiming), no other skill button can be pressed or cast; the pin is ignored until the release.
 

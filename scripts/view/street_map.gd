@@ -8,28 +8,28 @@ extends Node3D
 
 const OWN_COLOR: Color = Palette.TEAM_OWN
 const ENEMY_COLOR: Color = Palette.TEAM_ENEMY
-const SKY_COLOR: Color = Color(0.56, 0.8, 0.98)
-# cinematic daylight (see make_environment)
-const SUN_ANGLES: Vector3 = Vector3(-56.0, 40.0, 0.0)
-const SUN_COLOR: Color = Color(0.94, 0.97, 1.0)
-const SUN_ENERGY: float = 1.25
-const SHADOW_OPACITY: float = 0.5
+const SKY_COLOR: Color = Color(0.72, 0.82, 0.96)
+# cinematic morning (see make_environment)
+const SUN_ANGLES: Vector3 = Vector3(-30.0, 52.0, 0.0)
+const SUN_COLOR: Color = Color(1.0, 0.88, 0.7)
+const SUN_ENERGY: float = 1.5
+const SHADOW_OPACITY: float = 0.62
 const SHADOW_BLUR: float = 1.6
 const FILL_ANGLES: Vector3 = Vector3(-30.0, 258.0, 0.0)
-const FILL_COLOR: Color = Color(0.7, 0.82, 1.0)
-const FILL_ENERGY: float = 0.28
-const AMBIENT_COLOR: Color = Color(0.86, 0.92, 1.0)
-const AMBIENT_ENERGY: float = 0.6
+const FILL_COLOR: Color = Color(0.58, 0.7, 1.0)
+const FILL_ENERGY: float = 0.38
+const AMBIENT_COLOR: Color = Color(0.78, 0.86, 1.0)
+const AMBIENT_ENERGY: float = 0.72
 const EXPOSURE: float = 1.0
 const TONEMAP_WHITE: float = 4.0
-const GLOW_INTENSITY: float = 0.25
-const GLOW_BLOOM: float = 0.0
-const GLOW_THRESHOLD: float = 1.0
-const SATURATION: float = 1.12
-const CONTRAST: float = 1.05
+const GLOW_INTENSITY: float = 0.45
+const GLOW_BLOOM: float = 0.12
+const GLOW_THRESHOLD: float = 0.92
+const SATURATION: float = 1.16
+const CONTRAST: float = 1.08
 const BRIGHTNESS: float = 1.0
-const HAZE_COLOR: Color = Color(0.82, 0.9, 1.0)
-const HAZE_DENSITY: float = 0.0008
+const HAZE_COLOR: Color = Color(1.0, 0.9, 0.8)
+const HAZE_DENSITY: float = 0.0016
 const RING_HEIGHT: float = 0.03
 const CURB_HEIGHT: float = 0.35
 const CROSS_STREET_WIDTH: float = 6.0
@@ -83,9 +83,10 @@ func _ready() -> void:
 	_back_button.pressed.connect(_on_back_pressed)
 
 
-## Cool, bright daylight: a high, cool-white sun (crisp shadows), a sky-blue fill
-## from the other side and a bright cool ambient so shadows stay light and blue, a
-## soft bloom on the brightest highlights and a light blue haze into the distance.
+## Cinematic morning: a low golden sun (long soft shadows), a cool blue fill from
+## the other side and a soft lavender ambient so the shadows stay blue against the
+## warm light, a gentle bloom on the highlights and a golden morning mist into the
+## distance.
 static func make_environment() -> Environment:
 	var env: Environment = Environment.new()
 	env.background_mode = Environment.BG_COLOR

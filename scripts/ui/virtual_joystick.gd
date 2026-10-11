@@ -1,7 +1,7 @@
 class_name VirtualJoystick
 extends Control
-## Floating on-screen joystick. Put it over the area it should listen in; the
-## stick appears where the finger lands. Handles real touches (multi-touch safe)
+## On-screen joystick: a fixed see-through circle with a knob that follows the
+## finger. Put it over the area it should listen in. Handles real touches (multi-touch safe)
 ## and the real mouse; ignores mouse events emulated from touch.
 
 signal changed(value: Vector2)
@@ -11,12 +11,9 @@ const DEADZONE: float = 0.1
 const THUMB_RADIUS: float = 38.0
 const NO_POINTER: int = -1
 const MOUSE_POINTER: int = -2
-const BASE_COLOR: Color = Color(0.1, 0.08, 0.14, 0.45)
-const RIM_COLOR: Color = Color(1.0, 0.9, 0.6, 0.75)
+const BASE_COLOR: Color = Color(0.1, 0.08, 0.14, 0.3)
 const THUMB_COLOR: Color = Color(1.0, 0.75, 0.25, 0.95)
 const THUMB_SHADE: Color = Color(0.75, 0.45, 0.1, 0.95)
-const HINT_COLOR: Color = Color(1.0, 1.0, 1.0, 0.1)
-const ARROW_COLOR: Color = Color(1.0, 1.0, 1.0, 0.6)
 
 var value: Vector2 = Vector2.ZERO
 ## Resting spot of the stick inside the zone (0..1 of its size).
@@ -68,16 +65,10 @@ func rest_position() -> Vector2:
 
 
 func _draw() -> void:
-	var origin: Vector2 = rest_position() if _pointer == NO_POINTER else _origin
+	# a plain see-through circle that never moves, and the knob that follows the finger
+	var origin: Vector2 = rest_position()
 	var thumb: Vector2 = origin if _pointer == NO_POINTER else _thumb
-	draw_circle(origin + Vector2(0.0, 5.0), MAX_RADIUS, Color(0, 0, 0, 0.25))
 	draw_circle(origin, MAX_RADIUS, BASE_COLOR)
-	draw_arc(origin, MAX_RADIUS - 2.0, 0.0, TAU, 48, RIM_COLOR, 4.0)
-	for i: int in 4:
-		var dir: Vector2 = Vector2.from_angle(TAU * float(i) / 4.0)
-		var tip: Vector2 = origin + dir * (MAX_RADIUS - 14.0)
-		var side: Vector2 = dir.orthogonal() * 8.0
-		draw_colored_polygon(PackedVector2Array([tip, tip - dir * 12.0 + side, tip - dir * 12.0 - side]), ARROW_COLOR)
 	draw_circle(thumb + Vector2(0.0, 4.0), THUMB_RADIUS, THUMB_SHADE)
 	draw_circle(thumb, THUMB_RADIUS, THUMB_COLOR)
 	draw_circle(thumb + Vector2(-10.0, -10.0), THUMB_RADIUS * 0.35, Color(1, 1, 1, 0.45))
@@ -93,7 +84,7 @@ func _in_zone(viewport_position: Vector2) -> bool:
 
 func _begin(pointer: int, viewport_position: Vector2) -> void:
 	_pointer = pointer
-	_origin = _to_local(viewport_position)
+	_origin = rest_position()
 	_update(viewport_position)
 
 
