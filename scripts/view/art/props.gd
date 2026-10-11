@@ -369,6 +369,19 @@ static func stop_sign() -> ArrayMesh:
 		return kit.commit())
 
 
+## A traffic light on a pole, its lights facing +Z (toward the camera).
+static func stop_light() -> ArrayMesh:
+	return cached("stoplight", func() -> ArrayMesh:
+		var kit: LowPoly = LowPoly.new()
+		kit.box(Vector3(0.0, 1.7, 0.0), Vector3(0.14, 3.4, 0.14), Palette.POST_GREY)
+		kit.box(Vector3(0.0, 3.0, 0.0), Vector3(0.5, 1.35, 0.4), Palette.BLACK.lightened(0.12))
+		kit.box(Vector3(0.0, 3.72, 0.0), Vector3(0.62, 0.1, 0.5), Palette.BLACK)
+		kit.sphere(Vector3(0.0, 3.4, 0.2), 0.15, Palette.JEEP_RED, 8, 5)
+		kit.sphere(Vector3(0.0, 3.0, 0.2), 0.15, Palette.SARI_YELLOW.darkened(0.3), 8, 5)
+		kit.sphere(Vector3(0.0, 2.6, 0.2), 0.15, Palette.LEAF.darkened(0.35), 8, 5)
+		return kit.commit())
+
+
 ## A parked jeepney, long axis along Z.
 static func jeepney() -> ArrayMesh:
 	return cached("jeep", func() -> ArrayMesh:
