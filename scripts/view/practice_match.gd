@@ -53,6 +53,7 @@ var _reconnect_left: float = -1.0
 @onready var _pick_screen: WeaponPickScreen = %PickScreen
 @onready var _map: StreetMap = %Map
 @onready var _walls: WallsView = %Walls
+var _enemy_walls_removed: bool = false
 @onready var _neutrals: NeutralsView = %Neutrals
 @onready var _audio: MatchAudio = %Audio
 
@@ -219,7 +220,6 @@ func _setup_online() -> void:
 func _setup_hud() -> void:
 	input.camera_yaw = _camera.rules.yaw_offset_degrees
 	Cinematic.add_film_finish(self)
-	Cinematic.add_dust(_camera)
 	hud.overhead.setup(sim, _camera, local_id, local_team)
 	hud.minimap.setup(sim, local_id, local_team)
 	hud.set_top_inset(_safe_top_inset())
@@ -233,6 +233,9 @@ func _connect_hud() -> void:
 	hud.hurt_button.pressed.connect(hurt_local.bind(DEBUG_DAMAGE))
 	hud.tricycle_button.pressed.connect(sim.tricycle.call_now)
 	hud.hurt_button.visible = not online
+	hud.menu.walls_button.visible = not online
+	hud.enemy_walls_toggled.connect(_set_enemy_walls_removed)
+	sim.sides_switched.connect(_apply_enemy_walls)
 	hud.tricycle_button.visible = not online
 	hud.again_pressed.connect(_on_again_pressed)
 	hud.swap_pressed.connect(open_swap)
@@ -483,6 +486,16 @@ func _on_sides_switched() -> void:
 
 func _on_tricycle_warning(_direction: int) -> void:
 	show_banner("TRICYCLE INCOMING!\nGet off the road!")
+
+
+## The settings toggle (practice only): knock the enemy walls down, or rebuild them.
+func _set_enemy_walls_removed(removed: bool) -> void:
+	_enemy_walls_removed = removed
+	_apply_enemy_walls()
+
+
+func _apply_enemy_walls() -> void:
+	sim.set_walls_standing(-own_side(), not _enemy_walls_removed)
 
 
 func _on_ball_hit(id: int) -> void:

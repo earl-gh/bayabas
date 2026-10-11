@@ -718,3 +718,37 @@ func test_the_pin_button_shows_the_dash_arrow_then_the_return_arrow() -> void:
 	for i: int in 120:
 		practice.advance(DT)
 	assert_eq(practice.hud.bookmark_button.icon_id, &"dash", "back at the pin")
+
+
+func test_a_spinner_shows_over_a_hero_behind_the_enemy_inner_wall() -> void:
+	var practice: PracticeMatch = _practice()
+	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
+	practice.advance(DT)
+	assert_false(practice.overhead().spinner_visible(player), "not in the enemy yard")
+	player.position = LAYOUT.spawn_center(-practice.own_side())
+	practice.advance(DT)
+	assert_true(practice.overhead().spinner_visible(player), "counting toward the point")
+
+
+func test_the_settings_toggle_removes_and_rebuilds_the_enemy_walls() -> void:
+	var practice: PracticeMatch = _practice()
+	var enemy_side: int = -practice.own_side()
+	var walls: WallsView = practice.get_node("%Walls") as WallsView
+	var before: int = walls.standing_count()
+	practice.hud.menu.walls_button.button_pressed = true
+	for wall: MapLayout.WallSpec in practice.sim.walls:
+		assert_eq(wall.hp == 0, wall.side == enemy_side, "only the enemy's columns come down")
+	assert_eq(walls.standing_count(), before / 2)
+	practice.hud.menu.walls_button.button_pressed = false
+	assert_eq(walls.standing_count(), before, "and they come back")
+
+
+func test_the_pin_aim_is_a_small_circle_at_the_end_of_the_dash() -> void:
+	var lines: Array[PackedVector2Array] = AimIndicator.pin_outline(Vector2.ZERO, Vector2(0.0, -1.0), 4.6)
+	assert_eq(lines.size(), 1)
+	var center: Vector2 = Vector2.ZERO
+	for point: Vector2 in lines[0]:
+		center += point
+	center /= float(lines[0].size())
+	assert_almost_eq(center.y, -4.6, 0.05, "centred at the end of the dash")
+	assert_lt(lines[0][0].distance_to(center), 0.8, "small")

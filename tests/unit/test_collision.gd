@@ -106,7 +106,7 @@ func test_destroyed_enemy_column_opens_its_slot() -> void:
 	p.position = Vector2(0.0, 0.0)
 	# walls are ordered side, layer, column: index 10 = enemy side, layer nearest mid, center
 	sim.walls[10].hp = 0
-	_run(sim, 1, Vector2(0.0, -1.0), 200)
+	_run(sim, 1, Vector2(0.0, -1.0), 320)
 	# now stopped by the enemy layer behind it
 	assert_almost_eq(p.position.y, _wall_face(MapLayout.SIDE_ENEMY, 0) + p.radius, 0.05)
 

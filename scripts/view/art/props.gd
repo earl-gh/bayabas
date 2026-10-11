@@ -331,11 +331,9 @@ static func cardboard_wall(size: Vector3) -> ArrayMesh:
 		# tape across the seam and along the bottom
 		kit.box(Vector3(0.0, size.y * 0.55, -0.02), Vector3(0.2, size.y * 0.6, 0.12), Palette.TAPE)
 		kit.box(Vector3(0.0, size.y * 0.06, 0.0), Vector3(size.x - 0.1, 0.1, 0.14), Palette.TAPE)
-		# the sticks holding it up, plus a couple of stones at the foot
+		# the sticks holding it up
 		for x: float in [-size.x / 2.0 + 0.08, 0.0, size.x / 2.0 - 0.08]:
 			kit.box(Vector3(x, size.y * 0.45, 0.2), Vector3(0.09, size.y * 0.9, 0.09), Palette.WOOD)
-		for x: float in [-size.x * 0.3, size.x * 0.28]:
-			kit.sphere(Vector3(x, 0.1, 0.3), 0.14, Palette.CONCRETE.darkened(0.12), 6, 4)
 		return kit.commit())
 
 

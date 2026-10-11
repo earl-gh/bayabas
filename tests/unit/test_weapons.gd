@@ -392,17 +392,18 @@ func test_trumpo_passes_through_and_launches_once_each() -> void:
 
 func test_enemy_walls_stop_projectiles_own_walls_do_not() -> void:
 	var sim: MatchSim = _sim()
-	_caster(sim, &"bato_light", &"papel_shield", Vector2(0.0, -8.5))
-	var behind_enemy_wall: PlayerState = _target(sim, 2, Vector2(0.0, -15.2))
+	var middle_z: float = LAYOUT.base_center(MapLayout.SIDE_OWN).y - LAYOUT.wall_layer_spacing
+	_caster(sim, &"bato_light", &"papel_shield", Vector2(0.0, -(middle_z - 5.5)))
+	var behind_enemy_wall: PlayerState = _target(sim, 2, Vector2(0.0, -(middle_z + 1.2)))
 	_cast(sim, 0)
 	_wait(sim, 1.0)
-	assert_eq(behind_enemy_wall.hp, 100, "the enemy's cardboard wall at z = -14 blocks the rock")
+	assert_eq(behind_enemy_wall.hp, 100, "the enemy's middle cardboard wall blocks the rock")
 	var other: MatchSim = _sim()
-	_caster(other, &"bato_light", &"papel_shield", Vector2(0.0, 17.0))
-	var past_own_wall: PlayerState = _target(other, 2, Vector2(0.0, 11.5))
+	_caster(other, &"bato_light", &"papel_shield", Vector2(0.0, middle_z + 3.0))
+	var past_own_wall: PlayerState = _target(other, 2, Vector2(0.0, middle_z - 2.5))
 	_cast(other, 0)
 	_wait(other, 1.0)
-	assert_eq(past_own_wall.hp, 86, "the rock flies through our own wall at z = 14")
+	assert_eq(past_own_wall.hp, 86, "the rock flies through our own middle wall")
 
 
 # ---- respawn swap ----------------------------------------------------------------

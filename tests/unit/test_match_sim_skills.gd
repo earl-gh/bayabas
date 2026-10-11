@@ -34,7 +34,7 @@ func test_skill_numbers_come_from_data() -> void:
 	assert_eq(RULES.dash_duration, 0.2)
 	assert_eq(RULES.dash_stumble, 0.4)
 	assert_eq(RULES.dash_cooldown, 8.0)
-	assert_eq(RULES.bookmark_blink, 3.2)
+	assert_eq(RULES.bookmark_blink, 4.6)
 	assert_eq(RULES.bookmark_speed_bonus, 0.0)
 	assert_eq(RULES.bookmark_tumble, 0.45)
 	assert_eq(RULES.bookmark_boost_duration, 4.0)

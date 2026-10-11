@@ -7,6 +7,7 @@ signal closed
 signal exit_pressed
 signal hurt_pressed
 signal tricycle_pressed
+signal enemy_walls_toggled(removed: bool)
 
 const BACKDROP: Color = Color(0.02, 0.02, 0.06, 0.32)
 const GOLD: Color = Color(1.0, 0.8, 0.32)
@@ -19,6 +20,7 @@ const BUTTON_HEIGHT: float = 62.0
 
 var hurt_button: Button
 var tricycle_button: Button
+var walls_button: Button
 
 var _test_title: Label
 
@@ -47,6 +49,9 @@ func _ready() -> void:
 	hurt_button.pressed.connect(hurt_pressed.emit)
 	tricycle_button = _button("Call the tricycle (test)", "blue", column)
 	tricycle_button.pressed.connect(tricycle_pressed.emit)
+	walls_button = _button("Enemy walls: ON", "grey", column)
+	walls_button.toggle_mode = true
+	walls_button.toggled.connect(_on_walls_toggled)
 	var spacer: Control = Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(spacer)
@@ -60,7 +65,7 @@ func _ready() -> void:
 
 
 func open() -> void:
-	_test_title.visible = hurt_button.visible or tricycle_button.visible
+	_test_title.visible = hurt_button.visible or tricycle_button.visible or walls_button.visible
 	visible = true
 
 
@@ -68,6 +73,11 @@ func close() -> void:
 	if visible:
 		visible = false
 		closed.emit()
+
+
+func _on_walls_toggled(removed: bool) -> void:
+	walls_button.text = "Enemy walls: OFF" if removed else "Enemy walls: ON"
+	enemy_walls_toggled.emit(removed)
 
 
 func _on_backdrop_input(event: InputEvent) -> void:

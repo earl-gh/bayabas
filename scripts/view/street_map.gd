@@ -33,7 +33,9 @@ const HAZE_DENSITY: float = 0.0016
 const RING_HEIGHT: float = 0.03
 const YARD_ALPHA: float = 0.5
 const CURB_HEIGHT: float = 0.35
-const CROSS_STREET_WIDTH: float = 6.0
+## The cross street (the only road, where the tricycle drives): four lanes of 3 m.
+const CROSS_STREET_WIDTH: float = 12.0
+const CROSS_LANE_WIDTH: float = 3.0
 const SIDEWALK_WIDTH: float = 2.4
 const HOUSE_SPACING: float = 6.5
 const END_WALL_HEIGHT: float = 2.4
@@ -249,12 +251,13 @@ func _road() -> ArrayMesh:
 	kit.box(Vector3(0.0, -0.05, 0.0), Vector3(layout.lane_width, 0.1, layout.lane_length), ALLEY_FLOOR)
 	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
 	kit.box(Vector3(0.0, -0.045, 0.0), Vector3(reach * 2.0, 0.1, CROSS_STREET_WIDTH), Palette.ASPHALT_DARK)
-	# zebra crossings on both sides of the cross street
-	for side: float in [-1.0, 1.0]:
-		var stripes: int = int(layout.lane_width / 1.2)
-		for i: int in stripes:
-			var x: float = -half_w + 0.6 + float(i) * 1.2
-			kit.box(Vector3(x, 0.006, side * (CROSS_STREET_WIDTH / 2.0 + 0.9)), Vector3(0.6, 0.02, 1.4), Palette.WHITE)
+	# four lanes: a dashed line, a solid line and a dashed line between them (no white lines)
+	var x: float = -reach + 1.0
+	while x < reach - 1.0:
+		for z: float in [-CROSS_LANE_WIDTH, CROSS_LANE_WIDTH]:
+			kit.box(Vector3(x + DASH_LENGTH / 2.0, 0.006, z), Vector3(DASH_LENGTH, 0.02, 0.16), Palette.LANE_PAINT)
+		x += DASH_LENGTH + DASH_GAP
+	kit.box(Vector3(0.0, 0.006, 0.0), Vector3(reach * 2.0 - 2.0, 0.02, 0.2), Palette.LANE_PAINT)
 	return kit.commit()
 
 
@@ -378,6 +381,8 @@ func _add_yard(side: int, color: Color) -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = Color(color.r, color.g, color.b, YARD_ALPHA)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	# drawn first, so the kids and everything else stand on top of the tint, never under it
+	material.render_priority = -100
 	mesh.material = material
 	_add(mesh, Vector3(0.0, RING_HEIGHT * 1.5, side * (absf(layout.yard_line(side)) + depth / 2.0)))
 	return material

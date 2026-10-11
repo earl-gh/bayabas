@@ -652,6 +652,14 @@ func walls_in_circle(team: int, center: Vector2, radius: float) -> Array[int]:
 	return result
 
 
+## Practice: knocks down (or rebuilds) every wall column of `side`.
+func set_walls_standing(side: int, standing: bool) -> void:
+	for wall: MapLayout.WallSpec in walls:
+		if wall.side == side:
+			wall.hp = layout.wall_hp if standing else 0
+	walls_rebuilt.emit()
+
+
 func damage_wall(index: int, amount: int) -> void:
 	var wall: MapLayout.WallSpec = walls[index]
 	if wall.hp <= 0 or amount <= 0:
