@@ -32,7 +32,7 @@ The current art is a first pass built **in code**: procedural meshes, vector ico
 
 ## Cinematic morning and depth (after the sanga Tokhang intro frames)
 - Lighting (`StreetMap.make_environment` and `_light_scene`): **cinematic morning**: a low golden sun (30 degrees up) throwing long soft shadows, a cool blue fill light from the other side and a soft lavender ambient so shadows stay blue against the warm light, a gentle bloom on the highlights and a golden morning mist into the distance. All numbers are constants at the top of `street_map.gd`.
-- Film finish (`scripts/view/cinematic.gd`, `shaders/cinematic.gdshader`), drawn under the HUD: a soft vignette and fine moving grain (no blur anywhere), plus dust motes drifting in the sunlight around the hero.
+- Film finish (`scripts/view/cinematic.gd`, `shaders/cinematic.gdshader`), drawn under the HUD: a soft vignette and fine moving grain (no blur anywhere). No floating dots or dust motes (owner).
 - Painted 9-slice frames (`tools/art/make_frames.py`, `assets/ui/`): bevelled gold-framed navy panels with an inner shadow and a top gloss, glossy bevelled buttons with a darker lip (orange, green, red, blue, grey, gold; pressed variants without the lip), dark rimmed pills. `KalyeahTheme.painted_button / painted_panel / painted_pill` use them for every button, the menu, the knocked-out card, the pick screen plates and the HUD pills.
 - Wall damage (`walls_view.gd`, `OverheadHud`): flash, wobble, flying cardboard chips, a damage number, a health bar over damaged columns, and rips / holes / tape (`assets/textures/cardboard_tears.png`) fading in as a column weakens.
 
@@ -47,3 +47,4 @@ The current art is a first pass built **in code**: procedural meshes, vector ico
 - Effects use CPU particles (web-safe) and simple mesh and ring effects.
 - Replacing a procedural prop or character with its `.glb` must not change gameplay: same height and hitbox for the kids, same footprint for props.
 - **Alley, not road (owner):** the lane is a concrete alley (`assets/textures/alley.png`, drawn by `tools/art/make_assets.py`): no lane paint, no curbs and sidewalks, tall painted house walls with doors, windows, a roof edge and a drainpipe along both sides. **The only road is the horizontal cross street** where the tricycle drives (asphalt, with its zebra crossings).
+- **The cross street** is the only road: 12 m wide, asphalt, four 3 m lanes split by a dashed, a solid and a dashed pale-yellow line. There are no white road lines or crosswalks anywhere, and no floating white dots (the dust motes and the stones at the foot of the cardboard walls are gone).

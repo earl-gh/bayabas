@@ -31,6 +31,12 @@ const WALL_BAR_SIZE: Vector2 = Vector2(78.0, 10.0)
 const WALL_TOP: float = 2.7
 const WALL_COLOR: Color = Color(1.0, 0.68, 0.3)
 const WALL_LOW_COLOR: Color = Color(1.0, 0.36, 0.22)
+## The spinner above a hero standing in the enemy's scoring area.
+const SPINNER_RADIUS: float = 15.0
+const SPINNER_LIFT: float = 36.0
+const SPINNER_COLOR: Color = Color(1.0, 0.86, 0.3)
+const SPINNER_BACK: Color = Color(0.08, 0.06, 0.1, 0.7)
+const SPINNER_SPEED: float = 5.0
 
 var _sim: MatchSim
 var _camera: Camera3D
@@ -146,6 +152,10 @@ func _draw_wall_bar(top: Vector2, health: float) -> void:
 	draw_rect(Rect2(rect.position, Vector2(rect.size.x * health, rect.size.y * 0.35)), color.lightened(0.35))
 
 
+func spinner_visible(state: PlayerState) -> bool:
+	return state.alive and state.base_time > 0.0
+
+
 func _draw_hero(state: PlayerState, head: Vector2) -> void:
 	var rect: Rect2 = Rect2(head - Vector2(BAR_SIZE.x / 2.0, 0.0), BAR_SIZE)
 	draw_rect(rect.grow(2.0), BACK)
@@ -164,8 +174,22 @@ func _draw_hero(state: PlayerState, head: Vector2) -> void:
 		draw_line(Vector2(x, rect.position.y), Vector2(x, rect.end.y), BACK, 1.5)
 	_draw_cooldowns(state, rect)
 	var status: String = _status_text(state)
+	var lift: float = 0.0
 	if not status.is_empty():
 		_text(_italic, status, head + Vector2(0.0, -8.0), STATUS_FONT, STATUS_COLOR, 6)
+		lift = 22.0
+	if state.base_time > 0.0:
+		_draw_spinner(head + Vector2(0.0, -SPINNER_LIFT - lift), state.base_time / _sim.rules.base_capture_time)
+
+
+## A spinning ring over a hero who is behind the enemy's inner wall: the ring fills as
+## the point gets closer (it scores when it is full).
+func _draw_spinner(center: Vector2, progress: float) -> void:
+	draw_circle(center, SPINNER_RADIUS + 4.0, SPINNER_BACK)
+	draw_arc(center, SPINNER_RADIUS, 0.0, TAU, 28, Color(1.0, 1.0, 1.0, 0.25), 4.0)
+	var spin: float = float(Time.get_ticks_msec()) / 1000.0 * SPINNER_SPEED
+	draw_arc(center, SPINNER_RADIUS, spin, spin + TAU * 0.28, 12, Color(1.0, 1.0, 1.0, 0.9), 4.0)
+	draw_arc(center, SPINNER_RADIUS - 6.0, -PI / 2.0, -PI / 2.0 + TAU * clampf(progress, 0.0, 1.0), 24, SPINNER_COLOR, 4.0)
 
 
 ## One thin bar under the health: the pin (gold while you are out on it).

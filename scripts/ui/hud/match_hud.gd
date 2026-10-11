@@ -11,6 +11,7 @@ signal swap_pressed
 signal again_pressed
 signal hurt_pressed
 signal tricycle_pressed
+signal enemy_walls_toggled(removed: bool)
 signal exit_pressed
 
 const BANNER_TIME: float = 2.0
@@ -235,6 +236,7 @@ func _build() -> void:
 	tricycle_button = menu.tricycle_button
 	menu.hurt_pressed.connect(hurt_pressed.emit)
 	menu.tricycle_pressed.connect(tricycle_pressed.emit)
+	menu.enemy_walls_toggled.connect(enemy_walls_toggled.emit)
 	menu.exit_pressed.connect(exit_pressed.emit)
 	menu.closed.connect(set_controls_active.bind(true))
 
