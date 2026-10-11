@@ -3,9 +3,8 @@ extends Control
 ## The whole in-match HUD, built in code (no scene text to patch): overhead bars,
 ## top row (square slanted minimap and settings button on the left, score in the
 ## centre, guava and tricycle timers on the right), the settings menu, and the
-## one-thumb controls: the joystick sits where a MOBA's basic attack would (bottom
-## right) with weapon 1, weapon 2, the pin and the guava in an arc around it; the
-## left-handed setting mirrors them.
+## controls: the joystick sits at the bottom centre with weapon 1, weapon 2, the pin
+## and the guava fanned in an arc over it.
 ## The match screen feeds it sim state through `sync_player()` and `sync_score()`.
 
 signal swap_pressed
@@ -21,17 +20,17 @@ const MINIMAP_SIZE: Vector2 = Vector2(150.0, 150.0)
 const GEAR_SIZE: float = 64.0
 const SCORE_SIZE: Vector2 = Vector2(200.0, 84.0)
 const INFO_SIZE: Vector2 = Vector2(144.0, 58.0)
-## One-thumb controls, as (distance from the near side edge, distance from the
-## bottom) of each control's centre on the 720x1280 base, for the right hand.
-const STICK_CENTER: Vector2 = Vector2(140.0, 150.0)
+## Controls, as (offset from the screen centre line, distance from the bottom) of
+## each control's centre on the 720x1280 base.
+const STICK_CENTER: Vector2 = Vector2(0.0, 150.0)
 const STICK_ZONE: float = 270.0
 const ARC_RADIUS: float = 232.0
-## Arc angles (degrees from straight left, toward straight up) of weapon 1,
-## weapon 2, the pin and the guava around the joystick.
-const ARC_ANGLES: Array[float] = [0.0, 30.0, 60.0, 90.0]
+## Arc angles (degrees from straight left over the top to straight right) of
+## weapon 1, weapon 2, the pin and the guava around the joystick.
+const ARC_ANGLES: Array[float] = [15.0, 65.0, 115.0, 165.0]
 const WEAPON_SIZE: float = 120.0
 const SKILL_SIZE: float = 104.0
-const CANCEL_AT: Vector2 = Vector2(118.0, 520.0)
+const CANCEL_AT: Vector2 = Vector2(-242.0, 520.0)
 const CANCEL_SIZE: Vector2 = Vector2(110.0, 100.0)
 const DOWN_TEXT: String = "YOU'RE DOWN!\nTouch a teammate or your base post to get back up"
 
@@ -56,7 +55,6 @@ var tricycle_button: Button
 var again_button: Button
 var settings_button: TextureButton
 var menu: MatchMenu
-var left_handed: bool = false
 var banner: Label
 
 var _banner_left: float = 0.0
@@ -66,8 +64,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
-	layout_controls(Settings.left_handed)
-	Settings.handedness_changed.connect(layout_controls)
+	layout_controls()
 
 
 ## Pixels the top row is pushed down to clear a notch or status bar.
@@ -238,26 +235,23 @@ func _build() -> void:
 	menu.closed.connect(set_controls_active.bind(true))
 
 
-## Puts the joystick at the bottom corner (right, or left when `left`) and the
-## skills in an arc around it; everything mirrors for the left hand.
-func layout_controls(left: bool) -> void:
-	left_handed = left
+## Puts the joystick at the bottom centre and the skills in an arc over it.
+func layout_controls() -> void:
 	_put(joystick, STICK_CENTER, Vector2(STICK_ZONE, STICK_ZONE))
 	var arc: Array[Control] = [weapon_buttons[0], weapon_buttons[1], bookmark_button, ball_button]
 	for i: int in arc.size():
 		var angle: float = deg_to_rad(ARC_ANGLES[i])
-		var at: Vector2 = STICK_CENTER + Vector2(cos(angle), sin(angle)) * ARC_RADIUS
+		# 0 degrees is straight left of the stick, 90 straight up
+		var at: Vector2 = STICK_CENTER + Vector2(-cos(angle), sin(angle)) * ARC_RADIUS
 		var side: float = WEAPON_SIZE if i < 2 else SKILL_SIZE
 		_put(arc[i], at, Vector2(side, side))
 	_put(cancel_zone, CANCEL_AT, CANCEL_SIZE)
 
 
-## Places `control` with its centre `at` = (from the near side edge, from the bottom).
+## Places `control` with its centre `at` = (from the centre line, from the bottom).
 func _put(control: Control, at: Vector2, extent: Vector2) -> void:
-	var anchor_x: float = 0.0 if left_handed else 1.0
-	var center_x: float = at.x if left_handed else -at.x
-	_place(control, Vector4(anchor_x, 1, anchor_x, 1), Vector4(
-		center_x - extent.x / 2.0, -at.y - extent.y / 2.0, center_x + extent.x / 2.0, -at.y + extent.y / 2.0))
+	_place(control, Vector4(0.5, 1, 0.5, 1), Vector4(
+		at.x - extent.x / 2.0, -at.y - extent.y / 2.0, at.x + extent.x / 2.0, -at.y + extent.y / 2.0))
 
 
 func _build_top_row() -> void:

@@ -91,40 +91,37 @@ func test_the_settings_menu_pauses_the_controls() -> void:
 	assert_true(hud.controls_active())
 
 
-func test_one_thumb_controls_sit_in_the_corner_and_mirror_for_the_left_hand() -> void:
-	var was_left: bool = Settings.left_handed
+func test_the_joystick_and_skills_sit_at_the_bottom_centre() -> void:
 	var screen_root: Control = autofree(Control.new()) as Control
 	screen_root.size = Vector2(720.0, 1280.0)
 	add_child(screen_root)
 	var hud: MatchHud = MatchHud.new()
 	screen_root.add_child(hud)
-	hud.layout_controls(false)
+	hud.layout_controls()
 	var stick: Vector2 = hud.joystick.get_rect().get_center()
 	var screen: Vector2 = hud.get_rect().size
-	assert_gt(stick.x, screen.x * 0.7, "right hand: joystick where the basic attack usually is")
+	assert_almost_eq(stick.x, screen.x / 2.0, 1.0, "joystick on the centre line")
 	assert_gt(stick.y, screen.y * 0.8)
+	var xs: Array[float] = []
 	for button: Control in [hud.weapon_buttons[0], hud.weapon_buttons[1], hud.bookmark_button, hud.ball_button]:
-		var distance: float = button.get_rect().get_center().distance_to(stick)
-		assert_almost_eq(distance, MatchHud.ARC_RADIUS, 1.0, "in an arc around the joystick")
-		assert_lt(button.get_rect().get_center().x, stick.x + 1.0, "on the inner side")
-	hud.layout_controls(true)
-	var mirrored: Vector2 = hud.joystick.get_rect().get_center()
-	assert_almost_eq(mirrored.x, screen.x - stick.x, 1.0, "left hand: mirrored")
-	assert_gt(hud.weapon_buttons[0].get_rect().get_center().x, mirrored.x, "skills arc to the right")
-	Settings.left_handed = was_left
+		var centre: Vector2 = button.get_rect().get_center()
+		assert_almost_eq(centre.distance_to(stick), MatchHud.ARC_RADIUS, 1.0, "in an arc around the joystick")
+		assert_lt(centre.y, stick.y + 1.0, "over the joystick, not under it")
+		assert_gt(button.get_rect().position.x, 0.0, "on screen")
+		assert_lt(button.get_rect().end.x, screen.x, "on screen")
+		xs.append(centre.x)
+	assert_lt(xs[0], xs[1])
+	assert_lt(xs[1], xs[2])
+	assert_lt(xs[2], xs[3])
+	assert_almost_eq(xs[0] + xs[3], screen.x, 1.0, "the fan is symmetrical")
+	assert_almost_eq(xs[1] + xs[2], screen.x, 1.0)
 
 
-func test_the_menu_switches_handedness() -> void:
-	var was_left: bool = Settings.left_handed
+func test_the_menu_has_no_handedness_switch() -> void:
 	var hud: MatchHud = autofree(MatchHud.new()) as MatchHud
 	add_child(hud)
-	hud.toggle_menu()
-	hud.menu.left_button.pressed.emit()
-	assert_true(Settings.left_handed)
-	assert_true(hud.left_handed, "the HUD follows the setting")
-	hud.menu.right_button.pressed.emit()
-	assert_false(hud.left_handed)
-	Settings.set_left_handed(was_left)
+	assert_false("left_button" in hud.menu, "controls are fixed")
+	assert_false("left_handed" in Settings)
 
 
 func test_the_stick_follows_the_turned_camera() -> void:
