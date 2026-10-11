@@ -5,7 +5,7 @@ const MAP_SCENE: PackedScene = preload("res://scenes/map/street_map.tscn")
 
 
 func test_layout_matches_gdd_numbers() -> void:
-	assert_eq(LAYOUT.lane_length, 60.0)
+	assert_eq(LAYOUT.lane_length, 105.0)
 	assert_eq(LAYOUT.lane_width, 16.0)
 	assert_eq(LAYOUT.base_radius, 2.0)
 	assert_eq(LAYOUT.wall_layers, 2)
@@ -55,8 +55,8 @@ func test_layer_order_from_base_outward() -> void:
 
 
 func test_bases_at_opposite_ends() -> void:
-	assert_eq(LAYOUT.base_center(MapLayout.SIDE_OWN).y, 26.0)
-	assert_eq(LAYOUT.base_center(MapLayout.SIDE_ENEMY).y, -26.0)
+	assert_eq(LAYOUT.base_center(MapLayout.SIDE_OWN).y, 48.5)
+	assert_eq(LAYOUT.base_center(MapLayout.SIDE_ENEMY).y, -48.5)
 
 
 func test_boundary_walls_enclose_lane_without_overlapping_it() -> void:
@@ -96,3 +96,19 @@ func test_the_middle_between_the_two_inner_wall_rows_is_3_by_4() -> void:
 	assert_eq(inner.size(), 2)
 	var middle_length: float = absf(inner[0] - inner[1])
 	assert_almost_eq(LAYOUT.lane_width / middle_length, 3.0 / 4.0, 0.001, "width : length = 3 : 4")
+
+
+func test_the_wall_rows_sit_where_moba_towers_do() -> void:
+	# base post to mid is the "nexus to mid" run: the inner row ~58% and the outer row ~78% of the way
+	var run: float = LAYOUT.base_center(MapLayout.SIDE_OWN).y
+	assert_almost_eq(LAYOUT.wall_first_layer_from_base / run, 0.58, 0.01, "inner row")
+	assert_almost_eq((LAYOUT.wall_first_layer_from_base + LAYOUT.wall_layer_spacing) / run, 0.78, 0.01, "outer row")
+
+
+func test_the_middle_between_the_inner_wall_rows_is_still_3_to_4() -> void:
+	var rows: Array[float] = []
+	for wall: MapLayout.WallSpec in LAYOUT.wall_columns():
+		if wall.side == MapLayout.SIDE_OWN and wall.layer == LAYOUT.wall_layers - 1:
+			rows.append(wall.rect.get_center().y)
+	var gap: float = rows[0] * 2.0
+	assert_almost_eq(LAYOUT.lane_width / gap, 0.75, 0.01, "16 x 21.3 m")

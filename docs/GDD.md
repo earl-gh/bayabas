@@ -74,14 +74,14 @@ Two copies of the same weapon cannot be equipped; two weapons of the same *type*
 - Lata travels at 14 m/s to its point before it lands; bato heavy lands 0.6 s after the cast.
 - Effects are applied before damage. Players in the death delay are not hit by anything (D8).
 
-## Map (single mid lane, ~60 m long × 16 m wide)
+## Map (single mid lane, ~105 m long × 16 m wide)
 - Layout per side, from base outward: base post → wall layer 1 → wall layer 2 → mid.
 - Each wall layer = 3 columns (left / center / right), each column 300 HP. A column at 0 HP is removed and opens that slot. Every hit shows: the sheet flashes and wobbles, cardboard chips fly, the damage number pops above it, a cardboard-coloured health bar appears over a damaged column, and rips, holes and tape spread over it as it weakens; it bursts into chips when it breaks.
 - **A team passes straight through its own cardboard walls; the enemy team is blocked by them** (owner decision, completes D5). Boundary walls block everyone. Walls take damage from enemy attacks and the ball (ball: 60). Which projectiles a wall stops: enemy projectiles are blocked; own-team projectiles pass through (D11).
 - What damages a wall column: enemy weapons deal their normal damage to it. The targeted rock (Bato light) normally needs an enemy in range; with none, it is thrown straight at the nearest enemy wall column in range instead. A projectile that hits it deals its damage once (a boomerang turns back); ground areas, jacks ticks and bola bounces hit every column inside their circle; cones hit columns in front within range. Non-damaging weapons (trap, shield) don't hurt walls. Own walls never take damage from their own team.
 - Base zone: circle r=2 around the electric post. A living, non-CC'd enemy standing in it for 0.5 s scores.
 - Boundary walls on the long sides (house fronts, fences).
-- Lane geometry (base 4 m from each lane end, wall layers 10.3 m and 15.3 m from the base, 1 m thick; the middle between the two inner wall rows is 16 x 21.3 m, a 3:4 rectangle) lives in `data/rules/map_layout.tres`; adjust there, not in code. The look is separate (`docs/ART.md`).
+- Lane geometry, spaced like the towers and nexus of LoL and MLBB (owner): the electric post (our nexus) is 4 m from each lane end, 48.5 m from the middle. Measured from the post toward the middle, the **inner wall row** (our inner tower) is **58%** of the way (28.1 m) and the **outer wall row** (our outer tower) **78%** (37.8 m), 9.7 m apart, so the outer rows are close to mid like the outer towers are. The middle between the two outer rows stays 16 x 21.3 m, a 3:4 rectangle, which is why the lane grew from 60 m to 105 m. All of it lives in `data/rules/map_layout.tres` (`lane_length`, `base_inset`, `wall_first_layer_from_base`, `wall_layer_spacing`); adjust there, not in code. The look is separate (`docs/ART.md`). Ranges, speeds and the 15 s guava spawn are unchanged; a lane end to end now takes about 21 s at full speed instead of 12 s, so balance is re-checked in M6.
 
 ## Vertical layout (portrait game)
 - The lane runs **along the screen's long axis**: your base at the bottom, the enemy base at the top. The server/sim map is orientation-agnostic (lane axis = Z); only the camera and UI know about portrait.

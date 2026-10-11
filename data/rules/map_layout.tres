@@ -4,14 +4,14 @@
 
 [resource]
 script = ExtResource("1_layout")
-lane_length = 60.0
+lane_length = 105.0
 lane_width = 16.0
 base_inset = 4.0
 base_radius = 2.0
 wall_layers = 2
 wall_columns_per_layer = 3
-wall_first_layer_from_base = 10.333333
-wall_layer_spacing = 5.0
+wall_first_layer_from_base = 28.12
+wall_layer_spacing = 9.7
 wall_thickness = 1.0
 wall_gap = 0.3
 wall_hp = 300

@@ -59,8 +59,8 @@ func test_target_looks_ahead_toward_the_enemy_and_is_clamped_near_the_ends() -> 
 	var limit: float = LAYOUT.lane_length / 2.0 - CAMERA.end_clamp
 	assert_eq(CAMERA.clamp_target(Vector2(0.0, 10.0), LAYOUT), Vector2(0.0, 7.5), "own side looks toward -Z")
 	assert_eq(CAMERA.clamp_target(Vector2(0.0, 10.0), LAYOUT, true), Vector2(0.0, 12.5), "flipped looks toward +Z")
-	assert_eq(CAMERA.clamp_target(Vector2(0.0, 29.0), LAYOUT), Vector2(0.0, limit))
-	assert_eq(CAMERA.clamp_target(Vector2(0.0, -29.0), LAYOUT), Vector2(0.0, -limit))
+	assert_eq(CAMERA.clamp_target(Vector2(0.0, LAYOUT.lane_length / 2.0 - 1.0), LAYOUT), Vector2(0.0, limit))
+	assert_eq(CAMERA.clamp_target(Vector2(0.0, -LAYOUT.lane_length / 2.0 + 1.0), LAYOUT), Vector2(0.0, -limit))
 
 
 func test_camera_follows_sideways_but_never_far_past_the_curb() -> void:
