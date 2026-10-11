@@ -11,7 +11,6 @@ signal pressed
 static var holder: TouchButton = null
 
 const READY_COLOR: Color = Color(0.14, 0.12, 0.2, 0.7)
-const FACE_ART: StringName = &"button_face"
 ## Painted per-skill buttons are named btn_<icon_id>.
 const BUTTON_ART_PREFIX: String = "btn_"
 ## The painted art includes its drop shadow, so it is drawn a little past the hit circle.
@@ -41,7 +40,7 @@ const MOUSE_POINTER: int = -2
 ## The weapon type tag (ATK / CC / BLK) shown under the art.
 @export var sub_text: String = ""
 @export var sub_color: Color = Color(1.0, 1.0, 1.0, 0.8)
-## Icons.draw id ("dash", "bato_light", ...); empty = text only.
+## Skill id ("dash", "bato_light", ...); its painted button is btn_<id>.png. Empty = text only.
 @export var icon_id: StringName = &""
 
 ## 1.0 = just used, 0.0 = ready.
@@ -128,14 +127,9 @@ func _draw() -> void:
 	var center: Vector2 = size / 2.0
 	var radius: float = minf(size.x, size.y) / 2.0
 	var button_art: Texture2D = Icons.art(StringName(BUTTON_ART_PREFIX + String(icon_id))) if icon_id != &"" else null
-	var face: Texture2D = Icons.art(FACE_ART)
 	if button_art != null:
 		# the whole painted button: type-coloured face, cropped icon, rim (tools/art/make_buttons.py)
 		draw_texture_rect(button_art, Rect2(center - Vector2(radius, radius) * ART_OVERHANG, Vector2(radius, radius) * 2.0 * ART_OVERHANG), false)
-	elif face != null:
-		draw_circle(center + Vector2(0.0, SHADOW_DROP), radius, SHADOW_COLOR)
-		# painted gold rim and navy face (tools/art/make_assets.py)
-		draw_texture_rect(face, Rect2(center - Vector2(radius, radius), Vector2(radius, radius) * 2.0), false)
 	else:
 		draw_circle(center + Vector2(0.0, SHADOW_DROP), radius, SHADOW_COLOR)
 		draw_circle(center, radius, READY_COLOR)
@@ -147,11 +141,8 @@ func _draw() -> void:
 		if not sub_text.is_empty():
 			_tag(font, sub_text, center + Vector2(0.0, radius * 0.86), sub_color)
 	elif icon_id != &"":
-		# art only; a weapon adds just its type (ATK / CC / BLK) as a small tag
-		var has_tag: bool = not sub_text.is_empty()
-		Icons.draw(self, icon_id, center + Vector2(0.0, -radius * (0.14 if has_tag else 0.0)), radius * (1.15 if has_tag else 1.3))
-		if has_tag:
-			_tag(font, sub_text, center + Vector2(0.0, radius * 0.62), sub_color)
+		# no drawn stand-in: a missing painted button is a bug, so say so
+		push_error("missing painted button art: %s%s" % [BUTTON_ART_PREFIX, icon_id])
 	else:
 		var line_shift: float = 0.0 if sub_text.is_empty() else -FONT_SIZE * 0.3
 		_text(font, label_text, center + Vector2(0.0, line_shift), FONT_SIZE, TEXT_COLOR)

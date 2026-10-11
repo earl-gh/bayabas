@@ -209,40 +209,6 @@ def _slipper(p, cx, cy, scale, deg, sole=(255, 120, 170), strap=(60, 110, 230)):
     return outline
 
 
-def icon_tsinelas(heavy):
-    p = Painter(ICON, ICON)
-    if heavy:
-        for k, y in enumerate((70, 112, 154)):
-            p.stroke([(18, y + 10), (66 - k * 6, y)], 7, (255, 255, 255, 170))
-        _slipper(p, 140, 132, 1.45, 28)
-    else:
-        _slipper(p, 90, 132, 0.95, -18)
-        _slipper(p, 170, 128, 0.95, 18)
-    return p.result()
-
-
-def icon_lata():
-    p = Painter(ICON, ICON)
-    cx, top, bottom, rx = 128, 62, 206, 62
-    body = union(p.round_rect_mask((cx - rx, top, cx + rx, bottom), 6), p.ellipse_mask((cx - rx, bottom - 18, cx + rx, bottom + 18)))
-    p.fill(body, (235, 238, 245), (150, 156, 170), angle=0, outline=6)
-    p.shade(body, (cx + 20, top, cx + rx + 30, bottom + 20), alpha=90)
-    label = ImageChops.multiply(body, p.round_rect_mask((cx - rx - 2, top + 30, cx + rx + 2, bottom - 18), 1))
-    p.paint(label, (250, 205, 40, 255))
-    band = ImageChops.multiply(body, p.round_rect_mask((cx - rx - 2, top + 70, cx + rx + 2, bottom - 30), 1))
-    p.paint(band, (215, 40, 40, 255))
-    sun = ImageChops.multiply(body, p.ellipse_mask((cx - 24, top + 38, cx + 24, top + 86)))
-    p.paint(sun, (255, 150, 40, 255))
-    for k in range(5):
-        x = cx - 34 + k * 17
-        cube = ImageChops.multiply(body, p.round_rect_mask((x, top + 96, x + 12, top + 108), 2))
-        p.paint(cube, (130, 20, 30, 255))
-    rim = p.ellipse_mask((cx - rx, top - 18, cx + rx, top + 18))
-    p.fill(rim, (250, 250, 255), (160, 165, 180), outline=6)
-    inner = p.ellipse_mask((cx - rx + 10, top - 11, cx + rx - 10, top + 11))
-    p.fill(inner, (190, 195, 205), (230, 232, 240), outline=0)
-    p.shine(body, (cx - rx + 8, top + 10, cx - rx + 30, bottom - 10), alpha=150)
-    return p.result()
 
 
 def _rock(p, cx, cy, r, seed, color=(176, 172, 165), dark=(96, 92, 88)):
@@ -273,162 +239,13 @@ def _burst(p, cx, cy, r, n=10, color=(255, 214, 70)):
     p.fill(m, (255, 245, 170), color, outline=4)
 
 
-def icon_bato(heavy):
-    p = Painter(ICON, ICON)
-    if heavy:
-        _burst(p, 150, 100, 96, 11)
-        _rock(p, 124, 140, 74, 7)
-    else:
-        _rock(p, 98, 150, 44, 3)
-        _rock(p, 162, 112, 34, 4)
-        for k in range(3):
-            p.stroke([(40 + k * 14, 84 - k * 22), (70 + k * 10, 104 - k * 18)], 6, (255, 255, 255, 170))
-    return p.result()
 
 
-def icon_gunting(heavy):
-    p = Painter(ICON, ICON)
-    blade = (236, 240, 248) if not heavy else (255, 226, 120)
-    blade_dark = (140, 150, 168) if not heavy else (205, 140, 40)
-    handle = (225, 50, 60) if not heavy else (60, 110, 230)
-    for side in (-1, 1):
-        a = rotated([(128, 128), (128 + 14, 128), (128 + 6, 30), (128 - 4, 34)], 128, 128, side * 24)
-        m = p.poly_mask(a)
-        p.fill(m, blade, blade_dark, angle=0, outline=5)
-        p.shine(m, (110, 40, 140, 120), alpha=90, angle=side * 24)
-    for side in (-1, 1):
-        cx, cy = rotated([(128, 188)], 128, 128, -side * 34)[0]
-        ring = p.ellipse_mask((cx - 34, cy - 26, cx + 34, cy + 26), angle=side * 30)
-        hole = p.ellipse_mask((cx - 18, cy - 11, cx + 18, cy + 11), angle=side * 30)
-        p.fill(ring, tuple(min(255, c + 40) for c in handle), tuple(int(c * 0.7) for c in handle), outline=5)
-        p.img.paste(Image.new("RGBA", p.img.size, (0, 0, 0, 0)), (0, 0), hole.filter(ImageFilter.MinFilter(9)))
-        p.paint(ImageChops.subtract(hole.filter(ImageFilter.MaxFilter(17)), hole.filter(ImageFilter.MinFilter(9))), INK)
-        stem = p.line_mask([(128, 140), (cx, cy - 10)], 18)
-        p.fill(stem, handle, tuple(int(c * 0.7) for c in handle), outline=4)
-    screw = p.ellipse_mask((116, 116, 140, 140))
-    p.fill(screw, (255, 230, 120), (180, 130, 40), outline=4)
-    if heavy:
-        for x, y, s in ((60, 60, 14), (198, 70, 10), (200, 180, 8)):
-            p.paint(p.poly_mask([(x, y - s), (x + s * 0.3, y - s * 0.3), (x + s, y), (x + s * 0.3, y + s * 0.3), (x, y + s), (x - s * 0.3, y + s * 0.3), (x - s, y), (x - s * 0.3, y - s * 0.3)]), (255, 250, 200, 255))
-    return p.result()
 
 
-def icon_papel_trap():
-    p = Painter(ICON, ICON)
-    ring = p.ellipse_mask((30, 150, 226, 226))
-    hole = p.ellipse_mask((48, 162, 208, 214))
-    p.paint(ImageChops.subtract(ring, hole), (90, 170, 255, 200))
-    rnd = random.Random(5)
-    pts = []
-    for k in range(18):
-        a = math.tau * k / 18
-        rr = 70 * rnd.uniform(0.8, 1.06)
-        pts.append((128 + rr * math.cos(a), 120 + rr * math.sin(a) * 0.92))
-    ball = p.poly_mask(pts)
-    p.fill(ball, (255, 255, 252), (200, 205, 215), angle=60, outline=6)
-    for _ in range(9):
-        x, y = rnd.uniform(80, 170), rnd.uniform(70, 165)
-        p.paint(ImageChops.multiply(p.line_mask([(x, y), (x + rnd.uniform(-30, 30), y + rnd.uniform(-20, 25))], 2.5), ball), (150, 155, 170, 220))
-    for y in (96, 120, 144):
-        p.paint(ImageChops.multiply(p.line_mask([(70, y + rnd.uniform(-6, 6)), (190, y + rnd.uniform(-6, 6))], 2), ball), (110, 160, 230, 160))
-    p.shine(ball, (82, 64, 130, 110), alpha=130)
-    return p.result()
 
 
-def icon_papel_shield():
-    p = Painter(ICON, ICON)
-    shield = [(128, 28), (210, 56), (204, 140), (128, 228), (52, 140), (46, 56)]
-    m = p.poly_mask(shield)
-    p.fill(m, (255, 255, 252), (215, 220, 230), angle=60, outline=7)
-    for k in range(7):
-        y = 70 + k * 20
-        p.paint(ImageChops.multiply(p.line_mask([(40, y), (216, y)], 2.4), m), (120, 170, 235, 255))
-    p.paint(ImageChops.multiply(p.line_mask([(84, 30), (84, 230)], 2.6), m), (235, 80, 90, 255))
-    fold = p.poly_mask([(170, 44), (210, 56), (206, 92)])
-    p.fill(fold, (230, 232, 240), (180, 185, 200), outline=4)
-    p.shine(m, (60, 40, 120, 120), alpha=120, angle=-20)
-    return p.result()
 
-
-def icon_jacks():
-    p = Painter(ICON, ICON)
-    ball = p.ellipse_mask((158, 150, 222, 214))
-    p.fill(ball, (255, 90, 90), (190, 20, 40), outline=5)
-    p.shine(ball, (168, 158, 196, 184), alpha=170)
-    cx, cy = 112, 120
-    for deg in (0, 60, 120):
-        a = math.radians(deg)
-        dx, dy = 72 * math.cos(a), 72 * math.sin(a) * 0.8
-        arm = p.line_mask([(cx - dx, cy - dy), (cx + dx, cy + dy)], 14)
-        p.fill(arm, (250, 222, 120), (190, 130, 40), angle=deg + 90, outline=5)
-    for deg in (0, 60, 120, 180, 240, 300):
-        a = math.radians(deg)
-        x, y = cx + 72 * math.cos(a), cy + 72 * math.sin(a) * 0.8
-        knob = p.ellipse_mask((x - 13, y - 13, x + 13, y + 13))
-        p.fill(knob, (255, 236, 150), (200, 140, 40), outline=4)
-        p.shine(knob, (x - 9, y - 10, x + 1, y - 1), alpha=200)
-    hub = p.ellipse_mask((cx - 15, cy - 15, cx + 15, cy + 15))
-    p.fill(hub, (255, 240, 170), (200, 150, 50), outline=4)
-    return p.result()
-
-
-def icon_bola():
-    p = Painter(ICON, ICON)
-    for k, r in enumerate((96, 80)):
-        p.stroke([(36 + k * 10, 60 + k * 24), (60 + k * 10, 46 + k * 24)], 6, (255, 255, 255, 160))
-    ball = p.ellipse_mask((52, 52, 212, 212))
-    p.fill(ball, (255, 96, 86), (176, 22, 40), angle=60, outline=7)
-    stripe = ImageChops.multiply(ball, p.ellipse_mask((40, 112, 224, 152), angle=-24))
-    p.paint(stripe, (255, 236, 120, 255))
-    p.shade(ball, (130, 130, 240, 240), alpha=80)
-    p.shine(ball, (80, 72, 140, 120), alpha=170, angle=-30)
-    return p.result()
-
-
-def icon_trumpo():
-    p = Painter(ICON, ICON)
-    for k in range(3):
-        p.stroke([(40 + k * 8, 200 - k * 4), (90, 214 - k * 2)], 4, (255, 255, 255, 140))
-    body = p.poly_mask([(56, 92), (200, 92), (196, 124), (140, 196), (128, 214), (116, 196), (60, 124)])
-    cap = p.ellipse_mask((52, 64, 204, 120))
-    shape = union(body, cap)
-    p.fill(shape, (232, 168, 96), (150, 86, 40), angle=0, outline=6)
-    for y0, col in ((96, (220, 40, 50)), (118, (40, 110, 220))):
-        band = ImageChops.multiply(shape, p.ellipse_mask((40, y0 - 10, 216, y0 + 12)))
-        p.paint(band, col + (255,))
-    p.shade(shape, (140, 70, 240, 220), alpha=80)
-    p.shine(shape, (70, 70, 120, 110), alpha=130)
-    tip = p.poly_mask([(120, 204), (136, 204), (128, 232)])
-    p.fill(tip, (220, 225, 235), (120, 125, 140), outline=4)
-    knob = p.round_rect_mask((116, 34, 140, 72), 8)
-    p.fill(knob, (210, 150, 90), (130, 80, 40), outline=5)
-    p.stroke([(140, 50), (180, 40), (206, 58), (196, 84), (220, 98)], 4, INK)
-    p.stroke([(140, 50), (180, 40), (206, 58), (196, 84), (220, 98)], 2, (250, 245, 220, 255))
-    return p.result()
-
-
-def icon_dash():
-    p = Painter(ICON, ICON)
-    for k, y in enumerate((86, 128, 170)):
-        p.stroke([(26 + (k % 2) * 16, y), (100, y)], 9, (255, 255, 255, 200))
-    arrow = p.poly_mask([(84, 104), (146, 104), (146, 58), (232, 128), (146, 198), (146, 152), (84, 152)])
-    p.fill(arrow, (130, 220, 255), (30, 120, 230), angle=90, outline=7)
-    p.shine(arrow, (96, 96, 200, 132), alpha=120)
-    return p.result()
-
-
-def icon_bookmark():
-    p = Painter(ICON, ICON)
-    pole = p.round_rect_mask((70, 34, 86, 226), 6)
-    p.fill(pole, (240, 220, 180), (150, 110, 70), angle=0, outline=5)
-    flag = p.poly_mask([(86, 40), (150, 30), (210, 54), (170, 80), (214, 118), (150, 108), (86, 122)])
-    p.fill(flag, (255, 90, 80), (190, 20, 40), angle=60, outline=6)
-    p.shine(flag, (96, 40, 170, 84), alpha=110)
-    knob = p.ellipse_mask((66, 22, 90, 46))
-    p.fill(knob, (255, 230, 120), (200, 150, 40), outline=4)
-    base = p.ellipse_mask((44, 214, 112, 234))
-    p.fill(base, (120, 110, 100), (70, 64, 60), outline=4)
-    return p.result()
 
 
 def icon_pin():
@@ -474,21 +291,6 @@ def icon_gear():
     return p.result()
 
 
-def button_face():
-    """The round skill button: gold rim, deep navy face (art goes on top in game)."""
-    p = Painter(ICON, ICON)
-    rim = p.ellipse_mask((6, 6, 250, 250))
-    p.fill(rim, (255, 232, 130), (190, 120, 30), angle=70, outline=5)
-    inner_rim = p.ellipse_mask((20, 20, 236, 236))
-    p.fill(inner_rim, (120, 80, 30), (230, 170, 60), angle=70, outline=0)
-    face = p.ellipse_mask((28, 28, 228, 228))
-    p.fill(face, (52, 78, 150), (18, 26, 64), outline=0)
-    p.shine(face, (50, 34, 206, 120), alpha=70)
-    p.shine(rim, (40, 10, 216, 60), alpha=120)
-    return p.result(shadow=False)
-
-
-# ---- textures ------------------------------------------------------------------------
 
 def _noise(size, scale, seed):
     rng = np.random.default_rng(seed)
@@ -846,13 +648,7 @@ def tex_cardboard_tears():
 
 def main(only=None):
     random.seed(1)
-    icons = {
-        "guava": icon_guava, "tsinelas_light": lambda: icon_tsinelas(False), "tsinelas_heavy": lambda: icon_tsinelas(True),
-        "lata": icon_lata, "bato_light": lambda: icon_bato(False), "bato_heavy": lambda: icon_bato(True),
-        "gunting_light": lambda: icon_gunting(False), "gunting_heavy": lambda: icon_gunting(True),
-        "papel_trap": icon_papel_trap, "papel_shield": icon_papel_shield, "jacks": icon_jacks, "bola": icon_bola,
-        "trumpo": icon_trumpo, "dash": icon_dash, "bookmark": icon_bookmark, "pin": icon_pin, "gear": icon_gear, "button_face": button_face,
-    }
+    icons = {"guava": icon_guava, "pin": icon_pin, "gear": icon_gear}
     for name, make in icons.items():
         if only is None or name in only:
             save(make(), ICONS, name)

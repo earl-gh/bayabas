@@ -230,8 +230,8 @@ func test_the_guava_prop_exists_and_the_ball_art_is_the_guava() -> void:
 func test_every_skill_has_painted_art() -> void:
 	for i: int in RULES.weapons.size():
 		var def: WeaponDef = RULES.weapons[i]
-		assert_not_null(Icons.art(def.id), String(def.id))
-	for id: StringName in [&"guava", &"pin", &"btn_pin", &"gear", &"button_face"]:
+		assert_not_null(Icons.art(StringName("btn_" + String(def.id))), String(def.id))
+	for id: StringName in [&"guava", &"pin", &"btn_pin", &"btn_dash", &"btn_pin_return", &"btn_guava", &"btn_guava_bitten", &"gear"]:
 		assert_not_null(Icons.art(id), String(id))
 
 
