@@ -12,7 +12,8 @@ const SPRITE_PATH: String = "res://assets/sprites/%s/%s_%s.png"
 const FALLBACK_SET: StringName = &"junjun"
 const DIRECTIONS: Array[String] = ["toward", "toward_right", "right", "away_right", "away"]
 ## World height of one sprite cell in metres (the kid fills about 85% of it).
-const CELL_HEIGHT: float = 2.0
+## The kids are drawn a little bigger than life so they read through the wide lens.
+const CELL_HEIGHT: float = 2.2
 const GHOST_COLOR: Color = Color(0.55, 0.55, 0.62)
 const HIT_COLOR: Color = Color(1.0, 0.55, 0.55)
 const STRIDE: float = 1.6
