@@ -41,6 +41,8 @@ const CROSS_STREET_WIDTH: float = 16.0
 const CROSS_LANE_WIDTH: float = 4.0
 ## A pedestrian lane (paved strip) between each alley and the road.
 const PEDESTRIAN_WIDTH: float = 2.4
+## Warm brick-tan pavers, so the pedestrian lane stands out from the grey alley and road.
+const PEDESTRIAN_TINT: Color = Color(1.0, 0.8, 0.62)
 const SIDEWALK_WIDTH: float = 2.4
 const HOUSE_SPACING: float = 6.5
 const END_WALL_HEIGHT: float = 2.4
@@ -324,7 +326,7 @@ func _add_ground_textures() -> void:
 		_geometry.add_child(floor_piece)
 	# a pedestrian lane (pavers) between each alley and the road
 	for side: float in [-1.0, 1.0]:
-		var walk: MeshInstance3D = StreetArt.ground("pavers", Vector2(layout.lane_width, PEDESTRIAN_WIDTH), PAVER_TILE)
+		var walk: MeshInstance3D = StreetArt.ground("pavers", Vector2(layout.lane_width, PEDESTRIAN_WIDTH), PAVER_TILE, PEDESTRIAN_TINT)
 		walk.position = Vector3(0.0, GROUND_LIFT * 2.0, side * (CROSS_STREET_WIDTH / 2.0 + PEDESTRIAN_WIDTH / 2.0))
 		_geometry.add_child(walk)
 	var reach: float = half_w + SIDEWALK_WIDTH + 12.0
