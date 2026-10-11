@@ -1,7 +1,8 @@
 class_name AimIndicator
 extends MeshInstance3D
 ## Ground lines showing where a weapon will go while its button is held: the range
-## circle plus a shape-specific marker (line, cone, landing circle, wall).
+## circle plus a shape-specific marker (cone, landing circle, lane, wall). A landing
+## circle stands alone: no line runs from the player to it.
 ## Uses the sim's own aim helpers so the preview matches the real cast.
 
 const HEIGHT: float = 0.06
@@ -10,6 +11,9 @@ const READY_COLOR: Color = Color(1.0, 1.0, 1.0, 0.9)
 const CANCEL_COLOR: Color = Color(1.0, 0.3, 0.3, 0.9)
 const RANGE_COLOR: Color = Color(1.0, 1.0, 1.0, 0.45)
 const BOUNCE_MARK_RADIUS: float = 0.3
+## The guava's flight lane, half width in metres (it is about 0.7 m across).
+const BALL_LANE_HALF_WIDTH: float = 0.55
+const FILL_ALPHA: float = 0.22
 
 var _mesh: ImmediateMesh = ImmediateMesh.new()
 var _material: StandardMaterial3D = StandardMaterial3D.new()
@@ -27,7 +31,6 @@ static func outline(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vec
 		WeaponDef.Shape.TARGETED:
 			var target: PlayerState = sim.players.get(target_id) as PlayerState
 			if target != null and sim.is_targetable(target):
-				lines.append(PackedVector2Array([origin, target.position]))
 				lines.append(circle(target.position, target.radius + 0.2))
 		WeaponDef.Shape.CONE:
 			var direction: Vector2 = sim.weapons.aim_direction(caster, aim)
@@ -40,7 +43,6 @@ static func outline(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vec
 			lines.append(wedge)
 		WeaponDef.Shape.GROUND_AOE, WeaponDef.Shape.FIELD, WeaponDef.Shape.TRAP:
 			var point: Vector2 = sim.weapons.aim_point(caster, def, aim)
-			lines.append(PackedVector2Array([origin, point]))
 			lines.append(circle(point, def.radius if def.radius > 0.0 else def.trigger_radius))
 		WeaponDef.Shape.BOOMERANG, WeaponDef.Shape.BOUNCER, WeaponDef.Shape.SPINNER:
 			var direction: Vector2 = sim.weapons.aim_direction(caster, aim)
@@ -60,11 +62,20 @@ static func outline(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vec
 	return lines
 
 
-## Ball throw preview: range circle plus the throw line.
+## Ball throw preview: range circle plus the lane the guava flies down, drawn as a
+## band `BALL_LANE_HALF_WIDTH` either side of the throw (not just a line).
 static func ball_outline(origin: Vector2, direction: Vector2, reach: float) -> Array[PackedVector2Array]:
 	var lines: Array[PackedVector2Array] = [circle(origin, reach)]
-	lines.append(PackedVector2Array([origin, origin + direction.normalized() * reach]))
+	lines.append(lane(origin, direction, reach, BALL_LANE_HALF_WIDTH))
 	return lines
+
+
+## A closed rectangle from `origin` along `direction` for `length`, `half_width` either side.
+static func lane(origin: Vector2, direction: Vector2, length: float, half_width: float) -> PackedVector2Array:
+	var along: Vector2 = direction.normalized()
+	var side: Vector2 = along.orthogonal() * half_width
+	var end: Vector2 = origin + along * length
+	return PackedVector2Array([origin + side, end + side, end - side, origin - side, origin + side])
 
 
 static func circle(center: Vector2, radius: float) -> PackedVector2Array:
@@ -92,7 +103,7 @@ func show_aim(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, 
 
 
 ## Draws polylines; the first is drawn faint as the range circle when `has_range`.
-func show_lines(lines: Array[PackedVector2Array], cancelled: bool, has_range: bool = true) -> void:
+func show_lines(lines: Array[PackedVector2Array], cancelled: bool, has_range: bool = true, fill_index: int = -1) -> void:
 	_mesh.clear_surfaces()
 	var color: Color = CANCEL_COLOR if cancelled else READY_COLOR
 	_mesh.surface_begin(Mesh.PRIMITIVE_LINES)
@@ -104,4 +115,18 @@ func show_lines(lines: Array[PackedVector2Array], cancelled: bool, has_range: bo
 			_mesh.surface_add_vertex(Vector3(line[i].x, HEIGHT, line[i].y))
 			_mesh.surface_set_color(line_color)
 			_mesh.surface_add_vertex(Vector3(line[i + 1].x, HEIGHT, line[i + 1].y))
+	_mesh.surface_end()
+	if fill_index >= 0 and fill_index < lines.size():
+		_fill(lines[fill_index], Color(color.r, color.g, color.b, FILL_ALPHA))
+
+
+## A see-through fan fill of a closed polygon (the rectangle of a lane).
+func _fill(polygon: PackedVector2Array, color: Color) -> void:
+	if polygon.size() < 4:
+		return
+	_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i: int in range(1, polygon.size() - 2):
+		for point: Vector2 in [polygon[0], polygon[i], polygon[i + 1]]:
+			_mesh.surface_set_color(color)
+			_mesh.surface_add_vertex(Vector3(point.x, HEIGHT, point.y))
 	_mesh.surface_end()

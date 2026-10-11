@@ -15,3 +15,4 @@ max_range = 3.5
 damage = 24
 angle_degrees = 60.0
 delay = 0.5
+cast_lock = 0.5

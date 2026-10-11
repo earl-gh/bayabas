@@ -57,6 +57,8 @@ enum Shape {
 @export var snips_min: int = 1
 @export var snips_max: int = 1
 @export var snip_hold_step: float = 0.0
+## Seconds the caster cannot move after the cast (heavy attacks; 0 = can move while casting).
+@export var cast_lock: float = 0.0
 
 
 func deals_damage() -> bool:

@@ -31,7 +31,7 @@ const BRIGHTNESS: float = 1.0
 const HAZE_COLOR: Color = Color(1.0, 0.9, 0.8)
 const HAZE_DENSITY: float = 0.0016
 const RING_HEIGHT: float = 0.03
-const YARD_ALPHA: float = 0.28
+const YARD_ALPHA: float = 0.5
 const CURB_HEIGHT: float = 0.35
 const CROSS_STREET_WIDTH: float = 6.0
 const SIDEWALK_WIDTH: float = 2.4
@@ -167,11 +167,10 @@ func _build_map() -> void:
 	for side: int in [MapLayout.SIDE_OWN, MapLayout.SIDE_ENEMY]:
 		var center: Vector2 = layout.base_center(side)
 		var color: Color = OWN_COLOR if side == MapLayout.SIDE_OWN else ENEMY_COLOR
-		var ring: StandardMaterial3D = _add_disc(Vector3(center.x, RING_HEIGHT / 2.0, center.y), layout.base_radius, color)
 		var post: MeshInstance3D = _add(Props.electric_post(), Vector3(center.x, 0.0, center.y))
 		# a team-coloured band on the post so you can tell bases apart from afar
 		var band: StandardMaterial3D = _add_band(post, color)
-		_base_materials[side] = [ring, band, _add_yard(side, color)]
+		_base_materials[side] = [band, _add_yard(side, color)]
 		_add_sign("poster_0" if side == MapLayout.SIDE_OWN else "poster_1", POSTER_HEIGHT, Vector3(center.x + 0.45, 1.3, center.y))
 	# street dressing outside the lane
 	var store_z: float = -half_l * 0.45
@@ -351,19 +350,6 @@ func _add(mesh: Mesh, at: Vector3, yaw: float = 0.0) -> MeshInstance3D:
 	instance.rotation.y = yaw
 	_geometry.add_child(instance)
 	return instance
-
-
-func _add_disc(center: Vector3, radius: float, color: Color) -> StandardMaterial3D:
-	var mesh: CylinderMesh = CylinderMesh.new()
-	mesh.top_radius = radius
-	mesh.bottom_radius = radius
-	mesh.height = RING_HEIGHT
-	mesh.radial_segments = 20
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = color
-	mesh.material = material
-	_add(mesh, center)
-	return material
 
 
 ## The yard behind a side's inner wall, tinted in that team's colour: getting in here

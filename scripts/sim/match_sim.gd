@@ -396,6 +396,7 @@ func _revive(state: PlayerState, by_id: int) -> void:
 func _clear_actions(state: PlayerState) -> void:
 	state.dash_time_left = 0.0
 	state.stumble_time_left = 0.0
+	state.cast_lock_left = 0.0
 	state.boost_time_left = 0.0
 	if state.mark_active:
 		state.bookmark_cooldown_left = rules.bookmark_cooldown
@@ -471,6 +472,7 @@ func _try_fire(state: PlayerState, slot: int, stick: Vector2, hold_seconds: floa
 	var aim: Vector2 = resolved_aim(state, slot, stick)
 	if weapons.fire(self, state, def, aim, hold_seconds, state.aim_target[slot]):
 		state.weapon_cooldowns[slot] = def.cooldown
+		state.cast_lock_left = def.cast_lock
 		weapon_cast.emit(state.id, def.id)
 
 
@@ -531,6 +533,10 @@ func _move(state: PlayerState, input: PlayerInput, dt: float) -> void:
 		return
 	if state.stumble_time_left > 0.0:
 		state.stumble_time_left = maxf(0.0, state.stumble_time_left - dt)
+		return
+	if state.cast_lock_left > 0.0:
+		# a heavy attack's cast animation: aiming was free while moving, but now stand still
+		state.cast_lock_left = maxf(0.0, state.cast_lock_left - dt)
 		return
 	if input == null or not state.effects.can_move():
 		return

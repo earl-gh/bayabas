@@ -18,6 +18,8 @@ var respawn_time_left: float = 0.0
 var dash_time_left: float = 0.0
 var dash_direction: Vector2 = Vector2.ZERO
 var stumble_time_left: float = 0.0
+## Rooted by a heavy attack's cast animation (light attacks never root).
+var cast_lock_left: float = 0.0
 var dash_cooldown_left: float = 0.0
 
 var bookmark_cooldown_left: float = 0.0

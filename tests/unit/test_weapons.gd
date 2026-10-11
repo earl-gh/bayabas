@@ -509,3 +509,40 @@ func test_targeted_bato_with_no_enemy_hits_the_nearest_enemy_wall() -> void:
 	for wall: MapLayout.WallSpec in sim.walls:
 		damaged += LAYOUT.wall_hp - wall.hp
 	assert_eq(damaged, 14, "the wall takes the rock's damage")
+
+
+# ---- casting while moving ----------------------------------------------------------
+
+func _cast_and_walk(weapon: StringName) -> float:
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var p: PlayerState = sim.add_player(1, 0)
+	p.position = Vector2.ZERO
+	sim.set_loadout(1, weapon, &"bato_light")
+	var aim: Vector2 = Vector2(0.0, -1.0)
+	# hold the weapon button while walking (aiming while moving), then release
+	for i: int in 6:
+		sim.set_input(1, PlayerInput.create(Vector2(1.0, 0.0), aim, PlayerInput.BTN_WEAPON_1, sim.tick))
+		sim.step(DT)
+	var before: float = p.position.x
+	sim.set_input(1, PlayerInput.create(Vector2(1.0, 0.0), aim, 0, sim.tick))
+	for i: int in 6:
+		sim.step(DT)
+		sim.set_input(1, PlayerInput.create(Vector2(1.0, 0.0), aim, 0, sim.tick))
+	return p.position.x - before
+
+
+func test_light_attacks_cast_while_the_player_keeps_moving() -> void:
+	assert_gt(_cast_and_walk(&"gunting_light"), 0.8, "no rooting after a light cast")
+
+
+func test_heavy_attacks_aim_while_moving_but_root_the_caster_while_casting() -> void:
+	var moved: float = _cast_and_walk(&"gunting_heavy")
+	assert_lt(moved, 0.4, "the heavy cast roots the player for its animation")
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var p: PlayerState = sim.add_player(1, 0)
+	sim.set_loadout(1, &"gunting_heavy", &"bato_light")
+	var start: float = p.position.x
+	for i: int in 6:
+		sim.set_input(1, PlayerInput.create(Vector2(1.0, 0.0), Vector2(0.0, -1.0), PlayerInput.BTN_WEAPON_1, sim.tick))
+		sim.step(DT)
+	assert_gt(p.position.x - start, 0.8, "aiming a heavy attack does not stop you")

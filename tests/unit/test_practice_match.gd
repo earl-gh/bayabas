@@ -399,9 +399,12 @@ func test_aim_indicator_shows_range_and_landing_circle() -> void:
 	caster.position = Vector2.ZERO
 	var def: WeaponDef = sim.weapon_defs[&"bato_heavy"]
 	var lines: Array[PackedVector2Array] = AimIndicator.outline(sim, caster, def, Vector2(0.0, -0.5), -1)
-	assert_eq(lines.size(), 3, "range circle, aim line, landing circle")
+	assert_eq(lines.size(), 2, "range circle and landing circle, no line from the player to it")
 	assert_almost_eq(lines[0][0].length(), def.max_range, 0.001)
-	assert_almost_eq(lines[1][1].y, -4.0, 0.001, "half the stick = half the range")
+	assert_almost_eq(lines[1][0].distance_to(Vector2(0.0, -4.0)), def.radius, 0.001, "half the stick = half the range")
+	var ball: Array[PackedVector2Array] = AimIndicator.ball_outline(Vector2.ZERO, Vector2(0.0, -1.0), 12.0)
+	assert_eq(ball[1].size(), 5, "the guava lane is a band, not a single line")
+	assert_almost_eq(absf(ball[1][0].x - ball[1][3].x), AimIndicator.BALL_LANE_HALF_WIDTH * 2.0, 0.001)
 	var cone: Array[PackedVector2Array] = AimIndicator.outline(sim, caster, sim.weapon_defs[&"gunting_light"], Vector2(1.0, 0.0))
 	assert_eq(cone.size(), 2)
 

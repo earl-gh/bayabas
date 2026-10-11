@@ -242,7 +242,7 @@ func _connect_hud() -> void:
 func _connect_sim() -> void:
 	sim.player_damaged.connect(func(id: int, amount: int) -> void: if id == local_id: _camera.shake(minf(0.1 + amount * 0.01, 0.4)))
 	sim.wall_destroyed.connect(func(_index: int) -> void: _camera.shake(0.18))
-	sim.weapon_cast.connect(func(id: int, _weapon: StringName) -> void: _views[id].play_cast())
+	sim.weapon_cast.connect(func(id: int, weapon: StringName) -> void: _views[id].play_cast(sim.weapon_defs[weapon].cast_lock))
 	sim.player_damaged.connect(func(id: int, _amount: int) -> void: _views[id].play_hit())
 	sim.point_scored.connect(_on_point_scored)
 	sim.set_won.connect(_on_set_won)
@@ -427,7 +427,7 @@ func _sync_aim(player: PlayerState) -> void:
 			if not sim.ball.is_holder(local_id):
 				continue
 			var direction: Vector2 = sim.resolved_ball_aim(player, stick)
-			_aim_indicator.show_lines(AimIndicator.ball_outline(player.position, direction, rules.ball_range), cancelled)
+			_aim_indicator.show_lines(AimIndicator.ball_outline(player.position, direction, rules.ball_range), cancelled, true, 1)
 			any_aiming = true
 			break
 		if slot >= player.weapons.size():
