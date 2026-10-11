@@ -49,8 +49,8 @@ func _def(id: StringName) -> WeaponDef:
 
 # ---- data ------------------------------------------------------------------
 
-func test_twelve_weapons_match_the_gdd_table() -> void:
-	assert_eq(RULES.weapons.size(), 12)
+func test_the_weapons_match_the_gdd_table() -> void:
+	assert_eq(RULES.weapons.size(), 14)
 	var expected: Dictionary = {
 		# id: [kind, cooldown, range, damage]
 		&"bato_light": [WeaponDef.Kind.ATTACK, 4.0, 7.0, 14],
@@ -546,3 +546,87 @@ func test_heavy_attacks_aim_while_moving_but_root_the_caster_while_casting() -> 
 		sim.set_input(1, PlayerInput.create(Vector2(1.0, 0.0), Vector2(0.0, -1.0), PlayerInput.BTN_WEAPON_1, sim.tick))
 		sim.step(DT)
 	assert_gt(p.position.x - start, 0.8, "aiming a heavy attack does not stop you")
+
+
+# ---- Langit Lupa: heal and the soil block ---------------------------------------------
+
+func _fire_slot(sim: MatchSim, id: int, aim: Vector2, hold_ticks: int = 2) -> void:
+	for i: int in hold_ticks:
+		sim.set_input(id, PlayerInput.create(Vector2.ZERO, aim, PlayerInput.BTN_WEAPON_1, sim.tick))
+		sim.step(DT)
+	sim.set_input(id, PlayerInput.create(Vector2.ZERO, aim, 0, sim.tick))
+	sim.step(DT)
+
+
+func test_langit_lupa_skills_exist_with_their_numbers() -> void:
+	var heal: WeaponDef = RULES.weapons.filter(func(w: WeaponDef) -> bool: return w.id == &"heal")[0]
+	assert_eq(heal.kind, WeaponDef.Kind.HEAL)
+	assert_eq(heal.street_game, "Langit Lupa")
+	assert_eq(heal.heal, 30)
+	var lupa: WeaponDef = RULES.weapons.filter(func(w: WeaponDef) -> bool: return w.id == &"langit_lupa")[0]
+	assert_eq(lupa.kind, WeaponDef.Kind.BLOCK)
+	assert_eq(lupa.shape, WeaponDef.Shape.SHIELD)
+	assert_eq(lupa.street_game, "Langit Lupa")
+	assert_lt(lupa.width, 2.0, "person-wide")
+
+
+func test_tapping_heal_heals_yourself() -> void:
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var me: PlayerState = sim.add_player(1, 0)
+	sim.set_loadout(1, &"heal", &"bato_light")
+	me.hp = 40
+	_fire_slot(sim, 1, Vector2.ZERO)
+	assert_eq(me.hp, 70)
+	assert_gt(me.weapon_cooldowns[0], 0.0)
+
+
+func test_dragging_heal_toward_a_teammate_heals_them_not_you() -> void:
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var me: PlayerState = sim.add_player(1, 0)
+	me.position = Vector2(0.0, 5.0)
+	var friend: PlayerState = sim.add_dummy(3, 0, Vector2(4.0, 5.0), DummyBrain.standing())
+	var other: PlayerState = sim.add_dummy(4, 0, Vector2(-4.0, 5.0), DummyBrain.standing())
+	sim.set_loadout(1, &"heal", &"bato_light")
+	me.hp = 40
+	friend.hp = 50
+	other.hp = 50
+	_fire_slot(sim, 1, Vector2(1.0, 0.0))
+	assert_eq(friend.hp, 80, "the teammate on that side")
+	assert_eq(other.hp, 50, "not the one on the other side")
+	assert_eq(me.hp, 40, "and not yourself")
+
+
+func test_a_heal_drag_with_nobody_there_does_nothing_and_costs_no_cooldown() -> void:
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var me: PlayerState = sim.add_player(1, 0)
+	sim.set_loadout(1, &"heal", &"bato_light")
+	me.hp = 40
+	_fire_slot(sim, 1, Vector2(1.0, 0.0))
+	assert_eq(me.hp, 40)
+	assert_eq(me.weapon_cooldowns[0], 0.0)
+
+
+func test_heal_never_reaches_enemies() -> void:
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var me: PlayerState = sim.add_player(1, 0)
+	me.position = Vector2(0.0, 5.0)
+	var enemy: PlayerState = sim.add_dummy(2, 1, Vector2(3.0, 5.0), DummyBrain.standing())
+	sim.set_loadout(1, &"heal", &"bato_light")
+	enemy.hp = 50
+	_fire_slot(sim, 1, Vector2(1.0, 0.0))
+	assert_eq(enemy.hp, 50)
+
+
+func test_the_soil_block_blocks_shots_then_collapses() -> void:
+	var sim: MatchSim = MatchSim.new(RULES, LAYOUT, 1)
+	var me: PlayerState = sim.add_player(1, 0)
+	me.position = Vector2(0.0, 5.0)
+	sim.set_loadout(1, &"langit_lupa", &"bato_light")
+	_fire_slot(sim, 1, Vector2(0.0, -1.0))
+	assert_eq(sim.weapons.shields.size(), 1)
+	var block: WeaponSystem.Shield = sim.weapons.shields[0]
+	assert_almost_eq(block.half_width * 2.0, 1.2, 0.001)
+	assert_true(sim.weapons.blocks_segment(1, me.position + Vector2(0.0, -4.0), me.position + Vector2(0.0, -1.0)), "enemy shots stop at the block")
+	for i: int in 130:
+		sim.step(DT)
+	assert_eq(sim.weapons.shields.size(), 0, "collapsed after its delay")

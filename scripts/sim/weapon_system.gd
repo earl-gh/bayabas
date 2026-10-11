@@ -11,6 +11,8 @@ enum ZoneKind { EXPLOSION, TRAP, SLOW_ZONE, FIELD }
 
 ## A cone weapon struck (instant, so the view gets a signal to flash it).
 signal cone_struck(owner_id: int, def: WeaponDef, origin: Vector2, direction: Vector2)
+## A heal landed on `target_id` (the caster or a teammate).
+signal healed(owner_id: int, target_id: int, def: WeaponDef)
 
 
 class Projectile extends RefCounted:
@@ -47,6 +49,7 @@ class Zone extends RefCounted:
 
 class Shield extends RefCounted:
 	var id: int
+	var def: WeaponDef
 	var team: int
 	var center: Vector2
 	## Unit vector along the wall.
@@ -131,6 +134,7 @@ func fire(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, hold
 			var facing: Vector2 = aim_direction(caster, aim)
 			var shield: Shield = Shield.new()
 			shield.id = _take_id()
+			shield.def = def
 			shield.team = caster.team
 			shield.center = caster.position + facing * def.offset
 			shield.along = facing.orthogonal()
@@ -139,6 +143,12 @@ func fire(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2, hold
 			shields.append(shield)
 		WeaponDef.Shape.BOUNCER, WeaponDef.Shape.SPINNER:
 			_new_projectile(caster, def, aim_direction(caster, aim))
+		WeaponDef.Shape.HEAL:
+			var patient: PlayerState = heal_target(sim, caster, def, aim)
+			if patient == null:
+				return false
+			sim.heal(patient.id, def.heal)
+			healed.emit(caster.id, patient.id, def)
 	return true
 
 
@@ -164,6 +174,8 @@ func reset() -> void:
 ## Auto-aim as a stick-style vector: toward the nearest enemy in range (length =
 ## distance / range), else straight ahead at full range. Taken once at the press.
 func auto_aim(sim: MatchSim, caster: PlayerState, def: WeaponDef) -> Vector2:
+	if def.shape == WeaponDef.Shape.HEAL:
+		return Vector2.ZERO  # a tap heals yourself
 	var target: PlayerState = sim.nearest_enemy(caster, def.max_range)
 	if target != null and target.position != caster.position:
 		var offset: Vector2 = target.position - caster.position
@@ -171,6 +183,30 @@ func auto_aim(sim: MatchSim, caster: PlayerState, def: WeaponDef) -> Vector2:
 			return (offset / def.max_range).limit_length(1.0)
 		return offset.normalized()
 	return caster.facing
+
+
+## Who a heal aimed with `aim` reaches: the caster for a tap (zero aim), otherwise the
+## living teammate nearest the dragged direction (within half the weapon's angle and
+## its range), or null when there is none.
+func heal_target(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vector2) -> PlayerState:
+	if aim == Vector2.ZERO:
+		return caster if sim.is_targetable(caster) else null
+	var direction: Vector2 = aim.normalized()
+	var half: float = deg_to_rad(def.angle_degrees / 2.0)
+	var best: PlayerState = null
+	var best_angle: float = half
+	for id: int in sim.players:
+		var other: PlayerState = sim.players[id]
+		if other.id == caster.id or other.team != caster.team or not sim.is_targetable(other):
+			continue
+		var offset: Vector2 = other.position - caster.position
+		if offset.length() > def.max_range + other.radius:
+			continue
+		var angle: float = absf(direction.angle_to(offset)) if offset.length() > 0.001 else 0.0
+		if angle <= best_angle:
+			best_angle = angle
+			best = other
+	return best
 
 
 ## Direction of a resolved aim (the facing if the aim is zero).

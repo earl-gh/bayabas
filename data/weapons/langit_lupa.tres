@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sim/weapon_def.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+id = &"langit_lupa"
+display_name = "Lupa (Soil Block)"
+short_name = "Lupa"
+street_game = "Langit Lupa"
+kind = 2
+shape = 6
+cooldown = 14.0
+duration = 3.5
+width = 1.2
+offset = 2.2
+look = &"soil"

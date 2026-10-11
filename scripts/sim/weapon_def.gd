@@ -3,7 +3,7 @@ extends Resource
 ## One weapon (docs/GDD.md "Weapons"). Every weapon is one generic `shape`
 ## executor plus numbers; no per-weapon scripts. Values live in data/weapons/*.tres.
 
-enum Kind { ATTACK, CROWD_CONTROL, BLOCK }
+enum Kind { ATTACK, CROWD_CONTROL, BLOCK, HEAL }
 enum Shape {
 	TARGETED,   ## projectile that homes on the nearest enemy in range
 	CONE,       ## instant (or delayed) cone in the aim direction; light version snips 2-6 times by hold time
@@ -14,6 +14,7 @@ enum Shape {
 	SHIELD,     ## wall in front of the thrower that blocks enemy projectiles
 	BOUNCER,    ## skillshot that bounces `count` times evenly up to max range, AoE at each bounce
 	SPINNER,    ## linear projectile that passes through enemies up to max range
+	HEAL,       ## instant: tap heals the caster, a drag picks a teammate in that direction within max range
 }
 
 @export var id: StringName = &""
@@ -57,6 +58,10 @@ enum Shape {
 @export var snips_min: int = 1
 @export var snips_max: int = 1
 @export var snip_hold_step: float = 0.0
+## HEAL: HP restored per cast.
+@export var heal: int = 0
+## How a SHIELD looks: &"" = a paper wall, &"soil" = a block of earth that rises and collapses.
+@export var look: StringName = &""
 ## Seconds the caster cannot move after the cast (heavy attacks; 0 = can move while casting).
 @export var cast_lock: float = 0.0
 
@@ -71,6 +76,8 @@ func kind_label() -> String:
 			return "ATK"
 		Kind.CROWD_CONTROL:
 			return "CC"
+		Kind.HEAL:
+			return "HEAL"
 	return "BLK"
 
 

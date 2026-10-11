@@ -102,7 +102,7 @@ def compose(icon_path, scale=0.98, nudge=(0, 0)):
 def main():
     for wid, kind in weapon_kinds().items():
         compose(os.path.join(ART, wid + ".png")).save(os.path.join(ICONS, "btn_%s.png" % wid), optimize=True)
-        print("btn_" + wid, ["ATK", "CC", "BLK"][kind])
+        print("btn_" + wid, ["ATK", "CC", "BLK", "HEAL"][kind])
     for name in ("heal", "guava", "guava_bitten", "dash", "pin_return"):
         compose(os.path.join(ART, name + ".png")).save(os.path.join(ICONS, "btn_%s.png" % name), optimize=True)
     compose(os.path.join(ICONS, "pin.png"), scale=0.84, nudge=(0, 2)).save(os.path.join(ICONS, "btn_pin.png"), optimize=True)

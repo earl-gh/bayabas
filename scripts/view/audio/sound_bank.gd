@@ -24,7 +24,7 @@ static func ids() -> Array[StringName]:
 		&"ko", &"respawn", &"victory", &"defeat", &"ui_click", &"ui_back", &"mark", &"tick",
 		&"cast_bato_light", &"cast_bato_heavy", &"cast_gunting_light", &"cast_gunting_heavy",
 		&"cast_papel_trap", &"cast_papel_shield", &"cast_tsinelas_light", &"cast_tsinelas_heavy",
-		&"cast_lata", &"cast_jacks", &"cast_bola", &"cast_trumpo"]
+		&"cast_lata", &"cast_jacks", &"cast_bola", &"cast_trumpo", &"cast_heal", &"cast_langit_lupa"]
 
 
 ## The cast sound for a weapon id (falls back to the generic cast).
@@ -106,6 +106,11 @@ static func _build(id: StringName) -> AudioStreamWAV:
 		&"tick":
 			return _render(0.05, func(t: float, d: float) -> float:
 				return _square(1000.0, t) * 0.18 * exp(-t * 70.0))
+		&"cast_heal":
+			return _arpeggio([659.25, 880.0, 1174.66], 0.07, 0.42)
+		&"cast_langit_lupa":
+			return _render(0.32, func(t: float, d: float) -> float:
+				return (sin(TAU * (90.0 + 120.0 * t) * t) * 0.55 + _noise(t * 0.4) * 0.35) * _env(t, d, 0.02) * (0.5 + 0.5 * t / d))
 		&"cast_bato_light":
 			return _render(0.16, func(t: float, d: float) -> float:
 				return _noise(t * 0.5) * 0.4 * _env(t, d, 0.01) * (1.0 - t / d) + sin(TAU * (520.0 - 1500.0 * t) * t) * 0.2 * _env(t, d, 0.004))

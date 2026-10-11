@@ -55,6 +55,10 @@ static func outline(sim: MatchSim, caster: PlayerState, def: WeaponDef, aim: Vec
 				for i: int in def.count:
 					var at: Vector2 = origin + direction * def.max_range * float(i + 1) / float(maxi(def.count, 1))
 					lines.append(circle(at, def.radius))
+		WeaponDef.Shape.HEAL:
+			var patient: PlayerState = sim.weapons.heal_target(sim, caster, def, aim)
+			if patient != null:
+				lines.append(circle(patient.position, patient.radius + 0.35))
 		WeaponDef.Shape.SHIELD:
 			var facing: Vector2 = sim.weapons.aim_direction(caster, aim)
 			var center: Vector2 = origin + facing * def.offset

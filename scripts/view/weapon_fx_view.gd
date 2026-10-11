@@ -15,7 +15,12 @@ const KIND_COLORS: Dictionary[WeaponDef.Kind, Color] = {
 	WeaponDef.Kind.ATTACK: Color(1.0, 0.55, 0.25),
 	WeaponDef.Kind.CROWD_CONTROL: Color(0.7, 0.45, 1.0),
 	WeaponDef.Kind.BLOCK: Color(0.92, 0.92, 0.85),
+	WeaponDef.Kind.HEAL: Color(0.45, 0.9, 0.4),
 }
+const SOIL_COLOR: Color = Color(0.5, 0.33, 0.2)
+const SOIL_HEIGHT: float = 1.7
+const SOIL_RISE_TIME: float = 0.22
+const SOIL_COLLAPSE_TIME: float = 0.6
 const ZONE_COLORS: Dictionary[WeaponSystem.ZoneKind, Color] = {
 	WeaponSystem.ZoneKind.EXPLOSION: Color(1.0, 0.2, 0.15, 0.35),
 	WeaponSystem.ZoneKind.TRAP: Color(0.95, 0.95, 0.9, 1.0),
@@ -60,12 +65,24 @@ func sync(sim: MatchSim, delta: float) -> void:
 	for shield: WeaponSystem.Shield in sim.weapons.shields:
 		seen[shield.id] = true
 		var node: MeshInstance3D = _nodes.get(shield.id) as MeshInstance3D
+		var soil: bool = shield.def != null and shield.def.look == &"soil"
 		if node == null:
 			var box: BoxMesh = BoxMesh.new()
-			box.size = Vector3(shield.half_width * 2.0, SHIELD_HEIGHT, SHIELD_THICKNESS)
-			box.material = _material(KIND_COLORS[WeaponDef.Kind.BLOCK])
+			if soil:
+				box.size = Vector3(shield.half_width * 2.0, SOIL_HEIGHT, shield.half_width * 2.0)
+				box.material = _material(SOIL_COLOR)
+			else:
+				box.size = Vector3(shield.half_width * 2.0, SHIELD_HEIGHT, SHIELD_THICKNESS)
+				box.material = _material(KIND_COLORS[WeaponDef.Kind.BLOCK])
 			node = _add(shield.id, box)
-		node.position = Vector3(shield.center.x, SHIELD_HEIGHT / 2.0, shield.center.y)
+		var grown: float = 1.0
+		if soil:
+			# the block of earth rises, stands, then collapses back to the ground
+			var age: float = shield.def.duration - shield.time_left
+			grown = clampf(minf(age / SOIL_RISE_TIME, shield.time_left / SOIL_COLLAPSE_TIME), 0.04, 1.0)
+		var height: float = SOIL_HEIGHT if soil else SHIELD_HEIGHT
+		node.scale.y = grown
+		node.position = Vector3(shield.center.x, height * grown / 2.0, shield.center.y)
 		node.rotation.y = -shield.along.angle()
 	for id: int in _nodes.keys():
 		if not seen.has(id):

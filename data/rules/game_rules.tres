@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GameRules" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="GameRules" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://scripts/sim/game_rules.gd" id="1_rules"]
 [ext_resource type="Script" path="res://scripts/sim/weapon_def.gd" id="w_script"]
@@ -15,6 +15,8 @@
 [ext_resource type="Resource" path="res://data/weapons/jacks.tres" id="w_jacks"]
 [ext_resource type="Resource" path="res://data/weapons/bola.tres" id="w_bola"]
 [ext_resource type="Resource" path="res://data/weapons/trumpo.tres" id="w_trumpo"]
+[ext_resource type="Resource" path="res://data/weapons/heal.tres" id="w_heal"]
+[ext_resource type="Resource" path="res://data/weapons/langit_lupa.tres" id="w_langit_lupa"]
 [ext_resource type="Resource" path="res://data/characters/junjun.tres" id="c_junjun"]
 [ext_resource type="Resource" path="res://data/characters/ligaya.tres" id="c_ligaya"]
 [ext_resource type="Resource" path="res://data/characters/migo.tres" id="c_migo"]
@@ -80,7 +82,7 @@ dummy_patrol_range = 3.0
 dummy_patrol_speed_scale = 0.5
 dummy_ally_x = 0.0
 dummy_ally_z = 11.0
-weapons = Array[ExtResource("w_script")]([ExtResource("w_bato_light"), ExtResource("w_bato_heavy"), ExtResource("w_gunting_light"), ExtResource("w_gunting_heavy"), ExtResource("w_papel_trap"), ExtResource("w_papel_shield"), ExtResource("w_tsinelas_light"), ExtResource("w_tsinelas_heavy"), ExtResource("w_lata"), ExtResource("w_jacks"), ExtResource("w_bola"), ExtResource("w_trumpo")])
+weapons = Array[ExtResource("w_script")]([ExtResource("w_bato_light"), ExtResource("w_bato_heavy"), ExtResource("w_gunting_light"), ExtResource("w_gunting_heavy"), ExtResource("w_papel_trap"), ExtResource("w_papel_shield"), ExtResource("w_tsinelas_light"), ExtResource("w_tsinelas_heavy"), ExtResource("w_lata"), ExtResource("w_jacks"), ExtResource("w_bola"), ExtResource("w_trumpo"), ExtResource("w_heal"), ExtResource("w_langit_lupa")])
 characters = Array[ExtResource("c_script")]([ExtResource("c_junjun"), ExtResource("c_ligaya"), ExtResource("c_migo"), ExtResource("c_toni"), ExtResource("c_popoy"), ExtResource("c_inday")])
 weapon_pick_time = 10.0
 polymorph_speed_scale = 0.5
