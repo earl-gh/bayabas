@@ -37,6 +37,27 @@ func base_center(side: int) -> Vector2:
 	return Vector2(0.0, side * (lane_length / 2.0 - base_inset))
 
 
+## Z of the inner wall row (the one a side's electric post stands in), measured at its center.
+func inner_wall_z(side: int) -> float:
+	return side * (lane_length / 2.0 - base_inset - wall_first_layer_from_base)
+
+
+## Z of the back face of a side's inner wall: a player past this line (toward that
+## side's lane end) is behind the wall, in that side's yard.
+func yard_line(side: int) -> float:
+	return inner_wall_z(side) + side * wall_thickness / 2.0
+
+
+## True when `position` is behind `side`'s inner wall, in its yard (the enemy scores there).
+func in_yard(side: int, position: Vector2) -> bool:
+	return position.y * side >= absf(yard_line(side)) and absf(position.x) <= lane_width / 2.0
+
+
+## Where a side's players start and respawn: the middle of the yard behind the inner wall.
+func spawn_center(side: int) -> Vector2:
+	return Vector2(0.0, side * (absf(yard_line(side)) + lane_length / 2.0) / 2.0)
+
+
 func lane_rect() -> Rect2:
 	return Rect2(-lane_width / 2.0, -lane_length / 2.0, lane_width, lane_length)
 

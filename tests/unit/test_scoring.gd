@@ -16,7 +16,7 @@ func _wait(sim: MatchSim, seconds: float) -> void:
 
 ## Puts `player` on the enemy base post and waits for the point.
 func _score(sim: MatchSim, player: PlayerState) -> void:
-	player.position = LAYOUT.base_center(-sim.side_for_team(player.team))
+	player.position = LAYOUT.spawn_center(-sim.side_for_team(player.team))
 	_wait(sim, RULES.base_capture_time + 0.1)
 
 
@@ -74,11 +74,11 @@ func test_best_of_three_sets() -> void:
 
 # ---- base capture --------------------------------------------------------------
 
-func test_standing_in_the_enemy_base_for_half_a_second_scores() -> void:
+func test_standing_behind_the_enemy_inner_wall_for_half_a_second_scores() -> void:
 	var sim: MatchSim = _sim()
 	var me: PlayerState = sim.add_player(1, 0)
 	watch_signals(sim)
-	me.position = LAYOUT.base_center(MapLayout.SIDE_ENEMY) + Vector2(1.5, 0.0)
+	me.position = LAYOUT.spawn_center(MapLayout.SIDE_ENEMY) + Vector2(1.5, 0.0)
 	_wait(sim, 0.4)
 	assert_eq(sim.score.points[0], 0, "not yet")
 	_wait(sim, 0.2)
@@ -90,10 +90,10 @@ func test_standing_in_the_enemy_base_for_half_a_second_scores() -> void:
 func test_stepping_out_resets_the_capture_timer() -> void:
 	var sim: MatchSim = _sim()
 	var me: PlayerState = sim.add_player(1, 0)
-	var base: Vector2 = LAYOUT.base_center(MapLayout.SIDE_ENEMY)
+	var base: Vector2 = LAYOUT.spawn_center(MapLayout.SIDE_ENEMY)
 	me.position = base
 	_wait(sim, 0.3)
-	me.position = base + Vector2(3.0, 0.0)
+	me.position = base + Vector2(0.0, 10.0)
 	sim.step(DT)
 	me.position = base
 	_wait(sim, 0.3)
@@ -110,7 +110,7 @@ func test_own_base_does_not_score() -> void:
 func test_cc_or_death_delay_in_the_base_does_not_score() -> void:
 	var sim: MatchSim = _sim()
 	var me: PlayerState = sim.add_player(1, 0)
-	me.position = LAYOUT.base_center(MapLayout.SIDE_ENEMY)
+	me.position = LAYOUT.spawn_center(MapLayout.SIDE_ENEMY)
 	sim.apply_effect(1, StatusEffects.Type.STUN, 1.0, 0.0)
 	_wait(sim, 0.8)
 	assert_eq(sim.score.points[0], 0, "stunned")

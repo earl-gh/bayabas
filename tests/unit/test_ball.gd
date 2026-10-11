@@ -137,7 +137,9 @@ func test_hitting_an_ally_passes_the_ball() -> void:
 
 
 func test_an_enemy_wall_takes_60_and_the_ball_despawns() -> void:
-	var sim: MatchSim = _holding(Vector2(0.0, -12.0))
+	# in front of the enemy's middle wall row
+	var row_z: float = LAYOUT.inner_wall_z(MapLayout.SIDE_ENEMY) + LAYOUT.wall_layer_spacing
+	var sim: MatchSim = _holding(Vector2(0.0, row_z + 4.0))
 	_throw(sim, 1, Vector2(0.0, -1.0))
 	_wait(sim, 0.5)
 	var hit: Array[int] = []
@@ -195,7 +197,7 @@ func test_going_down_drops_the_ball() -> void:
 func test_a_point_removes_the_ball() -> void:
 	var sim: MatchSim = _holding()
 	var me: PlayerState = sim.players[1]
-	me.position = LAYOUT.base_center(MapLayout.SIDE_ENEMY)
+	me.position = LAYOUT.spawn_center(MapLayout.SIDE_ENEMY)
 	_wait(sim, 4.0)
 	assert_eq(sim.ball.state, S.NONE)
 

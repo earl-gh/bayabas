@@ -31,6 +31,7 @@ const BRIGHTNESS: float = 1.0
 const HAZE_COLOR: Color = Color(0.82, 0.9, 1.0)
 const HAZE_DENSITY: float = 0.0008
 const RING_HEIGHT: float = 0.03
+const YARD_ALPHA: float = 0.28
 const CURB_HEIGHT: float = 0.35
 const CROSS_STREET_WIDTH: float = 6.0
 const SIDEWALK_WIDTH: float = 2.4
@@ -137,7 +138,9 @@ static func _light_scene(parent: Node, sun: DirectionalLight3D) -> void:
 func set_own_side(own_side: int) -> void:
 	for side: int in _base_materials:
 		for material: StandardMaterial3D in _base_materials[side]:
-			material.albedo_color = OWN_COLOR if side == own_side else ENEMY_COLOR
+			var tint: Color = OWN_COLOR if side == own_side else ENEMY_COLOR
+			tint.a = material.albedo_color.a
+			material.albedo_color = tint
 	for decal: MeshInstance3D in _readable:
 		decal.rotation.y = 0.0 if own_side == MapLayout.SIDE_OWN else PI
 
@@ -168,7 +171,7 @@ func _build_map() -> void:
 		var post: MeshInstance3D = _add(Props.electric_post(), Vector3(center.x, 0.0, center.y))
 		# a team-coloured band on the post so you can tell bases apart from afar
 		var band: StandardMaterial3D = _add_band(post, color)
-		_base_materials[side] = [ring, band]
+		_base_materials[side] = [ring, band, _add_yard(side, color)]
 		_add_sign("poster_0" if side == MapLayout.SIDE_OWN else "poster_1", POSTER_HEIGHT, Vector3(center.x + 0.45, 1.3, center.y))
 	# street dressing outside the lane
 	var store_z: float = -half_l * 0.45
@@ -360,6 +363,20 @@ func _add_disc(center: Vector3, radius: float, color: Color) -> StandardMaterial
 	material.albedo_color = color
 	mesh.material = material
 	_add(mesh, center)
+	return material
+
+
+## The yard behind a side's inner wall, tinted in that team's colour: getting in here
+## is how the other team scores. A flat see-through slab on the road.
+func _add_yard(side: int, color: Color) -> StandardMaterial3D:
+	var depth: float = layout.lane_length / 2.0 - absf(layout.yard_line(side))
+	var mesh: BoxMesh = BoxMesh.new()
+	mesh.size = Vector3(layout.lane_width, RING_HEIGHT, depth)
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(color.r, color.g, color.b, YARD_ALPHA)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mesh.material = material
+	_add(mesh, Vector3(0.0, RING_HEIGHT * 1.5, side * (absf(layout.yard_line(side)) + depth / 2.0)))
 	return material
 
 
