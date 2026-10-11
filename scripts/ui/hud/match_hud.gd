@@ -40,10 +40,10 @@ var scoreboard: Scoreboard
 var info_label: Label
 var minimap: LaneMinimap
 var joystick: VirtualJoystick
-var bookmark_button: TouchButton
+var bookmark_button: AimButton
 var weapon_buttons: Array[AimButton] = []
 var ball_button: AimButton
-## Weapon 1, weapon 2, guava (the order MatchInput uses).
+## Weapon 1, weapon 2, guava, pin (the order MatchInput uses).
 var aim_buttons: Array[AimButton] = []
 var cancel_zone: Control
 var respawn_label: Label
@@ -73,7 +73,7 @@ func set_top_inset(pixels: float) -> void:
 
 
 func set_controls_active(active: bool) -> void:
-	var controls: Array[Control] = [joystick, bookmark_button]
+	var controls: Array[Control] = [joystick]
 	controls.append_array(aim_buttons)
 	for control: Control in controls:
 		control.set_process_input(active)
@@ -202,11 +202,13 @@ func _build() -> void:
 	ball_button = _aim_button()
 	ball_button.icon_id = &"guava"
 	ball_button.label_text = "Catch"
+	bookmark_button = _aim_button()
+	bookmark_button.icon_id = &"dash"
+	bookmark_button.label_text = "Pin"
 	weapon_buttons = [weapon_one, weapon_two]
-	aim_buttons = [weapon_one, weapon_two, ball_button]
+	aim_buttons = [weapon_one, weapon_two, ball_button, bookmark_button]
 	for button: AimButton in aim_buttons:
 		button.cancel_zone = cancel_zone
-	bookmark_button = _skill_button(&"dash", "Pin")
 	banner = Label.new()
 	_place(banner, Vector4(0, 0.3, 1, 0.3), Vector4(0, -60, 0, 60))
 	banner.visible = false

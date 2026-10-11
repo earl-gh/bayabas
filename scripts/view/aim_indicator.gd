@@ -14,6 +14,7 @@ const BOUNCE_MARK_RADIUS: float = 0.3
 ## The guava's flight lane, half width in metres (it is about 0.7 m across).
 const BALL_LANE_HALF_WIDTH: float = 0.55
 const FILL_ALPHA: float = 0.22
+const PIN_LANE_HALF_WIDTH: float = 0.5
 
 var _mesh: ImmediateMesh = ImmediateMesh.new()
 var _material: StandardMaterial3D = StandardMaterial3D.new()
@@ -68,6 +69,11 @@ static func ball_outline(origin: Vector2, direction: Vector2, reach: float) -> A
 	var lines: Array[PackedVector2Array] = [circle(origin, reach)]
 	lines.append(lane(origin, direction, reach, BALL_LANE_HALF_WIDTH))
 	return lines
+
+
+## Pin dash preview: the band the dash covers, from the player `length` metres.
+static func pin_outline(origin: Vector2, direction: Vector2, length: float) -> Array[PackedVector2Array]:
+	return [lane(origin, direction, length, PIN_LANE_HALF_WIDTH)]
 
 
 ## A closed rectangle from `origin` along `direction` for `length`, `half_width` either side.

@@ -37,6 +37,13 @@ func _enemy_ahead(practice: PracticeMatch, distance: float) -> PlayerState:
 	return enemy
 
 
+## The pin button: pressed, then released a tick later.
+func _tap_pin(practice: PracticeMatch) -> void:
+	practice.press_skill(PlayerInput.BTN_BOOKMARK)
+	practice.advance(DT)
+	practice.advance(DT)
+
+
 func test_local_player_starts_at_own_base_seen_from_behind() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
@@ -111,8 +118,7 @@ func test_skill_presses_do_nothing_in_the_death_delay() -> void:
 	player.position = Vector2(0.0, 0.0)
 	practice.hurt_local(100)
 	practice.press_skill(PlayerInput.BTN_DASH)
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
-	practice.advance(DT)
+	_tap_pin(practice)
 	assert_eq(player.dash_time_left, 0.0)
 	assert_false(player.mark_active)
 	assert_true(player.death_delay)
@@ -179,8 +185,7 @@ func test_bookmark_button_blinks_the_player() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	var start_z: float = player.position.y
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
-	practice.advance(DT)
+	_tap_pin(practice)
 	assert_almost_eq(player.position.distance_to(player.mark_position), practice.sim.rules.bookmark_blink, 0.05)
 	assert_true(player.mark_active)
 
@@ -188,8 +193,7 @@ func test_bookmark_button_blinks_the_player() -> void:
 func test_a_pressed_skill_is_sent_once() -> void:
 	var practice: PracticeMatch = _practice()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
-	practice.advance(DT)
+	_tap_pin(practice)
 	practice.advance(DT)
 	assert_true(player.mark_active, "one press: out on the pin, not straight back")
 
@@ -199,13 +203,11 @@ func test_the_pin_button_returns_early_then_waits_for_its_cooldown() -> void:
 	var pin: TouchButton = practice.hud.bookmark_button
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	_equip(practice, &"bato_light", &"papel_shield")
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
-	practice.advance(DT)
+	_tap_pin(practice)
 	assert_false(pin.locked, "out on the pin: the same button brings you back")
 	assert_true(pin.highlight, "glows while you can return")
 	practice.advance(DT)
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
-	practice.advance(DT)
+	_tap_pin(practice)
 	assert_false(player.mark_active, "returned early")
 	assert_true(pin.locked, "now on cooldown")
 	practice.aim_started(1)
@@ -608,11 +610,9 @@ func test_minimap_puts_our_base_at_the_bottom_even_after_the_switch() -> void:
 
 func test_skill_buttons_show_cooldown_seconds() -> void:
 	var practice: PracticeMatch = _practice()
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
+	_tap_pin(practice)
 	practice.advance(DT)
-	practice.advance(DT)
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
-	practice.advance(DT)
+	_tap_pin(practice)
 	var pin: TouchButton = practice.hud.bookmark_button
 	assert_eq(ceili(pin.cooldown_seconds), 14)
 
@@ -643,8 +643,7 @@ func test_the_pin_cooldown_bar_drains_while_out_then_refills() -> void:
 	var hud: OverheadHud = practice.overhead()
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	assert_eq(hud.mark_fraction(player), 1.0)
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
-	practice.advance(DT)
+	_tap_pin(practice)
 	assert_true(player.mark_active)
 	assert_between(hud.mark_fraction(player), 0.9, 1.0, "out on the pin: time left, draining")
 	for i: int in 135:
@@ -709,8 +708,7 @@ func test_the_pin_button_shows_the_dash_arrow_then_the_return_arrow() -> void:
 	var player: PlayerState = practice.sim.players[PracticeMatch.LOCAL_ID]
 	practice.advance(DT)
 	assert_eq(practice.hud.bookmark_button.icon_id, &"dash", "ready")
-	practice.press_skill(PlayerInput.BTN_BOOKMARK)
-	practice.advance(DT)
+	_tap_pin(practice)
 	assert_true(player.mark_active)
 	assert_eq(practice.hud.bookmark_button.icon_id, &"dash", "blink and tumble")
 	for i: int in 30:

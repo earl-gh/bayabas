@@ -134,6 +134,7 @@ func set_loadout(id: int, first: StringName, second: StringName) -> bool:
 	state.weapons = [first, second]
 	state.weapon_cooldowns = [0.0, 0.0]
 	state.aim_hold = [-1.0, -1.0]
+	state.pin_aim_hold = -1.0
 	return true
 
 
@@ -318,14 +319,11 @@ func _step_alive(state: PlayerState, input: PlayerInput, dt: float) -> void:
 	# queue a cast for the moment it ends (no precasting).
 	var previous: int = state.previous_buttons
 	var just_pressed: int = input.buttons & ~previous if input != null else 0
-	if input != null and just_pressed & PlayerInput.BTN_BOOKMARK and state.mark_active:
-		# out on the pin: pressing again brings you back at once, even mid-tumble
-		_return_to_mark(state)
-	elif input != null and state.can_act():
+	if input != null:
+		_handle_pin_button(state, input, previous, dt)
+	if input != null and state.can_act():
 		if just_pressed & PlayerInput.BTN_DASH and state.dash_cooldown_left <= 0.0:
 			_start_dash(state, input)
-		elif just_pressed & PlayerInput.BTN_BOOKMARK and state.bookmark_ready():
-			_use_bookmark(state)
 	if input != null:
 		_handle_weapon_buttons(state, input, dt)
 		_handle_ball_button(state, input, previous, dt)
@@ -487,14 +485,45 @@ func _start_dash(state: PlayerState, input: PlayerInput) -> void:
 	player_dashed.emit(state.id)
 
 
-## The pin (Bookmark): stick a pin where you stand, blink a short way, tumble,
-## and after `bookmark_boost_duration` snap back to the pin. Pressing again while
-## out returns early.
-func _use_bookmark(state: PlayerState) -> void:
+## The pin button works like an aimed skill: press while it is ready and you aim
+## (drag to choose the direction), release to dash; a tap dashes the way the player
+## faces. Pressing while out on the pin brings you back at once, even mid-tumble.
+func _handle_pin_button(state: PlayerState, input: PlayerInput, previous: int, dt: float) -> void:
+	var held: bool = input.is_pressed(PlayerInput.BTN_BOOKMARK)
+	var was_held: bool = (previous & PlayerInput.BTN_BOOKMARK) != 0
+	if held and not was_held:
+		if state.mark_active:
+			_return_to_mark(state)
+			state.pin_aim_hold = -1.0
+		elif state.can_act() and state.bookmark_ready():
+			state.pin_aim_hold = 0.0
+		else:
+			state.pin_aim_hold = -1.0
+	elif held and state.pin_aim_hold >= 0.0:
+		state.pin_aim_hold = -1.0 if not state.can_act() else state.pin_aim_hold + dt
+	elif not held and was_held and state.pin_aim_hold >= 0.0:
+		state.pin_aim_hold = -1.0
+		if not input.is_pressed(PlayerInput.BTN_AIM_CANCEL) and state.can_act() and state.bookmark_ready():
+			_use_bookmark(state, input.aim)
+
+
+## The direction a pin dash would take now: the drag past the deadzone, otherwise
+## the way the player faces.
+func resolved_pin_aim(state: PlayerState, stick: Vector2) -> Vector2:
+	if stick.length() >= rules.aim_deadzone:
+		return stick.normalized()
+	return state.facing
+
+
+## The pin (Bookmark): stick a pin where you stand, dash a short way in `aim` (or
+## the facing), tumble, and after `bookmark_boost_duration` snap back to the pin.
+func _use_bookmark(state: PlayerState, aim: Vector2 = Vector2.ZERO) -> void:
+	var direction: Vector2 = resolved_pin_aim(state, aim)
+	state.facing = direction
 	state.mark_position = state.position
 	state.mark_active = true
 	state.boost_time_left = rules.bookmark_boost_duration
-	_move_by(state, state.facing * rules.bookmark_blink)
+	_move_by(state, direction * rules.bookmark_blink)
 	state.stumble_time_left = rules.bookmark_tumble
 	bookmark_used.emit(state.id)
 

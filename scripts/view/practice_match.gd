@@ -16,6 +16,7 @@ const MAX_STEPS_PER_FRAME: int = 8
 const AIRBORNE_LIFT: float = 1.0
 const WEAPON_SLOTS: int = 2
 const BALL_SLOT: int = 2
+const PIN_SLOT: int = 3
 const RECONNECT_INTERVAL: float = 2.0
 ## Practice-only debug button to test the death delay without an enemy that fights back.
 const DEBUG_DAMAGE: int = 30
@@ -226,7 +227,6 @@ func _setup_hud() -> void:
 
 func _connect_hud() -> void:
 	hud.joystick.changed.connect(set_stick)
-	hud.bookmark_button.pressed.connect(press_skill.bind(PlayerInput.BTN_BOOKMARK))
 	for slot: int in hud.aim_buttons.size():
 		hud.aim_buttons[slot].aim_started.connect(aim_started.bind(slot))
 		hud.aim_buttons[slot].aim_released.connect(aim_released.bind(slot))
@@ -279,7 +279,7 @@ func _screen_to_world(screen_aim: Vector2) -> Vector2:
 func _mouse_aim(slot: int) -> Vector2:
 	var player: PlayerState = sim.players[local_id]
 	var viewport: Viewport = get_viewport()
-	if viewport == null or (slot != BALL_SLOT and slot >= player.weapons.size()):
+	if viewport == null or (slot < BALL_SLOT and slot >= player.weapons.size()):
 		return Vector2.ZERO
 	var mouse: Vector2 = viewport.get_mouse_position()
 	var hit: Variant = Plane(Vector3.UP, 0.0).intersects_ray(_camera.project_ray_origin(mouse), _camera.project_ray_normal(mouse))
@@ -288,7 +288,9 @@ func _mouse_aim(slot: int) -> Vector2:
 	var point: Vector3 = hit as Vector3
 	var offset: Vector2 = Vector2(point.x, point.z) - player.position
 	var reach: float = rules.ball_range
-	if slot != BALL_SLOT:
+	if slot == PIN_SLOT:
+		reach = rules.bookmark_blink
+	elif slot != BALL_SLOT:
 		var def: WeaponDef = sim.weapon_defs[player.weapons[slot]]
 		reach = def.max_range if def.max_range > 0.0 else 1.0
 	return (offset / reach).limit_length(1.0)
@@ -428,6 +430,13 @@ func _sync_aim(player: PlayerState) -> void:
 				continue
 			var direction: Vector2 = sim.resolved_ball_aim(player, stick)
 			_aim_indicator.show_lines(AimIndicator.ball_outline(player.position, direction, rules.ball_range), cancelled, true, 1)
+			any_aiming = true
+			break
+		if slot == PIN_SLOT:
+			if not player.bookmark_ready():
+				continue
+			var dash_direction: Vector2 = sim.resolved_pin_aim(player, stick)
+			_aim_indicator.show_lines(AimIndicator.pin_outline(player.position, dash_direction, rules.bookmark_blink), cancelled, false, 0)
 			any_aiming = true
 			break
 		if slot >= player.weapons.size():
